@@ -59,3 +59,9 @@ typings/
 
 # next.js build output
 .next
+
+# Ensures that I don't add GB's of data
+helpers/TrackGrabber/Data
+
+# Ensures no one can see my secret keys
+helpers/secretKeys.json
