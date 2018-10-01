@@ -20,15 +20,13 @@ import styles from '../../../styles/mainStyle';
 // Content
 import About from './aboutContent';
 
-function scrollIntoView (target) {
-    jQuery('html, body').animate({scrollTop: target.offset().top}, 1000, function() {
-        location.hash = target;
-        target.focus();
-        if (!target.is(":focus")) {
-            target.attr('tabindex', '-1');
-            target.focus()
-        }
-    });
+function scrollTop() {
+  let target = document.querySelector('.Template-aboutContainer-43').getClientRects()[0].top;
+  window.scroll({
+    top: target,
+    left  : 0,
+    behavior: 'smooth'
+  });
 }
 
 class Template extends React.Component {
@@ -52,7 +50,7 @@ class Template extends React.Component {
 
                     <section className={classes.buttonContainer}>
                         <Typography> <a href="login" className={classes.mainButton}> Login </a> </Typography>
-                        <Typography> <a className={classes.mainButton}> About </a> </Typography>
+                        <Typography> <a className={classes.mainButton} onClick={scrollTop}> About </a> </Typography>
                     </section>
                 </section>
 

@@ -10,6 +10,7 @@ let spotifyApi = {};
 
 const querystring = require('querystring');
 
+var mongoose = require('../helpers/mongoose');
 
 var stateKey = 'spotify_auth_state';
 
@@ -38,6 +39,7 @@ module.exports = function(command, data, callback) {
             });
             break;
         case 'new_user':
+            // Ensures that the access token works
             spotifyApi[data.username] = new SpotifyWebApi({
                 clientId : client_id,
                 clientSecret : client_secret,
@@ -153,6 +155,18 @@ module.exports = function(command, data, callback) {
                 })
                 .catch(function(err){
                     console.log(err);
+                });
+
+
+
+            case 'check_account':
+                mongoose('get', {username: data.username}, null, null, function(data){
+                    console.log("THIS IS RETURNED DATA: " + data.spotify);
+                    if(data.spotify.access_token){
+                        callback({response: 'success', data: data });
+                    } else {
+                        callback({response: 'failed'});
+                    }
                 });
     }
 }

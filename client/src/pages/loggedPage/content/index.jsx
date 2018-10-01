@@ -24,6 +24,9 @@ class Template extends React.Component {
         this.setState({ value });
     };
 
+    componentWillMount() {
+    }
+
     render(){
         const { classes } = this.props;
         const { value } = this.state;
@@ -31,21 +34,16 @@ class Template extends React.Component {
         return (
             <section className={classes.body}>
 
-                <section id="loadScreen">
-                    <span class="pulse"></span>
-                </section>
-
                 <section id="accountHolder" className={classes.accountHolder}>
                     <img id="profilePic" className={classes.profilePic}/>
-                    <Typography id="profileArea" className={classes.profileArea}>
+                    <section id="profileArea" className={classes.profileArea}>
                         <Typography id="profileUserName" className={classes.profileUserName}> </Typography>
                         <Typography id="profileName" className={classes.profileName}> Not Logged In </Typography>
-                    </Typography>
+                    </section>
                     <Typography> <a href="logout" id="profileLogout" className={classes.prolfileLogout}> <i class="fas fa-sign-out-alt"></i> Logout </a> </Typography>
                 </section>
 
                 <section className={classes.header}>
-
                     <section className={classes.titleContainer}>
                         <Typography variant='display4' className={classes.title}> MusicDEV </Typography>
                         <Typography variant='display1' className={classes.titleChild}> Finding the right music </Typography>

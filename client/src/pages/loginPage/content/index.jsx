@@ -31,7 +31,7 @@ class Template extends React.Component {
         return (
             <section>
                 <Typography> <a className={classes.backHome} href="welcome"> &#x3c; </a> </Typography>
-                <section className={classes.header} style={{height: '96vh'}}>
+                <section className={classes.header}>
 
                     <section className={classes.titleContainer}>
                         <Typography variant='display4' className={classes.title}> MusicDEV </Typography>

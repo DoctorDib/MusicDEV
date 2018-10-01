@@ -30,7 +30,7 @@ class Template extends React.Component {
 
         return (
             <section>
-                <section className={classes.header} style={{height: '96vh'}}>
+                <section className={classes.header}>
                     <section className={classes.titleContainer}>
                         <Typography variant='display4' className={classes.title}> MusicDEV </Typography>
                         <Typography variant='display1' className={classes.titleChild}> Welcome newbie! </Typography>

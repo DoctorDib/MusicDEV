@@ -1,4 +1,5 @@
 const WebSocket = require('ws');
+const User = require('../helpers/mongoose.js');
 const spotify = require('../helpers/spotify_api.js');
 
 class Socket {
@@ -40,6 +41,10 @@ class Socket {
                         break;
                     case 'new_user':
                         spotify('new_user', {username: message.data.username});
+                        User('get', {username: message.data.username}, null, null, function(data){
+                            console.log(data)
+                        })
+                        //func, ident, set, object, callback
                         break;
                     case 'ping':
                         CLIENTS[CLIENTS.indexOf(ws)].send("pong")
@@ -54,6 +59,7 @@ class Socket {
                             console.log(data)
                             sendBack(ws, {username: data.username})
                         });
+
                 }
             });
         });

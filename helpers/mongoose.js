@@ -1,6 +1,8 @@
 var User = require('../models/user');
 
-module.exports = function(func, ident, set, object) {
+// mongoose('get', {username: <USERNAME>})
+
+module.exports = function(func, ident, set, object, callback) {
     if(func === 'update'){
         User.update(ident, {[set] : object}, function(err){
             if(err){
@@ -12,7 +14,8 @@ module.exports = function(func, ident, set, object) {
     } else if(func === 'get'){
         var test = User.findOne(ident);
         return test.exec(function(err, object){
-            return object
+            callback(object)
+            return object;
         });
     }
 }

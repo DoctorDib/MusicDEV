@@ -11,6 +11,7 @@ const dependencies = require('./dependencies');
 const passport = require('passport');
 const querystring = require('querystring');
 const favicon = require('serve-favicon');
+const path = require('path');
 
 dependencies.resolve(function(routing){
     const app = SetupExpress();
@@ -41,7 +42,7 @@ dependencies.resolve(function(routing){
         app.use(express.static('client/public'));
         app.use(cookieParser());
         app.set('views', __dirname + '/client/public');
-        //app.use(favicon(path.join(__dirname, '/client/src/img', 'icon.png')));
+        app.use(favicon(path.join(__dirname, '/client/src/img', 'icon.png')));
         app.engine('jsx', require('express-react-views').createEngine());
         app.use(bodyParser.json());
         app.use(bodyParser.urlencoded({extended: true}));

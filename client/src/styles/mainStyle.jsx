@@ -1,6 +1,6 @@
 const styles = theme => ({
     header: {
-        height: '85vh',
+        height: '100vh',
         backgroundColor: '#292929',
         color: '#eeeeee',
         display: 'flex',
@@ -8,7 +8,8 @@ const styles = theme => ({
         justifyContent: 'space-around',
         flexDirection: 'column',
         boxShadow: '0px 4px 3px 0px #b9b9b9',
-        userSelect: 'none'
+        userSelect: 'none',
+        backgroundImage: 'radial-gradient(#5f5f5f, #292929)'
     },
     titleContainer:{
         display: 'flex',

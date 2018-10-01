@@ -42,8 +42,18 @@ module.exports = function(passport){
         },
 
         loggedIn: function(req, res){
-            res.render('index/loggedIndex.ejs', {
-                title: 'musicDEV'
+            spotify('new_user', {username:req.user.username});
+
+            // Checks if users spotify account is linked
+            spotify('check_account', {username:req.user.username}, function(response){
+                if(response.response === "success"){
+                    res.render('index/loggedIndex.ejs', {
+                        title: 'musicDEV',
+                        pic: response.data.picture
+                    });
+                } else {
+                    res.redirect('/spotify_login');
+                }
             });
         },
 
@@ -149,11 +159,7 @@ module.exports = function(passport){
                             username: req.user.username,
                             access_token: access_token
                         }).then(function(data){
-                            res.render('index.jsx', {
-                                title: 'musicDEV',
-                                pic: data.picture,
-                                playlist: ["one", "two", "three"]
-                            });
+                            res.redirect('/')
                         });
                     } else {
                         console.log(error)
