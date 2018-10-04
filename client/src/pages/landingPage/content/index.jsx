@@ -2,43 +2,47 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import Button from '@material-ui/core/Button';
-import Dialog from '@material-ui/core/Dialog';
-import DialogTitle from '@material-ui/core/DialogTitle';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogContentText from '@material-ui/core/DialogContentText';
-import DialogActions from '@material-ui/core/DialogActions';
 import Typography from '@material-ui/core/Typography';
-import AppBar from '@material-ui/core/AppBar';
-import Tabs from '@material-ui/core/Tabs';
-import Tab from '@material-ui/core/Tab';
+
+import Dialog from '@material-ui/core/Dialog';
+
+import LoginDialog from '../../loginPage/content';
+import RegisterDialog from '../../registerPage/content';
+
 import { withStyles } from '@material-ui/core/styles';
-
-var currentPage, initialSetUp = false;
-
-import styles from '../../../styles/mainStyle';
+import styles from './style';
 
 // Content
 import About from './aboutContent';
 
-function scrollTop() {
-  let target = document.querySelector('.Template-aboutContainer-43').getClientRects()[0].top;
-  window.scroll({
-    top: target,
-    left  : 0,
-    behavior: 'smooth'
-  });
-}
-
 class Template extends React.Component {
-    state = { value: 0 };
+    constructor(props) {
+        super(props);
 
-    handleChange = (event, value) => {
-        this.setState({ value });
+        this.state = {
+            loginOpen: false,
+            registerOpen: false
+        };
+    }
+
+    scrollTop = () => {
+        window.scroll({
+            top: document.querySelector('#aboutContainer').getClientRects()[0].top,
+            left  : 0,
+            behavior: 'smooth',
+        });
+    };
+
+    handleClickOpen = target => () => {
+        this.setState({ [target]: true });
+    };
+
+    handleClose = target => () => {
+        this.setState({ [target]: false });
     };
 
     render(){
         const { classes } = this.props;
-        const { value } = this.state;
 
         return (
             <section className={classes.body}>
@@ -49,16 +53,20 @@ class Template extends React.Component {
                     </section>
 
                     <section className={classes.buttonContainer}>
-                        <Typography> <a href="login" className={classes.mainButton}> Login </a> </Typography>
-                        <Typography> <a className={classes.mainButton} onClick={scrollTop}> About </a> </Typography>
+                        <Button onClick={this.handleClickOpen('loginOpen')} color={'secondary'} variant='raised' size="large" className={classes.mainButton}>Login</Button>
+                        <Button onClick={this.handleClickOpen('registerOpen')} color={'secondary'} variant='raised' size="large" className={classes.mainButton}>Register</Button>
+                        <Button color={'secondary'} variant='raised' size="large" className={classes.mainButton} onClick={this.scrollTop}>About</Button>
                     </section>
                 </section>
+
+                <LoginDialog open={this.state.loginOpen} close={this.handleClose}/>
+                <RegisterDialog open={this.state.registerOpen} close={this.handleClose}/>
 
                 <About />
             </section>
         );
     }
-};
+}
 
 Template.propTypes = {
     classes: PropTypes.object.isRequired

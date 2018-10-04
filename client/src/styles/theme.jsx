@@ -1,31 +1,18 @@
-
 import createMuiTheme from '@material-ui/core/styles/createMuiTheme';
-import indigo from '@material-ui/core/colors/indigo';
-import green from '@material-ui/core/colors/green';
-import blueGrey from '@material-ui/core/colors/blueGrey';
 
-const theme = createMuiTheme({
+export default createMuiTheme({
     palette: {
         primary: {
-            light: 'pink',
-            main: '#2196F3',
-            dark: '#0D47A1',
-            contrastText: '#fff',
-            text: '#fff',
+            light: '#eeeeee',
+            main: '#444444',
         },
         secondary: {
-            light: '#EF9A9A',
-            main: '#EF5350',
-            dark: '#C62828',
-            contrastText: '#fff',
+            light: '#444444',
+            main: '#eeeeee',
         },
-        whiteText: {
-            main: 'white'
-        },
-    },
-    typography: {
-        fontFamily: '"Roboto"',
+        error: {
+            light: '#dc3636',
+            main: '#dc3636'
+        }
     }
 });
-
-export { theme };

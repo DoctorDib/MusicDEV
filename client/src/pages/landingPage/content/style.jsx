@@ -1,4 +1,7 @@
-const styles = theme => ({
+import styles from '../../../styles/mainStyle';
+
+export default theme => ({
+    ...styles,
     aboutContainer: {
         maxWidth: '85vw',
         marginLeft: 'auto',
@@ -9,7 +12,5 @@ const styles = theme => ({
     aboutSections: {
         paddingTop: '1em',
         paddingBottom: '0.5em',
-    }
+    },
 });
-
-export default styles;

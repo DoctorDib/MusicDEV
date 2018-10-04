@@ -18,29 +18,19 @@ var currentPage, initialSetUp = false;
 import styles from '../../../styles/mainStyle';
 
 class Template extends React.Component {
-    state = { value: 0 };
-
-    handleChange = (event, value) => {
-        this.setState({ value });
-    };
-
-    componentWillMount() {
-    }
 
     render(){
         const { classes } = this.props;
-        const { value } = this.state;
 
         return (
             <section className={classes.body}>
-
                 <section id="accountHolder" className={classes.accountHolder}>
                     <img id="profilePic" className={classes.profilePic}/>
                     <section id="profileArea" className={classes.profileArea}>
                         <Typography id="profileUserName" className={classes.profileUserName}> </Typography>
                         <Typography id="profileName" className={classes.profileName}> Not Logged In </Typography>
                     </section>
-                    <Typography> <a href="logout" id="profileLogout" className={classes.prolfileLogout}> <i class="fas fa-sign-out-alt"></i> Logout </a> </Typography>
+                    <Typography> <a href="logout" id="profileLogout" className={classes.prolfileLogout}> <i className="fas fa-sign-out-alt"></i> Logout </a> </Typography>
                 </section>
 
                 <section className={classes.header}>

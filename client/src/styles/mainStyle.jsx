@@ -1,6 +1,11 @@
-const styles = theme => ({
+import theme from './theme';
+
+const styles = {
     header: {
-        height: '100vh',
+        height: '75vh',
+        [theme.breakpoints.down('sm')]: {
+            height: '100vh',
+        },
         backgroundColor: '#292929',
         color: '#eeeeee',
         display: 'flex',
@@ -15,12 +20,6 @@ const styles = theme => ({
         display: 'flex',
         flexDirection: 'column',
         userSelect: 'none'
-    },
-    buttonContainer:{
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center'
     },
     title: {
         color: '#eeeeee',
@@ -38,50 +37,35 @@ const styles = theme => ({
         alignItems: 'center',
         userSelect: 'none'
     },
-    loginInput: {
+
+    inputField: {
         width: '100%',
-        fontSize: '1em',
-        padding:'0.25em'
-    },
-    loginLabel: {
-        marginTop: '1em',
-        marginBottom: '0.5em',
-        color: '#eeeeee',
-        userSelect: 'none'
+        marginBottom: '2em',
+        color: 'white'
     },
     mainButton: {
-        backgroundColor: '#efefef',
-        fontSize: '1.5em',
-        color: 'black',
-        cursor: 'pointer',
         border: 'none',
-        borderRadius: '0.25em',
-        padding: '0.75em',
-        paddingLeft: '2em',
-        paddingRight: '2em',
+        borderRadius: '0.15em',
         textDecoration: 'none',
         outline: 'none',
         margin: '2em',
         userSelect: 'none',
-        '&:hover': {
-            backgroundColor: '#8a8a8a'
-        },
-        '&:active': {
-            backgroundColor: '#383838'
-        }
     },
+
     backHome: {
         position: 'fixed',
         fontSize: '3em',
         color: '#eeeeee',
         textDecoration: 'none',
-        border: 'solid 0.1em white',
-        borderRadius: '1em',
-        padding: '0.5em',
+        border: 'solid 0.05em white',
         marginLeft: '1em',
         marginTop: '1em',
         userSelect: 'none',
+        borderRadius: '100px',
+        height: '65px',
+        width: '65px'
     },
+
     accountHolder: {
         backgroundColor: 'white',
         width: '22em',
@@ -122,8 +106,6 @@ const styles = theme => ({
     },
     profileLogout: {
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
         flexDirection: 'column',
         marginLeft: 'auto',
         marginRight: '1em',
@@ -135,6 +117,6 @@ const styles = theme => ({
             cursor: 'pointer'
         }
     }
-});
+};
 
 export default styles;

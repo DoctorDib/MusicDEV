@@ -1,6 +1,5 @@
 import React from 'react';
 import ReactDom from 'react-dom';
-import PropTypes from 'prop-types';
 
 import { mainTheme } from '../../styles/theme.jsx';
 import Indexer from './content/index';
@@ -17,9 +16,5 @@ class App extends React.Component {
         );
     };
 }
-
-App.propTypes = {
-    classes: PropTypes.object.isRequired
-};
 
 ReactDom.render(<App />, document.getElementById('importContent'));

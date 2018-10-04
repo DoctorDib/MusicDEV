@@ -1,14 +1,14 @@
 var LocalStrategy = require('passport-local').Strategy;
 var User = require('../models/user');
 
-module.exports = function(passport) {
+module.exports = (passport) => {
 
-    passport.serializeUser(function(user, done) {
+    passport.serializeUser((user, done) => {
         done(null, user.id);
     });
 
-    passport.deserializeUser(function(id, done) {
-        User.findById(id, function(err, user) {
+    passport.deserializeUser((id, done) => {
+        User.findById(id, (err, user) => {
             done(err, user);
         });
     });
@@ -18,10 +18,9 @@ module.exports = function(passport) {
         passwordField : 'password',
         passReqToCallback : true
     },
-    function(req, username, password, done) {
-        process.nextTick(function() {
-
-            User.findOne({ 'username' :  username }, function(err, user) {
+    (req, username, password, done) => {
+        process.nextTick(() => {
+            User.findOne({ 'username' :  username }, (err, user) => {
                 if (err)
                     return done(err);
 
@@ -33,7 +32,7 @@ module.exports = function(passport) {
 
                     newUser.username  = username;
                     newUser.password = newUser.generateHash(password);
-                    newUser.picture = '/img/blank_pic.jpg';
+                    newUser.picture = '../client/src/img/blank_pic.jpg';
                     newUser.spotify = {
                         user_id: "",
                         spotify_token : "",
@@ -41,7 +40,7 @@ module.exports = function(passport) {
                         playlists: []
                     }
 
-                    newUser.save(function(err) {
+                    newUser.save((err) => {
                         if (err)
                             throw err;
                         return done(null, newUser);
@@ -55,20 +54,19 @@ module.exports = function(passport) {
         usernameField : 'username',
         passwordField : 'password',
         passReqToCallback : true
-    },
-    function(req, username, password, done) {
-        User.findOne({ 'username' :  username }, function(err, user) {
-            console.log(user)
+    }, (req, username, password, done) => {
+        User.findOne({ 'username' :  username }, (err, user) => {
+            console.log(err)
             if (err)
                 return done(err);
 
             if (!user)
-                return done(null, false, req.flash('loginMessage', 'No user found.'));
+                return done(true, false);
 
             if (!user.validPassword(password))
-                return done(null, false, req.flash('loginMessage', 'Oops! Wrong password.'));
+                return done(true, false);
 
-            return done(null, user);
+            return done(false, user);
         });
     }));
 };

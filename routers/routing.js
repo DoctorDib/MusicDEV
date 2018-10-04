@@ -17,7 +17,7 @@ const spotify = require('../helpers/spotify_api.js');
 
 module.exports = function(passport){
     return {
-        setRouting: function(router){
+        setRouting: function (router) {
             router.get('/', isLoggedIn, this.loggedIn);
             router.get('/welcome', this.landingPage);
             router.get('/register', this.registerPage);
@@ -35,18 +35,18 @@ module.exports = function(passport){
         },
 
         // Main landing page (not logged in).
-        landingPage: function(req, res){
+        landingPage: function (req, res) {
             res.render('index/landingIndex.ejs', {
                 title: 'musicDEV'
             });
         },
 
-        loggedIn: function(req, res){
-            spotify('new_user', {username:req.user.username});
+        loggedIn: function (req, res) {
+            spotify('new_user', {username: req.user.username});
 
             // Checks if users spotify account is linked
-            spotify('check_account', {username:req.user.username}, function(response){
-                if(response.response === "success"){
+            spotify('check_account', {username: req.user.username}, function (response) {
+                if (response.response === "success") {
                     res.render('index/loggedIndex.ejs', {
                         title: 'musicDEV',
                         pic: response.data.picture
@@ -58,32 +58,44 @@ module.exports = function(passport){
         },
 
         // Login page
-        loginPage: function(req, res){
+        loginPage: function (req, res) {
             res.render('index/loginIndex.ejs', {
                 title: 'Login'
             });
         },
 
-        // Login validation
-        loginVal: passport.authenticate('local_login', {
-            successRedirect : '/',
-            failureRedirect : '/login',
-            failureFlash : true
-        }),
+        loginVal: function (req, res) {
+            passport.authenticate('local_login', (err, user) => {
+                if (!user) return res.json({success: false, msg: 'Incorrect username or password'});
+                if (err) return res.json({success: false, msg: 'Something went wrong, please try again'});
+                req.logIn(user, (err) => {
+                    if (err) return console.log('ERROR: ' + err);
+                    res.json({success: true, user: user});
+                });
+            })(req, res);
+        },
 
         // Register page
-        registerPage: function(req, res){
+        registerPage: function (req, res) {
             res.render('index/registerIndex.ejs', {
                 title: 'musicDEV'
             })
         },
 
         // Register validation
-        registerVal: passport.authenticate('local_register', {
-            successRedirect : '/login',
-            failureRedirect : '/register',
-            failureFlash : true
-        }),
+        registerVal: function (req, res) {
+            passport.authenticate('local_register', (err, user) => {
+                if (err) return res.json({success: false, msg: 'Something went wrong, please try again'});
+                if (!user) return res.json({success: false, msg: 'Username already exists!'});
+
+                req.logIn(user, (err) => {
+                    if (err) return console.log('ERROR: ' + err);
+                    res.json({success: true, user: user});
+                });
+            })(req, res);
+        },
+
+
 
         // Logging out of account
         logout: function(req, res){
