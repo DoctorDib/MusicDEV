@@ -42,7 +42,7 @@ const config = {
 
 const trainConfig = {
     // Defaults values --> expected validation
-    iterations: 5000000,    // the maximum times to iterate the training data --> number greater than 0
+    iterations: 50000000,    // the maximum times to iterate the training data --> number greater than 0
     errorThresh: 0.005,   // the acceptable error percentage from training data --> number between 0 and 1
     log: logIt,           // true to use console.log, when a function is supplied it is used --> Either true or a function
     logPeriod: 25,        // iterations between logging out --> number greater than 0
@@ -122,14 +122,14 @@ function grabFeatures(type, trackURIList, callback) {
                         input:{
                             danceability: value.danceability,
                             energy: value.energy,
-                            key: value.key,
-                            loudness: value.loudness,
+                            key: value.key / 1000,
+                            loudness: value.loudness / 1000,
                             speechiness: value.speechiness,
                             acousticness: value.acousticness,
                             instrumentalness: value.instrumentalness,
                             liveness: value.liveness,
                             valence: value.valence,
-                            tempo: value.tempo
+                            tempo: value.tempo / 1000
                         },
                         output: {
                             [type]:1
@@ -203,12 +203,12 @@ function trainSingle (data, callback){
     let activityNet = new brain.NeuralNetwork(config);
 
 
-    genreNet.train(data.genre, trainConfig)
+    genreNet.trainAsync(data.genre, trainConfig)
         .then((log) => {
             console.log(log)
             console.log("Finished training...");
 
-            activityNet.train(data.activity, trainConfig)
+            activityNet.trainAsync(data.activity, trainConfig)
                 .then((log) => {
                     console.log(log)
                     console.log("Finished training...");
@@ -359,7 +359,7 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function(err, database
                     }
                 })
                 .catch(function(err){
-                   console.log(err);
+                    console.log(err);
                 });
         } else if(process.argv[2] === "predict") {
             useCollection = db.collection("musicMemory");

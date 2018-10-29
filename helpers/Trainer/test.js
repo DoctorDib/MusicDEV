@@ -1,5 +1,5 @@
 //const cache = require('memory-cache');
-const limdu = require('limdu');
+
 const MongoClient = require('mongodb').MongoClient;
 const async = require('async');
 const brain = require('brain.js');
@@ -36,15 +36,15 @@ function logIt(test){
 }
 
 let memory = [
-    {input: { r: 5, g: 2, b: 3 }, output: {black: 1}},
-    {input: { r: 0.55, g: 0.5, b: 0.4 }, output: {white: 1}},
+    {input: { a: 0.8, b: 0.945,c: 0.8, d: 0.945,e: 0.8, f: 0.945, }, output: {black: 1}},
+    {input: { a: 0.25656, b: 0.2, c: 0.25656, d: 0.2, e: 0.25656, f: 0.2, }, output: {white: 1}},
 ];
 
 
 let timer = 500
 function train(callback){
     console.log("Training started")
-    let net = new brain.NeuralNetwork();
+    let net = new brain.NeuralNetwork(config);
     net.trainAsync(memory, trainConfig)
         .then(function(){
             console.log("Finished")
@@ -62,8 +62,8 @@ MongoClient.connect("mongodb://localhost:27017/test", function(err, database) {
 
 
     train(function(data){
-        let net = new brain.NeuralNetwork();
-        let output = net.fromJSON(data).run({ r: 5, g: 2, b: 3 });
+        let net = new brain.NeuralNetwork(config);
+        let output = net.fromJSON(data).run({ a: 0.3, b: 0.3});
         console.log(output)
     });
     /*collection.findOne({"id": 'memory'}, function(err, resp) {
