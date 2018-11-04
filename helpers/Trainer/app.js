@@ -131,7 +131,7 @@ function grabFeatures(type, trackURIList, callback) {
 }
 
 function grabPlaylists(type, URI, callback){
-    spotifyApi.getPlaylist(null, URI)
+    spotifyApi.getPlaylist(URI)
         .then(function(data) {
             let trackURIList = [];
             let memory = {activity: [], genre: []};
@@ -167,6 +167,7 @@ function grabPlaylists(type, URI, callback){
         }, function(err) {
             if(err.statusCode === 404){
                 console.log(URI + " does not exist...");
+                console.log(err)
                 process.exit(1);
             }
             console.log("Something went wrong!", err);
