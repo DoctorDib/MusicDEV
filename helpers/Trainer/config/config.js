@@ -2,12 +2,12 @@ module.export = {
     config: {
         inputSize: 100,
             inputRange: 100,
-            hiddenSizes: [4],
+            hiddenSizes: [500, 500, 500, 500, 500, 500],
             outputSize: 100,
             learningRate: 0.01,
             decayRate: 0.999,
             binaryThresh: 0.5,     // ¯\_(ツ)_/¯
-            hiddenLayers: [4],     // array of ints for the sizes of the hidden layers in the network
+            hiddenLayers: [500, 500, 500, 500, 500, 500],     // array of ints for the sizes of the hidden layers in the network
             activation: 'sigmoid'  // supported activation types: ['sigmoid', 'relu', 'leaky-relu', 'tanh']
     },
     train: {

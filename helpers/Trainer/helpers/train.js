@@ -14,7 +14,7 @@ function logIt(data){
     console.log(">>", data)
 }
 
-let test = 0;
+let test = 500;
 
 module.exports = function(dictionary, callback) {
     let configTrain = config.train;
@@ -28,7 +28,6 @@ module.exports = function(dictionary, callback) {
          * Write training data to the stream. Called on each training iteration.
          */
         floodCallback: function() {
-            console.log(test ++ + ": Writing training data...")
             readInputs(trainStream, dictionary);
         },
         /**
