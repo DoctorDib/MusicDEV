@@ -1,5 +1,26 @@
-//const cache = require('memory-cache');
+const {Bayes} = require('nodeml');
+let bayes = new Bayes();
 
+
+bayes.train({ 'loudness': 100, 'tempo': 200 }, "Workout");
+bayes.train({ 'loudness': 100, 'tempo': 200 }, "Workout");
+bayes.train({ 'loudness': 100, 'tempo': 200 }, "Workout");
+bayes.train({ 'loudness': 100, 'tempo': 200 }, "Workout");
+bayes.train({ 'loudness': 20, 'tempo': 2 }, "Sleep");
+bayes.train({ 'loudness': 20, 'tempo': 2 }, "Sleep");
+bayes.train({ 'loudness': 20, 'tempo': 2 }, "Sleep");
+bayes.train({ 'loudness': 20, 'tempo': 2 }, "Sleep");
+bayes.train({ 'loudness': 20, 'tempo': 2 }, "Sleep");
+
+let result = bayes.test({'loudness': 20, 'tempo': 2,});
+console.log(result); // this print {answer: , score: }
+
+
+
+
+
+//const cache = require('memory-cache');
+/*
 const MongoClient = require('mongodb').MongoClient;
 const async = require('async');
 const brain = require('brain.js');
@@ -53,7 +74,7 @@ function train(callback){
             console.log(err);
         })
 }
-
+/**
 MongoClient.connect("mongodb://localhost:27017/test", function(err, database) {
     if(err) return console.error(err);
 
@@ -82,4 +103,4 @@ MongoClient.connect("mongodb://localhost:27017/test", function(err, database) {
             console.log(output);
         }
     });*/
-});
+/*});*/

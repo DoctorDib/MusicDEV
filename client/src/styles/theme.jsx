@@ -1,5 +1,8 @@
 import createMuiTheme from '@material-ui/core/styles/createMuiTheme';
 
+import green from '@material-ui/core/colors/green';
+import amber from '@material-ui/core/colors/amber';
+
 export default createMuiTheme({
     palette: {
         primary: {
@@ -13,6 +16,14 @@ export default createMuiTheme({
         error: {
             light: '#dc3636',
             main: '#dc3636'
-        }
+        },
+        warning: {
+            backgroundColor: amber[700],
+        },
+
+        message: {
+            display: 'flex',
+            alignItems: 'center',
+        },
     }
 });

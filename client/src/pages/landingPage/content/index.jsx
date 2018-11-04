@@ -4,10 +4,8 @@ import PropTypes from 'prop-types';
 import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
 
-import Dialog from '@material-ui/core/Dialog';
-
-import LoginDialog from '../../loginPage/content';
-import RegisterDialog from '../../registerPage/content';
+import LoginDialog from './loginDialog';
+import RegisterDialog from './registerDialog';
 
 import { withStyles } from '@material-ui/core/styles';
 import styles from './style';
@@ -52,7 +50,7 @@ class Template extends React.Component {
                         <Typography variant='display1' className={classes.titleChild}> Finding the right music </Typography>
                     </section>
 
-                    <section className={classes.buttonContainer}>
+                    <section>
                         <Button onClick={this.handleClickOpen('loginOpen')} color={'secondary'} variant='raised' size="large" className={classes.mainButton}>Login</Button>
                         <Button onClick={this.handleClickOpen('registerOpen')} color={'secondary'} variant='raised' size="large" className={classes.mainButton}>Register</Button>
                         <Button color={'secondary'} variant='raised' size="large" className={classes.mainButton} onClick={this.scrollTop}>About</Button>

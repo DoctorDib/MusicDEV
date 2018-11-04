@@ -6,8 +6,6 @@ const config = {
     entry: {
         'landingIndex': path.join(APP_DIR, 'pages/landingPage/landingIndex.jsx'),
         'loggedIndex': path.join(APP_DIR, 'pages/loggedPage/loggedIndex.jsx'),
-        'registerIndex': path.join(APP_DIR, 'pages/registerPage/registerIndex.jsx'),
-        'loginIndex': path.join(APP_DIR, 'pages/loginPage/loginIndex.jsx'),
     },
     mode: 'development',
     output: {
@@ -58,23 +56,10 @@ const config = {
         }),
 
         new HtmlWebpackPlugin({
-            chunks: ['loginIndex'],
-            filename: 'index/loginIndex.ejs',
-            template: '!!html-loader!client/src/pages/template.ejs',
-        }),
-
-        new HtmlWebpackPlugin({
-            chunks: ['registerIndex'],
-            filename: 'index/registerIndex.ejs',
-            template: '!!html-loader!client/src/pages/template.ejs',
-        }),
-
-        new HtmlWebpackPlugin({
             chunks: ['loggedIndex'],
             filename: 'index/loggedIndex.ejs',
             template: '!!html-loader!client/src/pages/template.ejs',
         }),
-
     ],
 };
 module.exports = config;

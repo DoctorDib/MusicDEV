@@ -65,58 +65,6 @@ const styles = {
         height: '65px',
         width: '65px'
     },
-
-    accountHolder: {
-        backgroundColor: 'white',
-        width: '22em',
-        right: '0',
-        position:'fixed',
-        display: 'flex',
-        flexDirection: 'row',
-        borderTopLeftRadius: '25% 100%',
-        borderBottomLeftRadius: '25% 100%',
-        marginTop: '0.5em',
-        border: 'solid 0.2em white',
-        borderRight: '0',
-        userSelect: 'none',
-    },
-    profilePic: {
-        width: '75px',
-        height: '75px',
-        borderRadius: '100%',
-        userSelect: 'none',
-    },
-    profileArea: {
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexDirection: 'column',
-        userSelect: 'none',
-    },
-    profileUserName: {
-        fontSize: '1.1em',
-        marginLeft: '1em',
-        fontWeight: 'bold',
-        color: 'black'
-    },
-    profileName: {
-        fontSize: '1em',
-        marginLeft: '1em',
-        color: 'black'
-    },
-    profileLogout: {
-        display: 'flex',
-        flexDirection: 'column',
-        marginLeft: 'auto',
-        marginRight: '1em',
-        color: 'black',
-        alignItems: 'center',
-        justifyContent: 'center',
-        userSelect: 'none',
-        '&:hover':{
-            cursor: 'pointer'
-        }
-    }
 };
 
 export default styles;

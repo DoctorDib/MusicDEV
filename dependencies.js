@@ -3,8 +3,14 @@ const path = require('path');
 
 const container = dependable.container();
 const modules = [
-    ['async', 'async'],
+    ['multer', 'multer'],
     ['passport', 'passport'],
+    ['util', 'util'],
+    ['async', 'async'],
+    ['fs', 'fs'],
+    ['path', 'path'],
+    ['pg', 'pg'],
+    ['ws', 'ws']
 ];
 
 modules.forEach(function(val){
@@ -14,6 +20,7 @@ modules.forEach(function(val){
 });
 
 container.load(path.join(__dirname, '/routers'));
+container.load(path.join(__dirname, '/helpers'));
 
 container.register('container', function(){
     return container;

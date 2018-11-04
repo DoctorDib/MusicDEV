@@ -2,17 +2,18 @@ const keys = require('./secretKeys.json');
 const client_id = keys.spotify.client_id;
 const client_secret = keys.spotify.client_secret;
 const redirect_uri = keys.spotify.spotify_callback;
+const scope = 'user-read-private user-read-email user-library-read user-top-read user-read-playback-state';
 
-var request = require('request');
-var SpotifyWebApi = require('spotify-web-api-node');
+const request = require('request');
+const SpotifyWebApi = require('spotify-web-api-node');
 
 let spotifyApi = {};
 
 const querystring = require('querystring');
 
-var mongoose = require('../helpers/mongoose');
+const mongoose = require('../helpers/mongoose');
 
-var stateKey = 'spotify_auth_state';
+const stateKey = 'spotify_auth_state';
 
 
 module.exports = function(command, data, callback) {
@@ -29,13 +30,13 @@ module.exports = function(command, data, callback) {
         break;
         case 'grabCurrentMusic':
             spotifyApi[data.username].getMyCurrentPlaybackState({})
-            .then(function(data) {
-                console.log(data)
-            // Output items
-                callback(data.body.item);
-                console.log("Now Playing: ",data.body.item.name);
-            }, function(err) {
-                console.log('Something went wrong!', err);
+            .then(function(resp) {
+                console.log(resp);
+                // Output items
+                callback(resp.body);
+                console.log("Now Playing: ",resp.body.item.name);
+            }).catch(function(err){
+                console.error('Something went wrong!', err);
             });
             break;
         case 'new_user':
@@ -45,31 +46,30 @@ module.exports = function(command, data, callback) {
                 clientSecret : client_secret,
                 redirectUri : redirect_uri
             });
+            callback("success");
             break;
 
         case 'refresh':
             // requesting access token from refresh token
-            var refresh_token = data.token;
             var authOptions = {
                 url: 'https://accounts.spotify.com/api/token',
                 headers: { 'Authorization': 'Basic ' + (new Buffer(client_id + ':' + client_secret).toString('base64')) },
                 form: {
                     grant_type: 'refresh_token',
-                    refresh_token: refresh_token
+                    refresh_token: data.token
                 }, json: true
             };
 
             request.post(authOptions, function(error, response, body) {
                 if (!error && response.statusCode === 200) {
-                    var access_token = body.access_token;
-                    return {'access_token': access_token}
+                    spotifyApi[data.username].setAccessToken(body.access_token);
+                    callback({access_token: body.access_token});
                 }
             });
+            break;
 
         case 'login':
             // your application requests authorization
-            var scope = 'user-read-private user-read-email user-library-read user-top-read user-read-playback-state';
-
             var url = 'https://accounts.spotify.com/authorize?' +
                 querystring.stringify({
                     response_type: 'code',
@@ -96,7 +96,7 @@ module.exports = function(command, data, callback) {
                     command: '/#' + querystring.stringify({error: 'state_mismatch'})
                 }
             } else {
-                return {repsonse: 'clear', command: stateKey};
+                return {response: 'clear', command: stateKey};
             }
 
         case 'callbackV2':
@@ -123,7 +123,7 @@ module.exports = function(command, data, callback) {
         case 'set_get':
             spotifyApi[data.username].setAccessToken(data.access_token);
 
-            return spotifyApi[data.username].getMe()
+            spotifyApi[data.username].getMe()
                 .then(function(data_root){
 
                     var build = data.data || {};
@@ -140,7 +140,6 @@ module.exports = function(command, data, callback) {
                                     name: element.name,
                                     id: element.id
                                 });
-                                console.log(playlist)
                             });
                             return playlist;
                         }). then(function(data_pass){
@@ -150,23 +149,21 @@ module.exports = function(command, data, callback) {
 
                     return build;
 
-                }).then(function(data){
-                    return data;
+                }).then(function(resp){
+                    callback(resp);
                 })
                 .catch(function(err){
-                    console.log(err);
+                    console.error(err);
                 });
-
-
-
+            break;
             case 'check_account':
-                mongoose('get', {username: data.username}, null, null, function(data){
-                    console.log("THIS IS RETURNED DATA: " + data.spotify);
-                    if(data.spotify.access_token){
-                        callback({response: 'success', data: data });
+                mongoose('get', {username: data.username}, null, null, function(respData){
+                    if(respData.spotify.access_token){
+                        callback({response: 'success', data: respData });
                     } else {
                         callback({response: 'failed'});
                     }
                 });
+                break;
     }
 }

@@ -1,4 +1,4 @@
-const keys = require('./secretKeys.js');
+const keys = require('../secretKeys.json');
 const client_id = keys.spotify.client_id;
 const client_secret = keys.spotify.client_secret;
 const redirect_uri = keys.spotify.spotify_callback;
@@ -155,8 +155,6 @@ function grabTracks(trackURIList, callback){
     var finalTrackObject = {};
     trackURIList = _.uniq(trackURIList);
     trackURIList = _.chunk(trackURIList, 50); // Splitting array into chunks of 50
-
-    console.log(trackURIList)
 
     async.eachOfSeries(trackURIList, function (value, trackKey, trackChunkLoopCallback) {
 

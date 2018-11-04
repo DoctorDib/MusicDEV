@@ -1,27 +1,19 @@
-let generateRandomString = function(length) {
-    let text = '';
-    let possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-
-    for (let i = 0; i < length; i++) {
-        text += possible.charAt(Math.floor(Math.random() * possible.length));
-    }
-    return text;
-};
-
 const stateKey = 'spotify_auth_state';
-const state = generateRandomString(16);
-const User = require('../models/user');
 const request = require('request');
-const mongoose = require('../helpers/mongoose');
 const spotify = require('../helpers/spotify_api.js');
+
+const isLoggedIn = (req, res, next) => {
+    if (req.isAuthenticated()) {
+        return next();
+    }
+    return res.redirect('/welcome');
+};
 
 module.exports = function(passport){
     return {
         setRouting: function (router) {
             router.get('/', isLoggedIn, this.loggedIn);
             router.get('/welcome', this.landingPage);
-            router.get('/register', this.registerPage);
-            router.get('/login', this.loginPage);
             router.get('/logout', this.logout);
             router.get('/spotify_callback', this.spotifyCallback);
             router.get('/spotify_login', this.spotifyLogin);
@@ -33,7 +25,9 @@ module.exports = function(passport){
             router.post('/register', this.registerVal);
             router.post('/ping', this.homeTest);
         },
-
+        /**
+         * Pages
+         */
         // Main landing page (not logged in).
         landingPage: function (req, res) {
             res.render('index/landingIndex.ejs', {
@@ -42,25 +36,16 @@ module.exports = function(passport){
         },
 
         loggedIn: function (req, res) {
-            spotify('new_user', {username: req.user.username});
-
+            spotify('new_user', {username: req.user.username}, ()=>{});
             // Checks if users spotify account is linked
-            spotify('check_account', {username: req.user.username}, function (response) {
+            spotify('check_account', {username: req.user.username}, response => {
                 if (response.response === "success") {
                     res.render('index/loggedIndex.ejs', {
-                        title: 'musicDEV',
-                        pic: response.data.picture
+                        title: 'musicDEV'
                     });
                 } else {
                     res.redirect('/spotify_login');
                 }
-            });
-        },
-
-        // Login page
-        loginPage: function (req, res) {
-            res.render('index/loginIndex.ejs', {
-                title: 'Login'
             });
         },
 
@@ -73,13 +58,6 @@ module.exports = function(passport){
                     res.json({success: true, user: user});
                 });
             })(req, res);
-        },
-
-        // Register page
-        registerPage: function (req, res) {
-            res.render('index/registerIndex.ejs', {
-                title: 'musicDEV'
-            })
         },
 
         // Register validation
@@ -95,11 +73,9 @@ module.exports = function(passport){
             })(req, res);
         },
 
-
-
         // Logging out of account
         logout: function(req, res){
-            req.session.destroy(function (err) {
+            req.session.destroy(() => {
             res.redirect('/welcome');
           });
         },
@@ -129,8 +105,8 @@ module.exports = function(passport){
         },
 
         spotifyCallback: function(req, res){
-            var cookie = req.cookies ? req.cookies[stateKey] : null;
-            var callback = spotify('callback', {
+            let cookie = req.cookies ? req.cookies[stateKey] : null;
+            let callback = spotify('callback', {
                 code : req.query.code,
                 state: req.query.state,
                 storedState: cookie,
@@ -142,17 +118,16 @@ module.exports = function(passport){
             } else {
                 res.clearCookie(callback.command);
 
-                var authOptions = spotify('callbackV2', {
+                let authOptions = spotify('callbackV2', {
                     code : req.query.code,
                     state: req.query.state,
                     storedState: cookie,
                     temp_user: req.user.username
                 });
 
-                request.post(authOptions, function(error, response, body) {
-                    console.log("ping");
+                request.post(authOptions, (error, response, body) => {
                     if (!error && response.statusCode === 200) {
-                        var access_token = body.access_token,
+                        let access_token = body.access_token,
                             refresh_token = body.refresh_token;
 
                         var options = {
@@ -166,26 +141,18 @@ module.exports = function(passport){
                             "refresh_token": refresh_token
                         };
 
-                        var test = spotify('set_get', {
+                        spotify('set_get', {
                             data: data,
                             username: req.user.username,
                             access_token: access_token
-                        }).then(function(data){
-                            res.redirect('/')
+                        }, () => {
+                            res.redirect('/');
                         });
                     } else {
-                        console.log(error)
-                        res.redirect('/#failed')
+                        res.redirect('/login')
                     }
                 });
             }
         }
-    }
-
-    function isLoggedIn(req, res, next) {
-        if (req.isAuthenticated())
-            return next();
-
-        res.redirect('/welcome');
-    }
+    };
 };
