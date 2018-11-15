@@ -1,44 +1,69 @@
 const brain = require('brain.js');
-
+const async = require('async');
 const config = require('../config/config');
 
-function readInputs(stream, data) {
-    for (let i = 0; i < data.length; i++) {
-        stream.write(data[i]);
-    }
-    // let it know we've reached the end of the inputs
-    stream.endInputs();
-}
+let type = '';
 
 function logIt(data){
-    console.log(">>", data)
+    data = JSON.stringify(data);
+    let iteration = data.split("iterations:").pop().split(',')[0];
+    let error = data.split("error:").pop();
+
+    console.log("Type: " + type);
+    console.log("Iterations: " + iteration);
+    console.log("Error: " + error);
+    console.log("=====================================")
 }
 
-let test = 500;
+function formatData(limit, data, callback){
+    let final = [];
+    let num = 0;
 
-module.exports = function(dictionary, callback) {
-    let configTrain = config.train;
-    config.log = logIt;
+    async.eachOfSeries(data, function (loopValue, loopKey, loopCallback) {
+        num ++;
+        if(limit){
+            let tmpLimit = loopValue.length * (limit / 100);
+            final = [...final, ...loopValue.slice(0, Math.ceil(tmpLimit))];
+        } else {
+            final = [...final, ...loopValue];
+        }
 
-    let net = new brain.NeuralNetwork(configTrain);
-
-    const trainStream = new brain.TrainStream({
-        neuralNetwork: net,
-        /**
-         * Write training data to the stream. Called on each training iteration.
-         */
-        floodCallback: function() {
-            readInputs(trainStream, dictionary);
-        },
-        /**
-         * Called when the network is done training.
-         */
-        doneTrainingCallback: function(obj) {
-            console.log(`trained in ${ obj.iterations } iterations with error: ${ obj.error }`);
-            callback(net);
+        if(num === Object.keys(data).length){
+            console.log("finished")
+            callback(final);
+        } else {
+            console.log("learning")
+            loopCallback();
         }
     });
+}
 
-    console.log("Started training...")
-    readInputs(trainStream, dictionary);
+module.exports = function(dictionary, limit, callback) {
+    let final = {}, num = 0;
+
+    let netConfig = {log: logIt};
+    netConfig = Object.assign(netConfig, config.config);
+
+    async.eachOfSeries(dictionary, function (loopValue, loopKey, loopCallback) {
+        type = loopKey;
+        num ++;
+        formatData(limit, loopValue, (data) => {
+            let net = new brain.NeuralNetwork(netConfig);
+            console.log("Training started:")
+            net.trainAsync(data, config.train)
+                .then(res => {
+                    final[loopKey] = net.toJSON();
+                    if(num === Object.keys(dictionary).length) {
+                        console.log("Finished and returning")
+                        callback(final);
+                    } else {
+                        console.log("Next")
+                        loopCallback();
+                    }
+                })
+                .catch(err => {
+                    console.log(err);
+                });
+        });
+    });
 };
