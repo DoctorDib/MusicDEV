@@ -80,15 +80,9 @@ function workout(expected, actual, callback){
 }
 
 function check(outcome) {
-    let high = 0;
-    let highLabel;
+    let high = 0, highLabel;
 
     for (index in outcome){
-
-        /*console.log("A: " + high);
-        console.log("B: " + outcome[index]);
-        console.log(outcome[index] > high ? "A is higher" : " A is not higher")
-        console.log("======");*/
         let tmpOut = round(outcome[index], 5);
         if(tmpOut > high){
             high = tmpOut;
@@ -99,27 +93,21 @@ function check(outcome) {
     return highLabel;
 }
 
-let catNum = 0;
-let mainNum = 0;
+let catNum = 0, mainNum = 0;
 
 module.exports = function(spotifyApi, netOptions, data) {
 
-    console.log(netOptions)
-
     async.eachOfSeries(data, function (mainValue, mainKey, mainCallback) {
-
-        mainNum ++;
         let net = new brain.NeuralNetwork(config.predict);
+        mainNum ++;
         net.fromJSON(netOptions.memory[mainKey]);
-
         async.eachOfSeries(mainValue, function (catValue, catKey, catCallback) {
             catNum ++;
             async.eachOfSeries(catValue, function (trackValue, trackKey, trackCallback) {
+                let outcome = net.run(trackValue.input);
 
                 initial.count[catKey] ++;
                 initial.count.overall ++;
-
-                let outcome = net.run(trackValue.input)
 
                 workout(catKey, check(outcome), function(){
                     console.log(mainKey)
@@ -133,7 +121,6 @@ module.exports = function(spotifyApi, netOptions, data) {
                     } else {
                         trackCallback()
                     }
-
                 });
             });
 

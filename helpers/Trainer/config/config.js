@@ -1,20 +1,20 @@
 module.exports = {
     config: {
-        inputSize: 1,
-        inputRange: 1,
-        hiddenSizes: [10, 10],
-        hiddenLayers: [20, 20],     // array of ints for the sizes of the hidden layers in the network
-        outputSize: 1,
-        learningRate: 0.5,
-        decayRate: 0.99,
+        inputSize: 20,
+        inputRange: 20,
+        /*hiddenSizes: [10, 10],*/
+        hiddenLayers: [10, 10],     // array of ints for the sizes of the hidden layers in the network
+        outputSize: 20,
+        learningRate: 0.1,
+        decayRate: 0.999,
         binaryThresh: 0.5,     // ¯\_(ツ)_/¯
         activation: 'sigmoid'  // supported activation types: ['sigmoid', 'relu', 'leaky-relu', 'tanh']
     },
     train: {
-        iterations: 500000,    // the maximum times to iterate the training data --> number greater than 0
-        errorThresh: 0.005,   // the acceptable error percentage from training data --> number between 0 and 1
+        iterations: 5000000,    // the maximum times to iterate the training data --> number greater than 0
+        errorThresh: 0.01,   // the acceptable error percentage from training data --> number between 0 and 1
         logPeriod: 25,        // iterations between logging out --> number greater than 0
-        learningRate: 0.01,    // scales with delta to effect training rate --> number between 0 and 1
+        learningRate: 0.1,    // scales with delta to effect training rate --> number between 0 and 1
         momentum: 0.1,        // scales with next layer's change value --> number between 0 and 1
         callback: null,       // a periodic call back that can be triggered while training --> null or function
         callbackPeriod: 10,   // the number of iterations through the training data between callback calls --> number greater than 0

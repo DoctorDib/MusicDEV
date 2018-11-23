@@ -1,25 +1,36 @@
 const brain = require('brain.js');
 const async = require('async');
 const config = require('../config/config');
+const push = require('./pushbullet');
 
-let type = '';
+let error, iteration;
+
+let type = '', timerStart=0;
+
+function timer(startTimer){
+    if(startTimer){
+        timerStart = 0;
+        timerStart = new Date();
+        return;
+    }
+    return (new Date() - timerStart) / 1000 + " seconds";
+}
 
 function logIt(data){
     data = JSON.stringify(data);
-    let iteration = data.split("iterations:").pop().split(',')[0];
-    let error = data.split("error:").pop();
+    iteration = data.split("iterations:").pop().split(',')[0];
+    error = data.split("error:").pop().replace('"', '');
 
-    console.log("Type: " + type);
+    console.log("=================" + type.toUpperCase() + "====================")
     console.log("Iterations: " + iteration);
     console.log("Error: " + error);
-    console.log("=====================================")
+    console.log("Duration: " + (new Date() - timerStart) / 1000 + " seconds")
 }
 
 function formatData(limit, data, callback){
-    let final = [];
-    let num = 0;
+    let final = [], num = 0;
 
-    async.eachOfSeries(data, function (loopValue, loopKey, loopCallback) {
+    async.eachOfSeries(data, (loopValue, loopKey, loopCallback) => {
         num ++;
         if(limit){
             let tmpLimit = loopValue.length * (limit / 100);
@@ -39,23 +50,42 @@ function formatData(limit, data, callback){
 }
 
 module.exports = function(dictionary, limit, callback) {
-    let final = {}, num = 0;
+    let num = 0;
 
-    let netConfig = {log: logIt};
-    netConfig = Object.assign(netConfig, config.config);
+    let mainNetConfig = {log: logIt};
+    netConfig = Object.assign(mainNetConfig, config.config);
 
-    async.eachOfSeries(dictionary, function (loopValue, loopKey, loopCallback) {
+    let netsObject = {}
+
+    async.eachOfSeries(dictionary, (loopValue, loopKey, loopCallback) => {
         type = loopKey;
-        num ++;
-        formatData(limit, loopValue, (data) => {
-            let net = new brain.NeuralNetwork(netConfig);
+
+        formatData(limit, loopValue, (formattedData) => {
+            timer(true);
+            let tmpNumber = Math.round((formattedData.length / 2) / 10);
+            let tmpConf = {
+                hiddenLayers: [tmpNumber, tmpNumber],
+                inputSize: formattedData.length,
+                inputRange:formattedData.length,
+                outputSize: formattedData.length
+            };
+            let tmpFinalConf = Object.assign(netConfig, tmpConf);
+
+            console.log(tmpFinalConf)
+
+            netsObject[loopKey] = new brain.NeuralNetwork(tmpFinalConf);
+
             console.log("Training started:")
-            net.trainAsync(data, config.train)
+            netsObject[loopKey].trainAsync(formattedData, config.train)
                 .then(res => {
-                    final[loopKey] = net.toJSON();
+                    let bodyData = `Finished: ${loopKey}\nError: ${error}\nIteration: ${iteration}\nTimer: ${timer(false)}`;
+
+                    push.send({title: "Finished task", body: bodyData})
+
+                    netsObject[loopKey] = netsObject[loopKey].toJSON();
                     if(num === Object.keys(dictionary).length) {
                         console.log("Finished and returning")
-                        callback(final);
+                        callback(netsObject);
                     } else {
                         console.log("Next")
                         loopCallback();

@@ -8,11 +8,11 @@ const negativeMap = {
 };
 
 function clampPositive(field, value){
-    return ((value / positiveMap[field]) / 2) + 0.5;
+    return Number((((value / positiveMap[field]) / 2) + 0.5).toFixed(5));
 }
 
 function clampNegative(field, value){
-    return (Math.abs(value) / negativeMap[field]) / 2;
+    return Number(((Math.abs(value) / negativeMap[field]) / 2).toFixed(5));
 }
 
 module.exports = function(field, val) {

@@ -1,4 +1,5 @@
 const dictionary =  require('./Data/dictionary');
+//const dictionary =  require('./Data/playlistSmall');
 const trackDictionary =  require('./Data/trackDictionary');
 const config = require('./config/config');
 
@@ -57,30 +58,30 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function(err, database
         let useCollection;
         let saveCollection;
 
-        if (process.argv[2] === "learnPlaylist") {
+        if (process.argv[2] === "learn") {
             // Grabbing categories and then saving to - musicCats
             saveCollection = db.collection("musicCats");
 
+            let limit, type;
+
+            limit = process.argv[3] ? Number(process.argv[3]) : false;
+
             async.eachOfSeries(dictionary, function (dictionaryValue, mainKey, dictionaryCallback) {
+
+                let catType = genreAndActivity.activity.indexOf(type) === -1 ? "genre" : "activity";
+
                 async.eachOfSeries(dictionaryValue.uriList, function (uriValue, uriKey, uriCallback) {
                     spotify.grabPlaylists(spotifyApi, dictionaryValue.category, uriValue, (data) => {
-                        console.log(data)
-                        let type = dictionaryValue.category;
+                        type = dictionaryValue.category;
 
-                        if (genreAndActivity.genre.indexOf(type) === -1){
-                            if(!memory.activity[type]){
-                                memory.activity[type] = []
-                            }
-                            memory.activity[type] = [...memory.activity[type], ...data];
-                        } else {
-                            if(!memory.genre[type]){
-                                memory.genre[type] = []
-                            }
-                            memory.genre[type] = [...memory.genre[type], ...data];
+                        if(!memory[catType][type]){
+                            memory[catType][type] = []
                         }
+                        memory[catType][type] = [...memory[catType][type], ...data];
+                        memory[catType][type] = memory[catType][type].splice(0, limit);
 
                         if(uriKey+1 >= dictionaryValue.uriList.length){
-                            if((mainKey+1) !== dictionary.length){
+                            if((mainKey+1) !== dictionary.length ){
                                 dictionaryCallback();
                             } else {
                                 saveCollection.findOne({"id": 'musicCats'}, function(err, respData) {
@@ -91,8 +92,11 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function(err, database
                                     } else {
                                         // Replace with existing one.
                                         console.log("Existing record found...")
-                                        console.log("Replacing existing record")
-                                        saveCollection.findOneAndReplace({id: "musicCats"}, {"musicCats": memory});
+                                        saveCollection.drop(function(err, delOK) {
+                                            if(err) return console.log("ERRRRROR")
+                                            console.log("Replacing existing record")
+                                            saveCollection.insert({id: "musicCats", "musicCats": memory});
+                                        });
                                     }
                                 });
                             }
@@ -101,7 +105,31 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function(err, database
                             console.log(type + ' - ' + (uriKey+1) + '/' + dictionaryValue.uriList.length);
                             console.log("TOTAL: " + ' - ' + (mainKey+1) + '/' + dictionary.length);
                             console.log("==========================================================================");
-                            uriCallback();
+
+
+                            if(limit && memory[catType][type].length >= limit){
+                                if(mainKey+1 === dictionary.length){
+                                    saveCollection.findOne({"id": 'musicCats'}, function(err, respData) {
+                                        if(respData === null){
+                                            // Insert new record
+                                            console.log("Inserting new record to Database")
+                                            saveCollection.insert({id: "musicCats", "musicCats": memory});
+                                        } else {
+                                            // Replace with existing one.
+                                            console.log("Existing record found...")
+                                            saveCollection.drop(function(err, delOK) {
+                                                if(err) return console.log("ERRRRROR")
+                                                console.log("Replacing existing record")
+                                                saveCollection.insert({id: "musicCats", "musicCats": memory});
+                                            });
+                                        }
+                                    });
+                                } else {
+                                    dictionaryCallback();
+                                }
+                            } else {
+                                uriCallback();
+                            }
                         }
                     });
                 });
@@ -118,12 +146,12 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function(err, database
                             if(!memory.activity[dictionaryValue.category]){
                                 memory.activity[dictionaryValue.category] = []
                             }
-                            memory.activity[dictionaryValue.category].push(data);
+                            memory.activity[dictionaryValue.category] = [...memory.activity[dictionaryValue.category], ...data]
                         } else {
                             if(!memory.genre[dictionaryValue.category]){
                                 memory.genre[dictionaryValue.category] = []
                             }
-                            memory.genre[dictionaryValue.category].push(data);
+                            memory.genre[dictionaryValue.category] = [...memory.genre[dictionaryValue.category], ...data]
                         }
 
                         if(uriKey+1 >= dictionaryValue.uriList.length){
@@ -140,8 +168,11 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function(err, database
                                     } else {
                                         // Replace with existing one.
                                         console.log("Existing record found...")
-                                        console.log("Replacing existing record")
-                                        saveCollection.findOneAndReplace({id: "musicCats"}, {"musicCats": memory});
+                                        saveCollection.drop(function(err, delOK) {
+                                            if (err) return console.log("ERRRRROR")
+                                            console.log("Replacing existing record")
+                                            saveCollection.insert({id: "musicCats", "musicCats": memory});
+                                        });
                                     }
                                 });
                             }
@@ -175,8 +206,11 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function(err, database
                                     saveCollection.insert({id: "memory", "memory": resp});
                                 } else {
                                     // Saving to existing record
-                                    console.log("Replacing with existing record")
-                                    saveCollection.findOneAndReplace({id: "memory"}, {id: "memory", "memory": resp})
+                                    saveCollection.drop(function(err, delOK) {
+                                        if (err) return console.log("ERRRRROR");
+                                        console.log("Replacing with existing record")
+                                        saveCollection.insert({id: "memory", "memory": resp})
+                                    });
                                 }
                             });
                         });
