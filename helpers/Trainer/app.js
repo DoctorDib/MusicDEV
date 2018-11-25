@@ -3,7 +3,11 @@ const dictionary =  require('./Data/dictionary');
 const trackDictionary =  require('./Data/trackDictionary');
 const config = require('./config/config');
 
+// ==== Training models ==== \\
 const trainer = require('./helpers/train');
+//const trainer = require('./helpers/train-tree');
+//const trainer = require('./helpers/train-synaptic');
+
 const spotify = require('./helpers/spotifyApi');
 const sample = require('./helpers/sample');
 
@@ -196,7 +200,7 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function(err, database
                     console.log(data)
                     if(data !== null){
                         let limit = process.argv[3] || false;
-                        trainer(data.musicCats, limit, (resp) => {
+                        trainer(spotifyApi, data.musicCats, limit, (resp) => {
                             console.log("Returned")
                             saveCollection.findOne({"id": 'memory'}, function(err, respData) {
                                 console.log("Searching")

@@ -55,7 +55,7 @@ let self = {
                                 tempo: boundary("tempo", value.tempo, null),
                             },
                             output: {
-                                [type]:1
+                                [type]: 1
                             }
                         };
 

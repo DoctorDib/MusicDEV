@@ -4,8 +4,7 @@ const config = require('../config/config');
 const push = require('./pushbullet');
 
 let error, iteration;
-
-let type = '', timerStart=0;
+let type='', timerStart=0;
 
 function timer(startTimer){
     if(startTimer){
@@ -49,16 +48,21 @@ function formatData(limit, data, callback){
     });
 }
 
-module.exports = function(dictionary, limit, callback) {
-    let num = 0;
+module.exports = function(SpotifyApi, dictionary, limit, callback) {
+    let num = 0, netsObject = {} ;
 
     let mainNetConfig = {log: logIt};
     netConfig = Object.assign(mainNetConfig, config.config);
 
-    let netsObject = {}
-
     async.eachOfSeries(dictionary, (loopValue, loopKey, loopCallback) => {
+
+        /*if(loopKey === "genre"){
+            loopKey = "activity"
+            loopValue = dictionary.activity;
+        }*/
+
         type = loopKey;
+
 
         formatData(limit, loopValue, (formattedData) => {
             timer(true);
@@ -69,10 +73,8 @@ module.exports = function(dictionary, limit, callback) {
                 inputRange:formattedData.length,
                 outputSize: formattedData.length
             };
+
             let tmpFinalConf = Object.assign(netConfig, tmpConf);
-
-            console.log(tmpFinalConf)
-
             netsObject[loopKey] = new brain.NeuralNetwork(tmpFinalConf);
 
             console.log("Training started:")
