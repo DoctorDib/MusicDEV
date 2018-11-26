@@ -56,22 +56,21 @@ module.exports = function(SpotifyApi, dictionary, limit, callback) {
 
     async.eachOfSeries(dictionary, (loopValue, loopKey, loopCallback) => {
 
-        /*if(loopKey === "genre"){
-            loopKey = "activity"
-            loopValue = dictionary.activity;
-        }*/
+        if(loopKey === "activity"){
+            loopKey = "genre"
+            loopValue = dictionary.genre;
+        }
 
         type = loopKey;
 
-
         formatData(limit, loopValue, (formattedData) => {
             timer(true);
-            let tmpNumber = Math.round((formattedData.length / 2) / 10);
+            let tmpNumber = Math.round(formattedData.length / 10);
             let tmpConf = {
                 hiddenLayers: [tmpNumber, tmpNumber],
-                inputSize: formattedData.length,
-                inputRange:formattedData.length,
-                outputSize: formattedData.length
+                inputSize: 1,
+                inputRange: formattedData.length / 10,
+                outputSize: 1
             };
 
             let tmpFinalConf = Object.assign(netConfig, tmpConf);

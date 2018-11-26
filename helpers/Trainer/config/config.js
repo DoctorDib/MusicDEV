@@ -5,8 +5,8 @@ module.exports = {
         /*hiddenSizes: [10, 10],*/
         hiddenLayers: [10, 10],     // array of ints for the sizes of the hidden layers in the network
         outputSize: 5,
-        learningRate: 0.1,
-        decayRate: 0.75,
+        learningRate: 0.01,
+        decayRate: 0.999,
         binaryThresh: 0.5,     // ¯\_(ツ)_/¯
         activation: 'sigmoid'  // supported activation types: ['sigmoid', 'relu', 'leaky-relu', 'tanh']
     },

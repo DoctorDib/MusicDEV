@@ -71,12 +71,13 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function(err, database
             limit = process.argv[3] ? Number(process.argv[3]) : false;
 
             async.eachOfSeries(dictionary, function (dictionaryValue, mainKey, dictionaryCallback) {
+                type = dictionaryValue.category;
 
                 let catType = genreAndActivity.activity.indexOf(type) === -1 ? "genre" : "activity";
 
                 async.eachOfSeries(dictionaryValue.uriList, function (uriValue, uriKey, uriCallback) {
                     spotify.grabPlaylists(spotifyApi, dictionaryValue.category, uriValue, (data) => {
-                        type = dictionaryValue.category;
+
 
                         if(!memory[catType][type]){
                             memory[catType][type] = []
