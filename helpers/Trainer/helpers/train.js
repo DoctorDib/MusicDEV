@@ -56,10 +56,10 @@ module.exports = function(SpotifyApi, dictionary, limit, callback) {
 
     async.eachOfSeries(dictionary, (loopValue, loopKey, loopCallback) => {
 
-        if(loopKey === "activity"){
+        /*if(loopKey === "activity"){
             loopKey = "genre"
             loopValue = dictionary.genre;
-        }
+        }*/
 
         type = loopKey;
 
