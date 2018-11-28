@@ -62,17 +62,13 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function(err, database
         let saveCollection;
 
         if (process.argv[2] === "learn") {
-            // Default save location - musicCats
-            saveCollection = db.collection("musicCats");
-            if (process.argv[4] === "master") {
-                // Grabbing categories and then saving to - masterMusicCats
-                saveCollection = db.collection("masterMusicCats");
-            }
-
             let limit, type;
 
-            limit = false;
-            if (process.argv[3] && process.argv[3] !== "0"){
+            limit = false
+            saveCollection = db.collection("masterMusicCats");
+            if (process.argv[3] && process.argv[3] !== "initial") {
+                // Default save location - musicCats
+                saveCollection = db.collection("musicCats");
                 limit = Number(process.argv[3]);
             }
 
