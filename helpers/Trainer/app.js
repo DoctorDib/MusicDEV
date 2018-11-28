@@ -62,12 +62,19 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function(err, database
         let saveCollection;
 
         if (process.argv[2] === "learn") {
-            // Grabbing categories and then saving to - musicCats
+            // Default save location - musicCats
             saveCollection = db.collection("musicCats");
+            if (process.argv[4] === "master") {
+                // Grabbing categories and then saving to - masterMusicCats
+                saveCollection = db.collection("masterMusicCats");
+            }
 
             let limit, type;
 
-            limit = process.argv[3] ? Number(process.argv[3]) : false;
+            limit = false;
+            if (process.argv[3] && process.argv[3] !== "0"){
+                limit = Number(process.argv[3]);
+            }
 
             async.eachOfSeries(dictionary, function (dictionaryValue, mainKey, dictionaryCallback) {
                 type = dictionaryValue.category;
@@ -79,7 +86,10 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function(err, database
                         }
 
                         memory[type] = [...memory[type], ...data];
-                        memory[type] = memory[type].splice(0, limit);
+
+                        if (limit) {
+                            memory[type] = memory[type].splice(0, limit);
+                        }
 
                         if(uriKey+1 >= dictionaryValue.uriList.length){
                             if((mainKey+1) !== dictionary.length ){
