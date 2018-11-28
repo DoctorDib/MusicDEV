@@ -3,8 +3,8 @@ const async = require('async');
 const config = require('../config/config');
 const push = require('./pushbullet');
 
-let error, iteration;
-let type='', timerStart=0;
+let error = 0, iteration = 'default';
+let timerStart=0;
 
 function timer(startTimer){
     if(startTimer){
@@ -20,7 +20,7 @@ function logIt(data){
     iteration = data.split("iterations:").pop().split(',')[0];
     error = data.split("error:").pop().replace('"', '');
 
-    console.log("=================" + type.toUpperCase() + "====================")
+    console.log("=========================================================")
     console.log("Iterations: " + iteration);
     console.log("Error: " + error);
     console.log("Duration: " + (new Date() - timerStart) / 1000 + " seconds")
@@ -49,52 +49,32 @@ function formatData(limit, data, callback){
 }
 
 module.exports = function(SpotifyApi, dictionary, limit, callback) {
-    let num = 0, netsObject = {} ;
+    let num = 0;
 
-    let mainNetConfig = {log: logIt};
-    netConfig = Object.assign(mainNetConfig, config.config);
+    formatData(limit, dictionary, (formattedData) => {
+        num++;
+        timer(true);
 
-    async.eachOfSeries(dictionary, (loopValue, loopKey, loopCallback) => {
+        let tmpNumber = formattedData.length;
+        let mainNetConfig = {
+            log: logIt,
+            hiddenLayers: [tmpNumber/10, tmpNumber/10]
+        };
 
-        /*if(loopKey === "activity"){
-            loopKey = "genre"
-            loopValue = dictionary.genre;
-        }*/
+        netConfig = Object.assign(config.config, mainNetConfig);
+        let netsObject = new brain.NeuralNetwork(netConfig);
 
-        type = loopKey;
-
-        formatData(limit, loopValue, (formattedData) => {
-            timer(true);
-            let tmpNumber = Math.round(formattedData.length / 10);
-            let tmpConf = {
-                hiddenLayers: [tmpNumber, tmpNumber],
-                inputSize: 1,
-                inputRange: formattedData.length / 10,
-                outputSize: 1
-            };
-
-            let tmpFinalConf = Object.assign(netConfig, tmpConf);
-            netsObject[loopKey] = new brain.NeuralNetwork(tmpFinalConf);
-
-            console.log("Training started:")
-            netsObject[loopKey].trainAsync(formattedData, config.train)
-                .then(res => {
-                    let bodyData = `Finished: ${loopKey}\nError: ${error}\nIteration: ${iteration}\nTimer: ${timer(false)}`;
-
-                    push.send({title: "Finished task", body: bodyData})
-
-                    netsObject[loopKey] = netsObject[loopKey].toJSON();
-                    if(num === Object.keys(dictionary).length) {
-                        console.log("Finished and returning")
-                        callback(netsObject);
-                    } else {
-                        console.log("Next")
-                        loopCallback();
-                    }
-                })
-                .catch(err => {
-                    console.log(err);
-                });
-        });
+        console.log("Training started:")
+        netsObject.trainAsync(formattedData, config.train)
+            .then(res => {
+                let bodyData = `Finished: \nError: ${error}\nIteration: ${iteration}\nTimer: ${timer(false)}`;
+                push.send({title: "Finished task", body: bodyData})
+                netsObject = netsObject.toJSON();
+                console.log("Finished and returning")
+                callback(netsObject);
+            })
+            .catch(err => {
+                console.log(err);
+            });
     });
 };

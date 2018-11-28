@@ -29,7 +29,6 @@ const spotifyApi = new SpotifyWebApi({
 });
 
 const genreAndActivity = {
-    genre: ['Pop', 'HipHop', 'RnB', 'Rock', 'Jazz'],
     activity: ['Workout', 'Chill', 'ElectronicAndDance', 'Party', 'Focus', 'Sleep', 'Romance', 'Gaming', 'Dinner', 'Travel']
 };
 
@@ -55,7 +54,7 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function(err, database
 
     const db = database.db("musicDEV");
 
-    let memory = { activity: {}, genre: {} };
+    let memory = { };
 
     setUpAccount(function(){
         console.log("=========================================================================================");
@@ -73,17 +72,14 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function(err, database
             async.eachOfSeries(dictionary, function (dictionaryValue, mainKey, dictionaryCallback) {
                 type = dictionaryValue.category;
 
-                let catType = genreAndActivity.activity.indexOf(type) === -1 ? "genre" : "activity";
-
                 async.eachOfSeries(dictionaryValue.uriList, function (uriValue, uriKey, uriCallback) {
                     spotify.grabPlaylists(spotifyApi, dictionaryValue.category, uriValue, (data) => {
-
-
-                        if(!memory[catType][type]){
-                            memory[catType][type] = []
+                        if(!memory[type]){
+                            memory[type] = []
                         }
-                        memory[catType][type] = [...memory[catType][type], ...data];
-                        memory[catType][type] = memory[catType][type].splice(0, limit);
+
+                        memory[type] = [...memory[type], ...data];
+                        memory[type] = memory[type].splice(0, limit);
 
                         if(uriKey+1 >= dictionaryValue.uriList.length){
                             if((mainKey+1) !== dictionary.length ){
@@ -112,7 +108,7 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function(err, database
                             console.log("==========================================================================");
 
 
-                            if(limit && memory[catType][type].length >= limit){
+                            if(limit && memory[type].length >= limit){
                                 if(mainKey+1 === dictionary.length){
                                     saveCollection.findOne({"id": 'musicCats'}, function(err, respData) {
                                         if(respData === null){
@@ -147,17 +143,12 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function(err, database
                 async.eachOfSeries(dictionaryValue.uriList, function (uriValue, uriKey, uriCallback) {
 
                     spotify.grabFeatures(spotifyApi, dictionaryValue.category, uriValue, function(data){
-                        if (genreAndActivity.genre.indexOf(dictionaryValue.category) === -1){
-                            if(!memory.activity[dictionaryValue.category]){
-                                memory.activity[dictionaryValue.category] = []
-                            }
-                            memory.activity[dictionaryValue.category] = [...memory.activity[dictionaryValue.category], ...data]
-                        } else {
-                            if(!memory.genre[dictionaryValue.category]){
-                                memory.genre[dictionaryValue.category] = []
-                            }
-                            memory.genre[dictionaryValue.category] = [...memory.genre[dictionaryValue.category], ...data]
+
+                        if(!memory[dictionaryValue.category]){
+                            memory[dictionaryValue.category] = []
                         }
+                        memory[dictionaryValue.category] = [...memory[dictionaryValue.category], ...data]
+
 
                         if(uriKey+1 >= dictionaryValue.uriList.length){
                             if((mainKey+1) !== trackDictionary.length){
@@ -262,7 +253,8 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function(err, database
             });
         } else if (process.argv[2] === "sample") {
             let useCollectionMemory = db.collection("musicMemory");
-            let useCollectionCats = db.collection("musicCats");
+            let useCollectionCats = db.collection("masterMusicCats");
+
             useCollectionMemory.findOne({"id": 'memory'}, function(err, resp) {
                 if(!resp || resp === null){
                     console.log("Memory not found... Please teach me...");
