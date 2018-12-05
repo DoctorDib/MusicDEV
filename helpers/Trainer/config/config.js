@@ -4,14 +4,14 @@ module.exports = {
         inputRange: 1,
         outputSize: 1,
         hiddenSizes: [20, 20],
-        hiddenLayers: [50, 50],     // array of ints for the sizes of the hidden layers in the network
+        hiddenLayers: [38, 38],     // array of ints for the sizes of the hidden layers in the network
         learningRate: 0.1,
-        decayRate: 0.999,
+        decayRate: 0.9,
         binaryThresh: 0.5,     // ¯\_(ツ)_/¯
         activation: 'sigmoid'  // supported activation types: ['sigmoid', 'relu', 'leaky-relu', 'tanh']
     },
     train: {
-        iterations: 5000000,    // the maximum times to iterate the training data --> number greater than 0
+        iterations: 500000,    // the maximum times to iterate the training data --> number greater than 0
         errorThresh: 0.01,   // the acceptable error percentage from training data --> number between 0 and 1
         logPeriod: 25,        // iterations between logging out --> number greater than 0
         learningRate: 0.1,    // scales with delta to effect training rate --> number between 0 and 1

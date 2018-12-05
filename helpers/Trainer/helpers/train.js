@@ -20,48 +20,43 @@ function logIt(data){
     iteration = data.split("iterations:").pop().split(',')[0];
     error = data.split("error:").pop().replace('"', '');
 
-    console.log("=========================================================")
+    console.log("==================================")
     console.log("Iterations: " + iteration);
     console.log("Error: " + error);
     console.log("Duration: " + (new Date() - timerStart) / 1000 + " seconds")
 }
 
-function formatData(limit, data, callback){
+function formatData(data, callback){
     let final = [], num = 0;
 
     async.eachOfSeries(data, (loopValue, loopKey, loopCallback) => {
         num ++;
-        if(limit){
-            let tmpLimit = loopValue.length * (limit / 100);
-            final = [...final, ...loopValue.slice(0, Math.ceil(tmpLimit))];
-        } else {
-            final = [...final, ...loopValue];
-        }
+
+        final = [...final, ...loopValue];
 
         if(num === Object.keys(data).length){
-            console.log("finished")
             callback(final);
         } else {
-            console.log("learning")
             loopCallback();
         }
     });
 }
 
-module.exports = function(SpotifyApi, dictionary, limit, callback) {
+module.exports = function(SpotifyApi, dictionary, callback) {
     let num = 0;
 
-    formatData(limit, dictionary, (formattedData) => {
+    formatData(dictionary, (formattedData) => {
         num++;
         timer(true);
 
-        let tmpNumber = formattedData.length;
+        let tmpNumber = Math.ceil(formattedData.length / 10);
         let mainNetConfig = {
             log: logIt,
-            hiddenLayers: [tmpNumber/10, tmpNumber/10]
+//            hiddenLayers: [100, 100]
         };
 
         netConfig = Object.assign(config.config, mainNetConfig);
+        console.log(netConfig)
         let netsObject = new brain.NeuralNetwork(netConfig);
 
         console.log("Training started:")

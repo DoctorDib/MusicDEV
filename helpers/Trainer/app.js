@@ -1,4 +1,5 @@
-const dictionary =  require('./Data/dictionary');
+//const dictionary =  require('./Data/dictionary');
+const dictionary =  require('./Data/genreDictionary'); // For genre
 //const dictionary =  require('./Data/playlistSmall');
 const trackDictionary =  require('./Data/trackDictionary');
 const config = require('./config/config');
@@ -10,6 +11,7 @@ const trainer = require('./helpers/train');
 
 const spotify = require('./helpers/spotifyApi');
 const sample = require('./helpers/sample');
+const predict = require('./helpers/predict');
 
 const secretKeys = require('../secretKeys.json');
 const client_id = secretKeys.spotify.client_id;
@@ -31,6 +33,27 @@ const spotifyApi = new SpotifyWebApi({
 const genreAndActivity = {
     activity: ['Workout', 'Chill', 'ElectronicAndDance', 'Party', 'Focus', 'Sleep', 'Romance', 'Gaming', 'Dinner', 'Travel']
 };
+
+function round(input, dec){
+    console.log(input)
+    console.log(Number(Math.round(input+'e'+dec)+'e-'+dec))
+    return Number(Math.round(input+'e'+dec)+'e-'+dec);
+}
+
+function check(outcome) {
+    let high = 0, highLabel;
+
+    for (index in outcome) {
+        let tmpOut = round(outcome[index], 2);
+
+        if (tmpOut > high) {
+            high = tmpOut;
+            highLabel = index;
+        }
+    }
+
+    return highLabel;
+}
 
 function setUpAccount(callback){
     Spotify.getAccessToken({
@@ -61,7 +84,61 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function(err, database
         let useCollection;
         let saveCollection;
 
-        if (process.argv[2] === "learn") {
+        if (process.argv[2] === "cut") {
+            let memory = {}, catCount=0;
+
+            useCollection = db.collection("masterMusicCats");
+            saveCollection = db.collection("musicCats");
+
+            useCollection.findOne({}).then(function(data){
+                console.log(data)
+                if (!data || Object.keys(data.musicCats).length !== 9){
+                    console.warn("No music categories found... please teach me by running the following command")
+                    console.log("                   - node app.js learn initial") // TODO - Temp.
+                    process.exit(1);
+                }
+
+                if (process.argv[3]) {
+                    limit = Number(process.argv[3]);
+
+                    if (limit > 100 || limit < 0) {
+                        console.error("Limit is not in range: 0 - 100%");
+                        process.exit(1);
+                    }
+                }
+
+                async.eachOfSeries(data.musicCats, function (catValue, catKey, catCallback) {
+                    catCount++;
+
+                    console.log(`Cutting ${catKey}`)
+
+                    let tmpLimit = Math.ceil(catValue.length * (limit / 100));
+                    console.log(tmpLimit)
+
+                    memory[catKey] = catValue.splice(0, tmpLimit);
+
+                    if (catCount === Object.keys(data.musicCats).length) {
+                        saveCollection.findOne({"id": 'musicCats'}, function(err, respData) {
+                            if(respData === null){
+                                // Insert new record
+                                console.log("Inserting new record to Database")
+                                saveCollection.insert({id: "musicCats", "musicCats": memory});
+                            } else {
+                                // Replace with existing one.
+                                console.log("Existing record found...")
+                                saveCollection.drop(function(err, delOK) {
+                                    if(err) return console.log("ERRRRROR")
+                                    console.log("Replacing existing record")
+                                    saveCollection.insert({id: "musicCats", "musicCats": memory});
+                                });
+                            }
+                        });
+                    } else {
+                        catCallback();
+                    }
+                });
+            });
+        } else if (process.argv[2] === "learn") {
             let limit, type;
 
             limit = false
@@ -69,6 +146,7 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function(err, database
             if (process.argv[3] && process.argv[3] !== "initial") {
                 // Default save location - musicCats
                 saveCollection = db.collection("musicCats");
+
                 limit = Number(process.argv[3]);
             }
 
@@ -153,8 +231,8 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function(err, database
                         if(!memory[dictionaryValue.category]){
                             memory[dictionaryValue.category] = []
                         }
-                        memory[dictionaryValue.category] = [...memory[dictionaryValue.category], ...data]
 
+                        memory[dictionaryValue.category] = [...memory[dictionaryValue.category], ...data]
 
                         if(uriKey+1 >= dictionaryValue.uriList.length){
                             if((mainKey+1) !== trackDictionary.length){
@@ -197,8 +275,7 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function(err, database
                 .then(function(data){
                     console.log(data)
                     if(data !== null){
-                        let limit = process.argv[3] || false;
-                        trainer(spotifyApi, data.musicCats, limit, (resp) => {
+                        trainer(spotifyApi, data.musicCats, (resp) => {
                             console.log("Returned")
                             saveCollection.findOne({"id": 'memory'}, function(err, respData) {
                                 console.log("Searching")
@@ -228,8 +305,6 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function(err, database
         } else if(process.argv[2] === "predict") {
             useCollection = db.collection("musicMemory");
 
-            let selected = process.argv[4];
-
             useCollection.findOne({"id": 'memory'}, function(err, resp) {
                 if(!resp || resp === null){
                     console.log("Memory not found... Please teach me...");
@@ -237,23 +312,19 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function(err, database
                 } else {
                     console.log("Found")
 
-                    console.log("Settings: ", resp.memory[selected]);
+//                    console.log("Settings: ", resp.memory);
                     let net = new brain.NeuralNetwork(config.predict);
-                    net.fromJSON(resp.memory[selected]);
+                    net.fromJSON(resp.memory);
 
                     let uri = process.argv[3].split(':');
                     uri = uri[uri.length - 1];
 
                     spotify.grabSingleFeature(spotifyApi, uri, function(data){
                         console.log(data);
-                        let outcome = net.run(data);
-                        console.log("================================================");
-                        console.log(outcome);
-                        console.log("================================================");
-
-                        /*let cheese = sortObject(outcome);
-                        arraySort(cheese, 'foo');
-                        console.log(cheese)*/
+                        predict(net, data, (resp) => {
+                            let finalResponse = `I think it is:\n  - ${resp}`;
+                            console.log(finalResponse)
+                        });
                     });
                 }
             });
@@ -278,6 +349,10 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function(err, database
             });
         } else {
             console.log("Please insert command in the following format...");
+            console.log("    - Initial Training:");
+            console.log("        - node app.js learn initial");
+            console.log("    - Cut:");
+            console.log("        - node app.js cut [PERCENTAGE (per track)]");
             console.log("    - Train:");
             console.log("        -node app.js train");
             console.log("    - Predict:");
