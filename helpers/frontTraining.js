@@ -1,5 +1,5 @@
-const predict = require('./Trainer/helpers/predict');
-const config = require('./Trainer/config/config');
+const predict = require('./musicTool/helpers/predict');
+const config = require('./musicTool/config/config');
 
 const spotify = require('./spotify_api');
 
