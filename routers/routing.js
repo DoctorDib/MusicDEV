@@ -21,7 +21,6 @@ module.exports = function(passport){
             router.get('/spotify_refresh_token', this.spotifyRefresh);
 
             router.get('/ping', this.homeTest);
-
             router.post('/ping', this.homeTest);
         },
         /**

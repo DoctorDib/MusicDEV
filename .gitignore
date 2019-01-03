@@ -68,5 +68,11 @@ helpers/Trainer/Data
 data/
 >>>>>>> d6c8f9d... New methods added
 
+# Removing build files
+./client/public
+
 # Ensures no one can see my secret keys
 helpers/secretKeys.json
+
+# Other files
+.idea/
