@@ -121,8 +121,8 @@ class Template extends React.Component {
                         console.log("Please try again");
                     }
                 }).catch(error => {
-                    console.log(error);
-                });
+                console.log(error);
+            });
         } else if (count > 50) {
             this.setState({
                 // Setting max of 50 playlists because that's the cap of the spotify music feature grabber.
@@ -192,7 +192,7 @@ class Template extends React.Component {
                                 </div>
                             ))}
                             {this.state.newUser ? null :
-                            <Button onClick={this.props.close('settingsOpen')}> X </Button>}
+                                <Button onClick={this.props.close('settingsOpen')}> X </Button>}
                             <Button onClick={this.learn}> {this.state.newUser ? "Learn" : "Save"}</Button>
                         </FormGroup>
                     </section>

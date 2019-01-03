@@ -72,22 +72,22 @@ class Template extends React.Component {
                 username: cookie.username,
                 access_token: cookie.access_token
             }})
-        .then(resp => {
-            console.log(">>", resp.data)
-            if(resp.data.success){
-                this.setState({
-                    settingsOpen: resp.data.new_user,
-                    profilePlaylists: resp.data.playlists,
-                    newUser: resp.data.new_user,
-                    profileAccessToken: cookie.access_token
-                });
-            } else {
-                this.setState({
-                    errorNotification: 'Error: Session timeout, please logout and then backin...',
-                    warningSnack: true
-                })
-            }
-        }).catch(error => {
+            .then(resp => {
+                console.log(">>", resp.data)
+                if(resp.data.success){
+                    this.setState({
+                        settingsOpen: resp.data.new_user,
+                        profilePlaylists: resp.data.playlists,
+                        newUser: resp.data.new_user,
+                        profileAccessToken: cookie.access_token
+                    });
+                } else {
+                    this.setState({
+                        errorNotification: 'Error: Session timeout, please logout and then backin...',
+                        warningSnack: true
+                    })
+                }
+            }).catch(error => {
             console.log(error);
         });
     };
@@ -98,23 +98,23 @@ class Template extends React.Component {
                 username: this.state.profileUsername
             }
         })
-        .then(resp => {
-            if(resp.data.isPlaying){
-                this.setState({
-                    warningNotification: '', // Clearing the warnings
-                    currentPlayingSong: resp.data.song,
-                    currentPlayingAuthor: resp.data.artist,
-                    warningSnack: false,
-                });
-            } else {
-                this.setState({
-                    warningNotification: 'Warning: Spotify paused',
-                    currentPlayingSong: '',
-                    currentPlayingAuthor: '',
-                    warningSnack: true,
-                });
-            }
-        }).catch(err =>{
+            .then(resp => {
+                if(resp.data.isPlaying){
+                    this.setState({
+                        warningNotification: '', // Clearing the warnings
+                        currentPlayingSong: resp.data.song,
+                        currentPlayingAuthor: resp.data.artist,
+                        warningSnack: false,
+                    });
+                } else {
+                    this.setState({
+                        warningNotification: 'Warning: Spotify paused',
+                        currentPlayingSong: '',
+                        currentPlayingAuthor: '',
+                        warningSnack: true,
+                    });
+                }
+            }).catch(err =>{
             switch(err.response.status){
                 case 502:
                     this.setState({

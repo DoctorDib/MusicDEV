@@ -19,22 +19,22 @@ module.exports = function(command, data, callback) {
     switch(command){
         case 'analyseTrack':
             spotifyApi[data.username].getAudioFeatures(data.trackURI)
-            .then(function(data) {
-            // Output items
-                callback(data.body.item);
-                console.log("Now Playing: ",data.body.item.name);
-            }, function(err) {
-                console.log('Something went wrong!', err);
-            });
-        break;
+                .then(function(data) {
+                    // Output items
+                    callback(data.body.item);
+                    console.log("Now Playing: ",data.body.item.name);
+                }, function(err) {
+                    console.log('Something went wrong!', err);
+                });
+            break;
         case 'grabCurrentMusic':
             spotifyApi[data.username].getMyCurrentPlaybackState({})
-            .then(function(resp) {
-                console.log(resp);
-                // Output items
-                callback(resp.body);
-                console.log("Now Playing: ",resp.body.item.name);
-            }).catch(function(err){
+                .then(function(resp) {
+                    console.log(resp);
+                    // Output items
+                    callback(resp.body);
+                    console.log("Now Playing: ",resp.body.item.name);
+                }).catch(function(err){
                 console.error('Something went wrong!', err);
             });
             break;
@@ -159,11 +159,11 @@ module.exports = function(command, data, callback) {
                             console.error(err);
                         });
                 }).then(function(resp){
-                    callback({success: true, data: resp});
-                }).catch(function(err){
-                    callback({success: false});
-                    console.error("Get Me Error: ", err);
-                });
+                callback({success: true, data: resp});
+            }).catch(function(err){
+                callback({success: false});
+                console.error("Get Me Error: ", err);
+            });
             break;
 
         case 'set_get':
@@ -185,44 +185,44 @@ module.exports = function(command, data, callback) {
 
                     return build;
                 }).then(function(resp){
-                    callback(resp);
+                callback(resp);
+            })
+                .catch(function(err){
+                    console.error(err);
+                });
+            break;
+
+        case 'getMe':
+            let tmp = new SpotifyWebApi({
+                clientId : client_id,
+                clientSecret : client_secret,
+                redirectUri : redirect_uri
+            });
+
+            tmp.setAccessToken(data.access_token);
+
+            tmp.getMe()
+                .then(function(data_root){
+                    console.log(data_root)
+                    callback({
+                        username: data_root.body.id,
+                        name: data_root.body.display_name,
+                        image: data_root.body.images[0].url
+                    });
                 })
                 .catch(function(err){
                     console.error(err);
                 });
             break;
 
-            case 'getMe':
-                let tmp = new SpotifyWebApi({
-                    clientId : client_id,
-                    clientSecret : client_secret,
-                    redirectUri : redirect_uri
-                });
-
-                tmp.setAccessToken(data.access_token);
-
-                tmp.getMe()
-                    .then(function(data_root){
-                        console.log(data_root)
-                        callback({
-                            username: data_root.body.id,
-                            name: data_root.body.display_name,
-                            image: data_root.body.images[0].url
-                        });
-                    })
-                    .catch(function(err){
-                        console.error(err);
-                    });
-                break;
-
-            case 'check_account':
-                mongoose('get', {username: data.username}, null, null, function(respData){
-                    if(respData.spotify.access_token){
-                        callback({response: 'success', data: respData });
-                    } else {
-                        callback({response: 'failed'});
-                    }
-                });
-                break;
+        case 'check_account':
+            mongoose('get', {username: data.username}, null, null, function(respData){
+                if(respData.spotify.access_token){
+                    callback({response: 'success', data: respData });
+                } else {
+                    callback({response: 'failed'});
+                }
+            });
+            break;
     }
 }

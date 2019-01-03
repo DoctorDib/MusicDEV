@@ -64,7 +64,7 @@ module.exports = function(passport){
                 }
             });*/
         },
-        
+
         // Logging out of account
         logout: function(req, res){
             req.session.destroy(() => {
@@ -137,17 +137,17 @@ module.exports = function(passport){
                                 data: data,
                                 access_token: access_token,
                                 username: accountResponse.username
-                                }, () => {
-                                    let data = {
-                                        access_token: access_token,
-                                        username: accountResponse.username,
-                                        name: accountResponse.name,
-                                        image: accountResponse.image,
-                                    }
-                                    let maxAge = (60000 * 1440) // 6000ms to 1 minute => 24 hours
-                                    res.cookie('spotify', JSON.stringify(data), {maxAge: maxAge});
-                                    res.redirect('/');
-                                });
+                            }, () => {
+                                let data = {
+                                    access_token: access_token,
+                                    username: accountResponse.username,
+                                    name: accountResponse.name,
+                                    image: accountResponse.image,
+                                }
+                                let maxAge = (60000 * 1440) // 6000ms to 1 minute => 24 hours
+                                res.cookie('spotify', JSON.stringify(data), {maxAge: maxAge});
+                                res.redirect('/');
+                            });
                         });
                     } else {
                         res.redirect('/'); // Redirecting to homepage, if not loged in, then the user will be
