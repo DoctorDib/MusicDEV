@@ -84,8 +84,40 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function(err, database
         let useCollection;
         let saveCollection;
 
+<<<<<<< HEAD
         if (process.argv[2] === "cut") {
             let memory = {}, catCount=0;
+=======
+    const run = {
+        grabGenre: function (respMemory, inputData, genreCallback) {
+            let net = new brain.NeuralNetwork(config.predict);
+            net.fromJSON(respMemory);
+
+            predict(net, inputData, (resp) => {
+                genreCallback(resp);
+            });
+        },
+        grabGenreUserPlaylist: function (username, playlists, callback) {
+            useCollection = db.collection("musicMemory");
+            saveCollection = db.collection(username);
+
+            useCollection.findOne({"id": 'memory'}, function (err, resp) {
+                if (!resp || resp === null) {
+                    console.log("Memory not found... Please teach me...");
+                    process.exit(1);
+                } else {
+                    console.log("Found");
+
+                    run.grabGenre(resp.memory, playlist, (resp) => {
+                        saveCollection.insert({id: "user", "playlist": resp});
+                        callback();
+                    });
+                }
+            });
+        },
+        cut: function () {
+            let memory = {}, catCount = 0;
+>>>>>>> d6c8f9d... New methods added
 
             useCollection = db.collection("masterMusicCats");
             saveCollection = db.collection("musicCats");
@@ -347,6 +379,108 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function(err, database
                     });
                 }
             });
+<<<<<<< HEAD
+=======
+        },
+        build: function () {
+            const arr = _.range(parseInt(process.argv[3]));
+            console.log(arr)
+
+            let finalObject = {};
+            let finalArray = [];
+            let count=0;
+
+            useCollection = db.collection("musicMemory");
+            saveCollection = db.collection("masterMusic");
+
+            // Resetting collection
+            mongoAction.checkDelete(saveCollection, "master", () => {
+                useCollection.findOne({"id": 'memory'}, function (err, resp) {
+                    if (!resp || resp === null) {
+                        console.log("Memory not found... Please teach me...");
+                        process.exit(1);
+                    } else {
+                        console.log("Found")
+
+                        async.eachOfSeries(arr, function (value, keyFiles, callbackFiles) {
+                            readTextFile("./Data/trackData/" + value + ".json", function (json) {
+                                async.eachOfSeries(json, function (jsonValue, jsonKey, jsonCallback) {
+                                    let uriArray = [];
+                                    async.eachOfSeries(jsonValue.tracks, function (trackValue, trackKey, trackCallback) {
+                                        let uri = trackValue.track_uri.split(':');
+                                        uri = uri[uri.length - 1];
+                                        uriArray.push(uri); // Adding uri to array
+                                        finalObject[uri] = {name: trackValue.track_name, id: uri}; // Creating empty object
+
+                                        if (trackKey + 1 >= Object.keys(jsonValue.tracks).length) {
+                                            uriArray = uriArray.chunk(50);
+                                            async.eachOfSeries(uriArray, function (uriArrayValue, uriArrayKey, uriArrayCallback) {
+                                                setTimeout(function () {
+                                                    spotify.grabFeatures(spotifyApi, false, uriArrayValue, (data) => {
+                                                        async.eachOfSeries(data, function (featuresValue, featuresKey, featuresCallback) {
+                                                            let ident = featuresValue.id;
+                                                            delete featuresValue.id; // Sorting out data
+
+                                                            // Grabbing the predicted Genre
+                                                            run.grabGenre(resp.memory, featuresValue, (genre) => {
+                                                                finalObject[ident].features = featuresValue;
+                                                                finalObject[ident].genre = genre;
+                                                                finalArray.push(finalObject[ident]);
+
+                                                                count++
+
+                                                                let finalResponse = `==================================================\nID: ${count}\nName: ${finalObject[ident].name}\nGenre: ${genre}`;
+                                                                console.log(finalResponse)
+
+                                                                //mongoAction.insertArr(saveCollection, "master", {finalObject[ident].genre: finalObject[ident]})
+
+                                                                if (featuresKey + 1 >= data.length) {
+                                                                    if (uriArrayKey + 1 >= uriArray.length) {
+                                                                        if (jsonKey + 1 >= Object.keys(json).length) {
+                                                                            if (keyFiles + 1 >= arr.length) {
+                                                                                let body = `Database build has been completed with ${finalArray.length} entries.`;
+                                                                                push.send({
+                                                                                    title: "Database build complete",
+                                                                                    body: body
+                                                                                });
+                                                                            } else {
+                                                                                console.log('========================')
+                                                                                console.log(`${value}.json complete`)
+                                                                                console.log("Next file")
+                                                                                callbackFiles();
+                                                                            }
+                                                                        } else {
+                                                                            jsonCallback();
+                                                                        }
+                                                                    } else {
+                                                                        uriArrayCallback();
+                                                                    }
+                                                                } else {
+                                                                    featuresCallback();
+                                                                }
+                                                            });
+                                                        });
+                                                    });
+                                                }, 100);
+                                            });
+                                        } else {
+                                            trackCallback();
+                                        }
+                                    });
+                                });
+                            });
+                        });
+                    }
+                });
+            });
+        }
+    };
+
+    setUpAccount(function () {
+        if (run[process.argv[2]]) {
+            // Runs main application
+            run[process.argv[2]]();
+>>>>>>> d6c8f9d... New methods added
         } else {
             console.log("Please insert command in the following format...");
             console.log("    - Initial Training:");

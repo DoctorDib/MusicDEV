@@ -20,7 +20,11 @@ function check(outcome, callback) {
 module.exports = function (net, data, callback) {
     console.log(data)
     let outcome = net.run(data);
+<<<<<<< HEAD
     
+=======
+    console.log(outcome)
+>>>>>>> d6c8f9d... New methods added
     check(outcome, (resp)=>{
         callback(resp)
     });

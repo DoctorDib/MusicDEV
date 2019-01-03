@@ -26,7 +26,6 @@ let self = {
                 console.log("PLAYLIST TRACKS ERROR: " + err);
             });
     },
-
     grabFeatures: function(spotifyApi, type, trackURIList, callback) {
         //console.log([trackURIList])
         let tmpMemory = [];

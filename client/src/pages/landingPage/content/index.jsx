@@ -4,9 +4,6 @@ import PropTypes from 'prop-types';
 import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
 
-import LoginDialog from './loginDialog';
-import RegisterDialog from './registerDialog';
-
 import { withStyles } from '@material-ui/core/styles';
 import styles from './style';
 
@@ -16,11 +13,6 @@ import About from './aboutContent';
 class Template extends React.Component {
     constructor(props) {
         super(props);
-
-        this.state = {
-            loginOpen: false,
-            registerOpen: false
-        };
     }
 
     scrollTop = () => {
@@ -29,10 +21,6 @@ class Template extends React.Component {
             left  : 0,
             behavior: 'smooth',
         });
-    };
-
-    handleClickOpen = target => () => {
-        this.setState({ [target]: true });
     };
 
     handleClose = target => () => {
@@ -51,14 +39,10 @@ class Template extends React.Component {
                     </section>
 
                     <section>
-                        <Button onClick={this.handleClickOpen('loginOpen')} color={'secondary'} variant='raised' size="large" className={classes.mainButton}>Login</Button>
-                        <Button onClick={this.handleClickOpen('registerOpen')} color={'secondary'} variant='raised' size="large" className={classes.mainButton}>Register</Button>
+                        <Button href={'/spotify_login'} color={'secondary'} variant='raised' size="large" className={classes.mainButton}>Spotify Login</Button>
                         <Button color={'secondary'} variant='raised' size="large" className={classes.mainButton} onClick={this.scrollTop}>About</Button>
                     </section>
                 </section>
-
-                <LoginDialog open={this.state.loginOpen} close={this.handleClose}/>
-                <RegisterDialog open={this.state.registerOpen} close={this.handleClose}/>
 
                 <About />
             </section>

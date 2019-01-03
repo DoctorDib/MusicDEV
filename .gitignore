@@ -61,7 +61,12 @@ typings/
 .next
 
 # Ensures that I don't add GB's of data
+<<<<<<< HEAD
 helpers/TrackGrabber/Data
+=======
+helpers/Trainer/Data
+data/
+>>>>>>> d6c8f9d... New methods added
 
 # Ensures no one can see my secret keys
 helpers/secretKeys.json

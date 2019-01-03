@@ -57,9 +57,12 @@ export default theme => ({
 
     // Current music
     currentContainer: {
-        backgroundColor: 'pink',
-        marginTop: 'auto',
+        backgroundColor: '#d5d1d1',
+        textAlign: 'center',
+        position: 'fixed',
+        bottom: '0',
         width: '100%',
+        height: '3vh',
         justifyContent: 'center',
     },
     currentPlaying: {
