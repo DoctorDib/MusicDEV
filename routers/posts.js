@@ -10,38 +10,34 @@ module.exports = function(){
             router.get('/initialLoad', this.initialLoad);
             router.get('/currentSong', this.currentSong);
             router.get('/grabPlaylistGenre', this.grabPlaylistGenre);
+            router.get('/grabActivePlaylist', this.grabActivePlaylist)
         },
 
         initialLoad: function(req, res) {
-<<<<<<< HEAD
-            spotify('new_user', {username: req.user.username}, () => {
-                spotify('refresh', {username: req.user.username, token: req.user.spotify.refresh_token}, () => {
-                    res.json({
-                        name: req.user.username,
-                        username: req.user.spotify.user_id,
-                        pic: req.user.picture
-=======
             spotify('new_user', {username: req.query.username}, () => {
                 //spotify('refresh', {username: req.query.ID, token: req.user.spotify.refresh_token}, () => {
                 spotify('grabPlaylists', {username: req.query.username, access_token: req.query.access_token}, (playlists) => {
-                    MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, database) {
-                        if (err) return console.error(err);
-                        const db = database.db("musicDEV");
-                        let count = 0;
+                    if(playlists.success){
+                        MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, database) {
+                            if (err) return console.error(err);
+                            const db = database.db("musicDEV");
 
-                        useCollection = db.collection("users");
-                        useCollection.findOne({"id": req.query.username, "playlist": {$exist: true}, "activePlaylist": {$exist: true}}, function (err, resp) {
-                            console.log(resp)
-                            res.json({
-                                name: req.query.username,
-                                username: req.query.name,
-                                pic: req.query.image,
-                                new_user: (!resp || resp === null),
-                                playlists: playlists
+                            useCollection = db.collection("users");
+                            useCollection.findOne({id: req.query.username, activePlaylists: {$exists: true}, playlist: {$exists: true}}, function (err, resp) {
+                                if(err) console.log("Mongo error: ", err);
+                                res.json({
+                                    name: req.query.username,
+                                    username: req.query.name,
+                                    pic: req.query.image,
+                                    new_user: (!resp || resp === null),
+                                    playlists: playlists.data,
+                                    success: true
+                                });
                             });
                         });
->>>>>>> d6c8f9d... New methods added
-                    });
+                    } else {
+                        res.json({success: false});
+                    }
                 });
                 //});
             });
@@ -70,6 +66,28 @@ module.exports = function(){
                     res.json({
                         success: true
                     });
+                });
+            });
+        },
+        grabActivePlaylist: function(req, res) {
+            MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, database) {
+                if (err) return console.error(err);
+                const db = database.db("musicDEV");
+
+                useCollection = db.collection("users");
+                useCollection.findOne({id: req.query.username}, { activePlaylists: { $exists: true } }, (err, resp) => {
+                    if (err) console.log(err);
+
+                    if(resp !== null){
+                        if(resp.activePlaylists !== null){
+                            res.json({
+                                success: true,
+                                playlists: resp.activePlaylists
+                            });
+                        }
+                    } else {
+                        res.json({success: false});
+                    }
                 });
             });
         }

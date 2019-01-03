@@ -29,14 +29,33 @@ class Template extends React.Component {
         this.state = {
             playlist: {},
             open: this.props.open || false,
+            activePlaylist: [],
             playlistNames: {},
 
             profilePlaylists: [],
             profileUsername: '',
             profileAccessToken: '',
 
+
             newUser: false,
         };
+    }
+
+    sortActiveButtons = () =>{
+        let tmp = this.state.activePlaylist;
+        let eat = this.state.playlistNames;
+
+        for(let index in tmp){
+            if(!eat.hasOwnProperty(tmp[index])){
+                eat[tmp[index]] = {}
+            }
+            eat[tmp[index]].id = tmp[index];
+            eat[tmp[index]].active = true
+        }
+
+        this.setState({
+            playlistNames: eat
+        })
     }
 
     componentWillReceiveProps(props){
@@ -48,6 +67,25 @@ class Template extends React.Component {
             profileUsername: props.username,
             profileAccessToken: props.accessToken
         });
+
+        if(!props.newUser){
+            console.log("Settings")
+
+            Axios.get('grabActivePlaylist', {
+                params: {
+                    username: props.username,
+                }})
+                .then((resp) => {
+                    if(resp.data.playlists.length){
+                        this.setState({
+                            activePlaylist: resp.data.playlists
+                        });
+                        this.sortActiveButtons();
+                    }
+                }).catch((err) => {
+                console.log("Issue:", err)
+            });
+        }
     }
 
     learn = () => {
@@ -77,7 +115,8 @@ class Template extends React.Component {
                 }})
                 .then(resp => {
                     if(resp.data.success){
-                        this.handleChange.close
+                        console.log("Closing window")
+                        this.props.closeIt('settingsOpen')
                     } else {
                         console.log("Please try again");
                     }
@@ -106,21 +145,20 @@ class Template extends React.Component {
     handleChange = playlist => event => {
         let tmp = this.state.playlistNames;
 
-        if(!tmp.hasOwnProperty(this.slugify(playlist.name))){
+        if(!tmp.hasOwnProperty(playlist.id)){
             console
-            tmp[this.slugify(playlist.name)] = {
+            tmp[playlist.id] = {
                 name: playlist.name,
                 id: playlist.id,
                 active: false,
             };
         }
-        tmp[this.slugify(playlist.name)] = {
+        tmp[playlist.id] = {
             name: playlist.name,
             id: playlist.id,
-            active: !tmp[this.slugify(playlist.name)].active,
+            active: !tmp[playlist.id].active,
         };
         this.setState({ playlistNames: tmp});
-        console.log(tmp)
     };
 
     render(){
@@ -129,7 +167,7 @@ class Template extends React.Component {
         return (
             <Dialog
                 open={this.state.open}
-                onClose={this.props.closeIt('settingsOpen')}
+                onClose={this.props.close('settingsOpen')}
                 aria-labelledby="form-dialog-title"
             >
                 {this.state.newUser ?
@@ -138,13 +176,13 @@ class Template extends React.Component {
                 <Card style={{backgroundColor: '#fbfbfb'}}>
                     <section className={classes.body}>
                         <FormGroup>
-                            <FormLabel component="legend"> Your playlists: </FormLabel>
-                            {this.state.profilePlaylists.map(tile => (
+                            <FormLabel component="legend">Select your favourite playlists: (50 max)</FormLabel>
+                            {this.state.profilePlaylists && this.state.profilePlaylists.map(tile => (
                                 <div>
                                     <FormControlLabel
                                         control={
                                             <Switch
-                                                checked={this.state.playlistNames.hasOwnProperty(this.slugify(tile.name)) ? this.state.playlistNames[this.slugify(tile.name)].active : false}
+                                                checked={this.state.playlistNames.hasOwnProperty(tile.id) ? this.state.playlistNames[tile.id].active : false}
                                                 onChange={this.handleChange(tile)}
                                                 value={this.slugify(tile.name)}
                                             />
@@ -153,7 +191,9 @@ class Template extends React.Component {
                                     />
                                 </div>
                             ))}
-                            <Button onClick={this.learn}> Learn </Button>
+                            {this.state.newUser ? null :
+                            <Button onClick={this.props.close('settingsOpen')}> X </Button>}
+                            <Button onClick={this.learn}> {this.state.newUser ? "Learn" : "Save"}</Button>
                         </FormGroup>
                     </section>
                 </Card>

@@ -1,0 +1,13 @@
+{
+  "activities": {
+    "Workout": ["Rock",	"RnB", "ElectronicAndDance"],
+    "Party": ["Pop", "HipHop", "Rock", "ElectronicAndDance"],
+    "Focus": ["Jazz", "Classical", "Blues"],
+    "Sleep": ["Classical", "Blues"],
+    "Romance": ["Classical", "Blues", "Jazz"],
+    "Gaming": ["Rock", "RnB", "ElectronicAndDance"],
+    "Dinner": ["Chill", "Jazz", "Classical"],
+    "Travel": ["Pop", "HipHop", "RnB"],
+    "Relax": ["Chill", "Jazz", "Classical"]
+  }
+}

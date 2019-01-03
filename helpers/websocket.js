@@ -33,7 +33,7 @@ class Socket {
                             sendBack(ws, {event: 'currentSong', data: data});
                         });
                         break;
-                    case 'set_get':
+                    /*case 'set_get':
                         spotify('set_get', {
                             access_token: message.data.access_token,
                             username: message.data.username
@@ -45,7 +45,7 @@ class Socket {
                             console.log(data)
                         })
                         //func, ident, set, object, callback
-                        break;
+                        break;*/
                     case 'ping':
                         CLIENTS[CLIENTS.indexOf(ws)].send("pong")
                         break;

@@ -23,15 +23,13 @@ let self = {
                 callback(features);
             }, function(err) {
                 //console.log(trackURIList)
-                console.log("PLAYLIST TRACKS ERROR: " + err);
+                console.log("SINGLE TRACKS ERROR: " + err);
             });
     },
     grabFeatures: function(spotifyApi, type, trackURIList, callback) {
-        //console.log([trackURIList])
         let tmpMemory = [];
         spotifyApi.getAudioFeaturesForTracks([trackURIList])
             .then(function(data) {
-                //console.log(data.body.audio_features)
                 async.eachOfSeries(data.body.audio_features, function (value, key, trackLoopCallback) {
                     if(!value){
                         if(key+1 >= data.body.audio_features.length){
@@ -41,22 +39,29 @@ let self = {
                         }
                     } else {
                         let features = {
-                            input:{
-                                danceability: value.danceability,
-                                energy: value.energy,
-                                key: boundary("key", value.key, null),
-                                loudness: boundary("loudness", value.loudness, null),
-                                speechiness: value.speechiness,
-                                acousticness: value.acousticness,
-                                instrumentalness: value.instrumentalness,
-                                liveness: value.liveness,
-                                valence: value.valence,
-                                tempo: boundary("tempo", value.tempo, null),
-                            },
-                            output: {
-                                [type]: 1
-                            }
+                            danceability: value.danceability,
+                            energy: value.energy,
+                            key: boundary("key", value.key, null),
+                            loudness: boundary("loudness", value.loudness, null),
+                            speechiness: value.speechiness,
+                            acousticness: value.acousticness,
+                            instrumentalness: value.instrumentalness,
+                            liveness: value.liveness,
+                            valence: value.valence,
+                            tempo: boundary("tempo", value.tempo, null),
                         };
+
+                        if (type) {
+                            // Formatting for the Nerual networking process
+                            features = {
+                                input: features,
+                                output: {
+                                    [type]: 1
+                                }
+                            };
+                        } else {
+                            features.id = value.id;
+                        }
 
                         tmpMemory.push(features);
 

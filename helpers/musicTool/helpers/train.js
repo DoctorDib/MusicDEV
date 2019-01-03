@@ -62,11 +62,15 @@ module.exports = function(SpotifyApi, dictionary, callback) {
         console.log("Training started:")
         netsObject.trainAsync(formattedData, config.train)
             .then(res => {
-                let bodyData = `Finished: \nError: ${error}\nIteration: ${iteration}\nTimer: ${timer(false)}`;
-                push.send({title: "Finished task", body: bodyData})
-                netsObject = netsObject.toJSON();
-                console.log("Finished and returning")
-                callback(netsObject);
+                if(parseFloat(timer(false).match(/\d+.\d+/g)[0]) < 5){
+                    callback({error: true})
+                } else {
+                    let bodyData = `Finished: \nError: ${error}\nIteration: ${iteration}\nTimer: ${timer(false)}`;
+                    push.send({title: "Finished task", body: bodyData})
+                    netsObject = netsObject.toJSON();
+                    console.log("Finished and returning")
+                    callback({training: netsObject, error: false});
+                }
             })
             .catch(err => {
                 console.log(err);

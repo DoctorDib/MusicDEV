@@ -14,7 +14,8 @@ const styles = {
         flexDirection: 'column',
         boxShadow: '0px 4px 3px 0px #b9b9b9',
         userSelect: 'none',
-        backgroundImage: 'radial-gradient(#5f5f5f, #292929)'
+        backgroundImage: 'url("https://www.transparenttextures.com/patterns/binding-dark.png")'
+
     },
     titleContainer:{
         display: 'flex',
@@ -64,7 +65,7 @@ const styles = {
         borderRadius: '100px',
         height: '65px',
         width: '65px'
-    },
+    }
 };
 
 export default styles;

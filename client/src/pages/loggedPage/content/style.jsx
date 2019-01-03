@@ -4,18 +4,27 @@ export default theme => ({
     ...styles,
     // Profile information card
     accountHolder: {
-        backgroundColor: 'white',
+        backgroundColor: '#d7d7d7',
         width: '22em',
         right: '0',
         position: 'fixed',
         display: 'flex',
         flexDirection: 'row',
-        borderTopLeftRadius: '25% 100%',
-        borderBottomLeftRadius: '25% 100%',
-        marginTop: '0.5em',
-        border: 'solid 0.2em white',
+        transform: 'translateX(-50%)',
+        left: '50%',
+        top: '0.25vh',
+        borderBottomLeftRadius: '11% 50%',
+        borderBottomRightRadius: '11% 50%',
+        border: 'solid 0.2em #d7d7d7',
         borderRight: '0',
         userSelect: 'none',
+    },
+    topBar: {
+        display: 'flex',
+        flexGrow: '2',
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        backgroundColor: '#d7d7d7'
     },
     profilePic: {
         width: '75px',
@@ -29,16 +38,15 @@ export default theme => ({
         justifyContent: 'center',
         flexDirection: 'column',
         userSelect: 'none',
+        width: '100%'
     },
     profileUserName: {
         fontSize: '1.1em',
-        marginLeft: '1em',
         fontWeight: 'bold',
         color: 'black'
     },
     profileName: {
         fontSize: '1em',
-        marginLeft: '1em',
         color: 'black'
     },
     profileLogout: {

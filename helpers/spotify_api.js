@@ -6,15 +6,12 @@ const scope = 'user-read-private user-read-email user-library-read user-top-read
 
 const request = require('request');
 const SpotifyWebApi = require('spotify-web-api-node');
-
-const otherSpotify = require('./Trainer/helpers/spotifyApi')
+const otherSpotify = require('./musicTool/helpers/spotifyApi')
 
 let spotifyApi = {};
 
 const querystring = require('querystring');
-
 const mongoose = require('../helpers/mongoose');
-
 const stateKey = 'spotify_auth_state';
 
 
@@ -48,6 +45,7 @@ module.exports = function(command, data, callback) {
                 clientSecret : client_secret,
                 redirectUri : redirect_uri
             });
+
             callback("success");
             break;
 
@@ -142,20 +140,13 @@ module.exports = function(command, data, callback) {
             });
             break;
 
-        case 'set_get':
+        case 'grabPlaylists':
             spotifyApi[data.username].setAccessToken(data.access_token);
-
             spotifyApi[data.username].getMe()
                 .then(function(data_root){
+                    let playlist = [];
 
-                    var build = data.data || {};
-                    var playlist = [];
-
-                    build.user_id = data_root.body.id;
-
-                    mongoose('update', {username: data.username}, "picture", data_root.body.images[0].url);
-
-                    spotifyApi[data.username].getUserPlaylists(data_root.body.id)
+                    return spotifyApi[data.username].getUserPlaylists(data_root.body.id)
                         .then(function(return_data) {
                             return_data.body.items.forEach(function(element){
                                 playlist.push({
@@ -164,19 +155,14 @@ module.exports = function(command, data, callback) {
                                 });
                             });
                             return playlist;
-<<<<<<< HEAD
-                        }). then(function(data_pass){
-                        build.playlists = data_pass;
-                        mongoose('update', {username: data.username}, "spotify", build);
-                    });
-=======
                         }).catch(function(err){
                             console.error(err);
                         });
                 }).then(function(resp){
-                    callback(resp);
+                    callback({success: true, data: resp});
                 }).catch(function(err){
-                    console.error(err);
+                    callback({success: false});
+                    console.error("Get Me Error: ", err);
                 });
             break;
 
@@ -196,7 +182,6 @@ module.exports = function(command, data, callback) {
 
                     var build = data.data || {};
                     build.user_id = data_root.body.id;
->>>>>>> d6c8f9d... New methods added
 
                     return build;
                 }).then(function(resp){

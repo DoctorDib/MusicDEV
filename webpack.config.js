@@ -2,6 +2,8 @@ const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const BUILD_DIR = path.resolve(__dirname, 'client/public');
 const APP_DIR = path.resolve(__dirname, 'client/src');
+//const webpackDashboard = require('webpack-dashboard/plugin');
+
 const config = {
     entry: {
         'landingIndex': path.join(APP_DIR, 'pages/landingPage/landingIndex.jsx'),
@@ -10,7 +12,7 @@ const config = {
     mode: 'development',
     output: {
         path: BUILD_DIR,
-        filename: '[name]/js/bundle.js',
+        filename: 'js/bundle_[name].js',
     },
     resolve: {
         modules: ['node_modules', APP_DIR],
@@ -23,7 +25,8 @@ const config = {
                 include: APP_DIR,
                 loader: 'babel-loader',
                 query: {
-                    presets: ['react', 'es2015', 'stage-1'],
+                    presets: ['@babel/react', '@babel/env'],
+                    plugins: ['@babel/plugin-proposal-class-properties'],
                 },
             },
             {
@@ -49,6 +52,8 @@ const config = {
         fs: 'empty',
     },
     plugins: [
+        //new webpackDashboard(),
+
         new HtmlWebpackPlugin({
             chunks: ['landingIndex'],
             filename: 'index/landingIndex.ejs',

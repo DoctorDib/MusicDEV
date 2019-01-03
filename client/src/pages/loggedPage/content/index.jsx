@@ -6,7 +6,13 @@ import Axios from 'axios';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 import Snackbar from '@material-ui/core/Snackbar';
+
 import WarningIcon from '@material-ui/icons/Warning';
+import SettingsIcon from '@material-ui/icons/Settings';
+import LogoutIcon from '@material-ui/icons/ExitToApp';
+import ListenIcon from '@material-ui/icons/Headset';
+import HelpIcon from '@material-ui/icons/Help';
+
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody'
 import TableCell from '@material-ui/core/TableCell';
@@ -17,16 +23,14 @@ import FormControl from '@material-ui/core/FormControl';
 import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
+import Tooltip from '@material-ui/core/Tooltip';
 
-<<<<<<< HEAD
-=======
 import GridList from '@material-ui/core/GridList';
 import GridListTile from '@material-ui/core/GridListTile'
 
 // Settings
 import Settings from './playlistContainer'
 
->>>>>>> d6c8f9d... New methods added
 import { withStyles } from '@material-ui/core/styles';
 
 import styles from './style';
@@ -37,20 +41,18 @@ class Template extends React.Component {
 
         this.state = {
             listening: false,
-            buttonTitle: 'Activate',
             settingsOpen: false,
+            activeSettings: false, // Deciding if first time set up or if user has opened the settings
+            color: 'rgba(81,81,81,0)',
 
             // Profile information
             profileName: 'Not logged in',
             profileUsername: '',
             profilePic: '',
-<<<<<<< HEAD
-=======
             profileAccessToken: '',
             profilePlaylists: [],
             playlistNames: {},
             newUser: false,
->>>>>>> d6c8f9d... New methods added
 
             // Current playing
             currentPlayingSong: '',
@@ -71,21 +73,23 @@ class Template extends React.Component {
                 access_token: cookie.access_token
             }})
         .then(resp => {
-            this.setState({
-<<<<<<< HEAD
-                profileName: resp.data.name,
-                profileUsername: resp.data.username,
-                profilePic: resp.data.pic
-=======
-                settingsOpen: resp.data.new_user,
-                profilePlaylists: resp.data.playlists,
-                newUser: resp.data.new_user,
-                profileAccessToken: cookie.access_token
->>>>>>> d6c8f9d... New methods added
-            });
+            console.log(">>", resp.data)
+            if(resp.data.success){
+                this.setState({
+                    settingsOpen: resp.data.new_user,
+                    profilePlaylists: resp.data.playlists,
+                    newUser: resp.data.new_user,
+                    profileAccessToken: cookie.access_token
+                });
+            } else {
+                this.setState({
+                    errorNotification: 'Error: Session timeout, please logout and then backin...',
+                    warningSnack: true
+                })
+            }
         }).catch(error => {
             console.log(error);
-        })
+        });
     };
 
     grabCurrentSong = () => {
@@ -119,6 +123,7 @@ class Template extends React.Component {
                     });
                     break;
                 case 500:
+                case 401:
                     this.setState({
                         errorNotification: 'Error: Disconnected from the server, please refresh...',
                     });
@@ -126,13 +131,6 @@ class Template extends React.Component {
             }
             this.setState({listening: false})
         })
-    };
-
-    toggleListen = () => {
-        this.setState({
-            buttonTitle: this.state.listening ? 'Activate' : 'Deactivate',
-            listening: !this.state.listening
-        });
     };
 
     learn = () => {
@@ -161,8 +159,8 @@ class Template extends React.Component {
                     playlists: tmpArr
                 }})
                 .then(resp => {
-
                     console.log(resp)
+                    this.setState({playlistNames: resp})
                 }).catch(error => {
                 console.log(error);
             });
@@ -204,27 +202,70 @@ class Template extends React.Component {
         window.location.href = '/';
     };
 
-    handleClickOpen = target => () => {
+    relog() {
+        window.location.href = '/spotify_login';
+    };
+
+    handleClickOpen = (target, settings) => () => {
+        if(settings){
+            this.setState({activeSettings: true})
+        }
         this.setState({ [target]: true });
     };
 
     //handleClose = target => () => {
     handleClose = target => () => {
         this.setState({ [target]: false });
+        //this.setState({ [target]: false });
     };
+
+    handleEventClose = target => {
+        this.setState({ [target]: false });
+    };
+
+    handleLogout = () => {
+        window.location.href="logout";
+    }
+
+    handleChange = name => event => {
+        this.setState({ [name]: event.target.checked });
+    };
+
+    handleListen = event => {
+        this.setState({
+            listening: !this.state.listening,
+            color: this.state.listening ? 'rgba(81,81,81,0)' : 'rgba(81,81,81,0.8)'
+        });
+    }
 
     render(){
         const { classes } = this.props;
 
         return (
             <section className={classes.body}>
+                <section className={classes.topBar}>
+                    <Tooltip disableFocusListener disableTouchListener title="Toggle Listen">
+                        <Button style={{backgroundColor: this.state.color}} onClick={this.handleListen}>
+                            <ListenIcon style={{fontSize: '20'}}/>
+                        </Button>
+                    </Tooltip>
+                    <Tooltip disableFocusListener disableTouchListener title="Settings">
+                        <Button onClick={this.handleClickOpen('settingsOpen', true)} className={classes.profileSettings}><SettingsIcon style={{fontSize: '20'}}/></Button>
+                    </Tooltip>
+                    <Tooltip disableFocusListener disableTouchListener title="Help">
+                        <Button><HelpIcon style={{fontSize: '20'}}/></Button>
+                    </Tooltip>
+                    <Tooltip disableFocusListener disableTouchListener title="Logout">
+                        <Button onClick={this.handleLogout} ><LogoutIcon /> </Button>
+                    </Tooltip>
+                </section>
+
                 <section id="accountHolder" className={classes.accountHolder}>
                     <img id="profilePic" className={classes.profilePic} src={this.state.profilePic}/>
                     <section id="profileArea" className={classes.profileArea}>
                         <Typography id="profileUserName" className={classes.profileUserName}>{this.state.profileName}</Typography>
                         <Typography id="profileName" className={classes.profileName}>{this.state.profileUsername}</Typography>
                     </section>
-                    <Typography> <a href="logout" id="profileLogout" className={classes.profileLogout}><p className="fas fa-sign-out-alt"></p> Logout </a> </Typography>
                 </section>
 
                 <section className={classes.header}>
@@ -233,16 +274,13 @@ class Template extends React.Component {
                         <Typography variant='display1' className={classes.titleChild}> Finding the right music </Typography>
                     </section>
 
-                    <Button onClick={this.toggleListen} color={'secondary'} variant='raised' size="large" className={classes.mainButton}>{this.state.buttonTitle}</Button>
                     <Typography id={"Error"}>{this.state.errorNotification}</Typography>
 
-<<<<<<< HEAD
-=======
-                    { this.state.newUser == true && <Settings playlist={this.state.playlistNames}/> }
                     <Settings
                         open={this.state.settingsOpen}
                         newUser={this.state.newUser}
-                        closeIt={this.handleClose}
+                        close={this.handleClose}
+                        closeIt={this.handleEventClose}
                         playlistNames={this.state.playlistNames}
                         profilePlaylists={this.state.profilePlaylists}
                         username={this.state.profileUsername}
@@ -251,7 +289,6 @@ class Template extends React.Component {
                     <h1> {this.state.learning} </h1>
 
 
->>>>>>> d6c8f9d... New methods added
                     <section className={classes.currentContainer}>
                         <section className={classes.currentPlaying}>
                             <section className={classes.currentInformation}>
@@ -277,13 +314,18 @@ class Template extends React.Component {
                         this.state.warningNotification === 'Warning: New update from server, please refresh...' ?
                             <Button key="undo" color="secondary" size="small" onClick={this.refresh}>
                                 Refresh
-                            </Button> : null
+                            </Button> :
+                            this.state.errorNotification === 'Error: Session timeout, please logout and then backin...' ?
+                                <Button key="undo" color="secondary" size="small" onClick={this.relog}>
+                                    relog
+                                </Button> : null
                     ]}
                     message={
                         <section>
                             <span className={classes.warningSnackbar}>
                                 <WarningIcon style={{fontSize: '20'}}/>
-                                {this.state.warningNotification}
+                                {this.state.warningNotification ? this.state.warningNotification : null}
+                                {this.state.errorNotification ? this.state.errorNotification : null}
                             </span>
                         </section>
                     }
