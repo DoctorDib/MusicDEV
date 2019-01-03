@@ -68,6 +68,8 @@ client/public/
 
 # Ensures no one can see my secret keys
 helpers/secretKeys.json
+helpers/secretKeys.json.swp
 
 # Other files
 .idea/
+*.swp
