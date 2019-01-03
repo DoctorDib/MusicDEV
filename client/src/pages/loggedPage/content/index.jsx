@@ -12,7 +12,21 @@ import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
+import FormLabel from '@material-ui/core/FormLabel';
+import FormControl from '@material-ui/core/FormControl';
+import FormGroup from '@material-ui/core/FormGroup';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Switch from '@material-ui/core/Switch';
 
+<<<<<<< HEAD
+=======
+import GridList from '@material-ui/core/GridList';
+import GridListTile from '@material-ui/core/GridListTile';
+
+// Settings
+import Settings from './playlistContainer'
+
+>>>>>>> d6c8f9d... New methods added
 import { withStyles } from '@material-ui/core/styles';
 
 import styles from './style';
@@ -24,11 +38,19 @@ class Template extends React.Component {
         this.state = {
             listening: false,
             buttonTitle: 'Activate',
+            settingsOpen: false,
 
             // Profile information
             profileName: 'Not logged in',
             profileUsername: '',
             profilePic: '',
+<<<<<<< HEAD
+=======
+            profileAccessToken: '',
+            profilePlaylists: [],
+            playlistNames: {},
+            newUser: false,
+>>>>>>> d6c8f9d... New methods added
 
             // Current playing
             currentPlayingSong: '',
@@ -37,17 +59,29 @@ class Template extends React.Component {
             // Notifications
             warningNotification: '',
             errorNotification: '',
+            learningNotification: '',
             warningSnack: false,
         };
     }
 
-    initialLoad = () => {
-        Axios.get('initialLoad')
+    initialLoad = (cookie) => {
+        Axios.get('initialLoad', {
+            params: {
+                username: cookie.username,
+                access_token: cookie.access_token
+            }})
         .then(resp => {
             this.setState({
+<<<<<<< HEAD
                 profileName: resp.data.name,
                 profileUsername: resp.data.username,
                 profilePic: resp.data.pic
+=======
+                settingsOpen: resp.data.new_user,
+                profilePlaylists: resp.data.playlists,
+                newUser: resp.data.new_user,
+                profileAccessToken: cookie.access_token
+>>>>>>> d6c8f9d... New methods added
             });
         }).catch(error => {
             console.log(error);
@@ -55,9 +89,12 @@ class Template extends React.Component {
     };
 
     grabCurrentSong = () => {
-        Axios.get('currentSong')
+        Axios.get('currentSong', {
+            params: {
+                username: this.state.profileUsername
+            }
+        })
         .then(resp => {
-
             if(resp.data.isPlaying){
                 this.setState({
                     warningNotification: '', // Clearing the warnings
@@ -98,8 +135,63 @@ class Template extends React.Component {
         });
     };
 
+    learn = () => {
+        // Resetting
+        this.setState({
+            warningNotification: '',
+            warningSnack: false,
+        });
+
+        let learningPlaylists = this.state.playlistNames;
+        let tmpArr = [];
+        let count=0;
+
+        for (let index in learningPlaylists){
+            count ++;
+            if(learningPlaylists[index].active){
+                tmpArr.push(learningPlaylists[index].id)
+            }
+        }
+
+        if(tmpArr.length){
+            Axios.get('grabPlaylistGenre', {
+                params: {
+                    username: this.state.profileUsername,
+                    access_token: this.state.profileAccessToken,
+                    playlists: tmpArr
+                }})
+                .then(resp => {
+
+                    console.log(resp)
+                }).catch(error => {
+                console.log(error);
+            });
+        } else if (count > 50) {
+            this.setState({
+                // Setting max of 50 playlists because that's the cap of the spotify music feature grabber.
+                warningNotification: 'You can only chose a max of 50 playlists',
+                warningSnack: true,
+            });
+        } else {
+            this.setState({
+                warningNotification: 'Please select at least one playlist...',
+                warningSnack: true,
+            });
+        }
+    }
+
     componentDidMount() {
-        this.initialLoad();
+        let cookie = JSON.parse(Cookies.get('spotify'));
+        console.log(cookie)
+        console.log(cookie.username)
+        this.setState({
+            profileName: cookie.name,
+            profileUsername: cookie.username,
+            profilePic: cookie.image
+        });
+
+        this.initialLoad(cookie);
+
 
         window.setInterval(() => {
             if (this.state.listening){
@@ -112,6 +204,15 @@ class Template extends React.Component {
         window.location.href = '/';
     };
 
+    handleClickOpen = target => () => {
+        this.setState({ [target]: true });
+    };
+
+    //handleClose = target => () => {
+    handleClose = target => () => {
+        this.setState({ [target]: false });
+    };
+
     render(){
         const { classes } = this.props;
 
@@ -120,8 +221,8 @@ class Template extends React.Component {
                 <section id="accountHolder" className={classes.accountHolder}>
                     <img id="profilePic" className={classes.profilePic} src={this.state.profilePic}/>
                     <section id="profileArea" className={classes.profileArea}>
-                        <Typography id="profileUserName" className={classes.profileUserName}>{this.state.profileUsername}</Typography>
-                        <Typography id="profileName" className={classes.profileName}>{this.state.profileName}</Typography>
+                        <Typography id="profileUserName" className={classes.profileUserName}>{this.state.profileName}</Typography>
+                        <Typography id="profileName" className={classes.profileName}>{this.state.profileUsername}</Typography>
                     </section>
                     <Typography> <a href="logout" id="profileLogout" className={classes.profileLogout}><p className="fas fa-sign-out-alt"></p> Logout </a> </Typography>
                 </section>
@@ -135,6 +236,22 @@ class Template extends React.Component {
                     <Button onClick={this.toggleListen} color={'secondary'} variant='raised' size="large" className={classes.mainButton}>{this.state.buttonTitle}</Button>
                     <Typography id={"Error"}>{this.state.errorNotification}</Typography>
 
+<<<<<<< HEAD
+=======
+                    { this.state.newUser == true && <Settings playlist={this.state.playlistNames}/> }
+                    <Settings
+                        open={this.state.settingsOpen}
+                        newUser={this.state.newUser}
+                        closeIt={this.handleClose}
+                        playlistNames={this.state.playlistNames}
+                        profilePlaylists={this.state.profilePlaylists}
+                        username={this.state.profileUsername}
+                        accessToken={this.state.profileAccessToken}
+                    />
+                    <h1> {this.state.learning} </h1>
+
+
+>>>>>>> d6c8f9d... New methods added
                     <section className={classes.currentContainer}>
                         <section className={classes.currentPlaying}>
                             <section className={classes.currentInformation}>
@@ -157,10 +274,10 @@ class Template extends React.Component {
                     open={this.state.warningSnack}
                     variant="warning"
                     action={[
-                        this.state.warningNotification === 'Warning: Spotify paused' ? null :
+                        this.state.warningNotification === 'Warning: New update from server, please refresh...' ?
                             <Button key="undo" color="secondary" size="small" onClick={this.refresh}>
                                 Refresh
-                            </Button>
+                            </Button> : null
                     ]}
                     message={
                         <section>

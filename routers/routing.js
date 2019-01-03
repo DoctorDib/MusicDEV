@@ -3,10 +3,11 @@ const request = require('request');
 const spotify = require('../helpers/spotify_api.js');
 
 const isLoggedIn = (req, res, next) => {
-    if (req.isAuthenticated()) {
+    /*if (req.isAuthenticated()) {
         return next();
     }
-    return res.redirect('/welcome');
+    return res.redirect('/welcome');*/
+    return next();
 };
 
 module.exports = function(passport){
@@ -21,8 +22,6 @@ module.exports = function(passport){
 
             router.get('/ping', this.homeTest);
 
-            router.post('/login', this.loginVal);
-            router.post('/register', this.registerVal);
             router.post('/ping', this.homeTest);
         },
         /**
@@ -36,9 +35,17 @@ module.exports = function(passport){
         },
 
         loggedIn: function (req, res) {
-            spotify('new_user', {username: req.user.username}, ()=>{});
+
+            if(req.cookies.spotify){
+                res.render('index/loggedIndex.ejs', {
+                    title: 'musicDEV'
+                });
+            } else {
+                res.redirect('/welcome')
+            }
+
             // Checks if users spotify account is linked
-            spotify('check_account', {username: req.user.username}, response => {
+            /*spotify('check_account', {username: req.user.username}, response => {
                 if (response.response === "success") {
                     res.render('index/loggedIndex.ejs', {
                         title: 'musicDEV'
@@ -46,38 +53,15 @@ module.exports = function(passport){
                 } else {
                     res.redirect('/spotify_login');
                 }
-            });
+            });*/
         },
-
-        loginVal: function (req, res) {
-            passport.authenticate('local_login', (err, user) => {
-                if (!user) return res.json({success: false, msg: 'Incorrect username or password'});
-                if (err) return res.json({success: false, msg: 'Something went wrong, please try again'});
-                req.logIn(user, (err) => {
-                    if (err) return console.log('ERROR: ' + err);
-                    res.json({success: true, user: user});
-                });
-            })(req, res);
-        },
-
-        // Register validation
-        registerVal: function (req, res) {
-            passport.authenticate('local_register', (err, user) => {
-                if (err) return res.json({success: false, msg: 'Something went wrong, please try again'});
-                if (!user) return res.json({success: false, msg: 'Username already exists!'});
-
-                req.logIn(user, (err) => {
-                    if (err) return console.log('ERROR: ' + err);
-                    res.json({success: true, user: user});
-                });
-            })(req, res);
-        },
-
+        
         // Logging out of account
         logout: function(req, res){
             req.session.destroy(() => {
-            res.redirect('/welcome');
-          });
+                res.cookie('spotify', '', {maxAge: Date.now()}); // Desroying the cookie
+                res.redirect('/welcome');
+            });
         },
 
         spotifyRefresh: function(req, res){
@@ -110,7 +94,6 @@ module.exports = function(passport){
                 code : req.query.code,
                 state: req.query.state,
                 storedState: cookie,
-                temp_user: req.user.username
             });
 
             if(callback.response === 'failed'){
@@ -122,7 +105,6 @@ module.exports = function(passport){
                     code : req.query.code,
                     state: req.query.state,
                     storedState: cookie,
-                    temp_user: req.user.username
                 });
 
                 request.post(authOptions, (error, response, body) => {
@@ -141,15 +123,26 @@ module.exports = function(passport){
                             "refresh_token": refresh_token
                         };
 
-                        spotify('set_get', {
-                            data: data,
-                            username: req.user.username,
-                            access_token: access_token
-                        }, () => {
-                            res.redirect('/');
+                        spotify('getMe', {access_token: data.access_token}, (accountResponse) => {
+                            spotify('set_get', {
+                                data: data,
+                                access_token: access_token,
+                                username: accountResponse.username
+                                }, () => {
+                                    let data = {
+                                        access_token: access_token,
+                                        username: accountResponse.username,
+                                        name: accountResponse.name,
+                                        image: accountResponse.image,
+                                    }
+                                    let maxAge = (60000 * 1440) // 6000ms to 1 minute => 24 hours
+                                    res.cookie('spotify', JSON.stringify(data), {maxAge: maxAge});
+                                    res.redirect('/');
+                                });
                         });
                     } else {
-                        res.redirect('/login')
+                        res.redirect('/'); // Redirecting to homepage, if not loged in, then the user will be
+                        // redirected to the landing page.
                     }
                 });
             }

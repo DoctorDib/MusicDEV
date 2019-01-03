@@ -7,6 +7,8 @@ const scope = 'user-read-private user-read-email user-library-read user-top-read
 const request = require('request');
 const SpotifyWebApi = require('spotify-web-api-node');
 
+const otherSpotify = require('./Trainer/helpers/spotifyApi')
+
 let spotifyApi = {};
 
 const querystring = require('querystring');
@@ -88,7 +90,6 @@ module.exports = function(command, data, callback) {
             var code = data.code;
             var state = data.state;
             var storedState = data.storedState;
-            var temp_user = data.temp_user;
 
             if (state === null || state !== storedState) {
                 return {
@@ -103,7 +104,6 @@ module.exports = function(command, data, callback) {
             var code = data.code;
             var state = data.state;
             var storedState = data.storedState;
-            var temp_user = data.temp_user;
 
             var authOptions = {
                 url: 'https://accounts.spotify.com/api/token',
@@ -118,7 +118,29 @@ module.exports = function(command, data, callback) {
                 json: true
             };
 
-            return authOptions
+            return authOptions;
+
+        case 'grabTracksFromPlaylist':
+            spotifyApi[data.username].setAccessToken(data.access_token);
+
+            console.log(data.playlist + " >>>")
+            spotifyApi[data.username].getPlaylist(data.playlist)
+                .then(function(data) {
+                    callback(data.body.tracks.items)
+                }, function(err) {
+                    console.log('Grabbing tracks error: ', err);
+                });
+            break;
+
+        case 'grabFeaturesFromTracks':
+            spotifyApi[data.username].setAccessToken(data.access_token);
+            console.log("^%$%^%$%^%$%^")
+            console.log(data.trackURIs)
+            otherSpotify.grabFeatures(spotifyApi[data.username], false, data.trackURIs, (list) => {
+                console.log(list)
+                callback(list)
+            });
+            break;
 
         case 'set_get':
             spotifyApi[data.username].setAccessToken(data.access_token);
@@ -142,13 +164,41 @@ module.exports = function(command, data, callback) {
                                 });
                             });
                             return playlist;
+<<<<<<< HEAD
                         }). then(function(data_pass){
                         build.playlists = data_pass;
                         mongoose('update', {username: data.username}, "spotify", build);
                     });
+=======
+                        }).catch(function(err){
+                            console.error(err);
+                        });
+                }).then(function(resp){
+                    callback(resp);
+                }).catch(function(err){
+                    console.error(err);
+                });
+            break;
+
+        case 'set_get':
+            spotifyApi[data.username] = new SpotifyWebApi({
+                clientId : client_id,
+                clientSecret : client_secret,
+                redirectUri : redirect_uri
+            });
+
+            spotifyApi[data.username].setAccessToken(data.access_token);
+
+            let response={};
+
+            spotifyApi[data.username].getMe()
+                .then(function(data_root){
+
+                    var build = data.data || {};
+                    build.user_id = data_root.body.id;
+>>>>>>> d6c8f9d... New methods added
 
                     return build;
-
                 }).then(function(resp){
                     callback(resp);
                 })
@@ -156,6 +206,30 @@ module.exports = function(command, data, callback) {
                     console.error(err);
                 });
             break;
+
+            case 'getMe':
+                let tmp = new SpotifyWebApi({
+                    clientId : client_id,
+                    clientSecret : client_secret,
+                    redirectUri : redirect_uri
+                });
+
+                tmp.setAccessToken(data.access_token);
+
+                tmp.getMe()
+                    .then(function(data_root){
+                        console.log(data_root)
+                        callback({
+                            username: data_root.body.id,
+                            name: data_root.body.display_name,
+                            image: data_root.body.images[0].url
+                        });
+                    })
+                    .catch(function(err){
+                        console.error(err);
+                    });
+                break;
+
             case 'check_account':
                 mongoose('get', {username: data.username}, null, null, function(respData){
                     if(respData.spotify.access_token){
