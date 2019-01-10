@@ -1,35 +1,20 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-
 import Axios from 'axios';
 
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 import Snackbar from '@material-ui/core/Snackbar';
-
 import WarningIcon from '@material-ui/icons/Warning';
 import SettingsIcon from '@material-ui/icons/Settings';
 import LogoutIcon from '@material-ui/icons/ExitToApp';
 import ListenIcon from '@material-ui/icons/Headset';
 import HelpIcon from '@material-ui/icons/Help';
-
-import Table from '@material-ui/core/Table';
-import TableBody from '@material-ui/core/TableBody'
-import TableCell from '@material-ui/core/TableCell';
-import TableHead from '@material-ui/core/TableHead';
-import TableRow from '@material-ui/core/TableRow';
-import FormLabel from '@material-ui/core/FormLabel';
-import FormControl from '@material-ui/core/FormControl';
-import FormGroup from '@material-ui/core/FormGroup';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import Switch from '@material-ui/core/Switch';
 import Tooltip from '@material-ui/core/Tooltip';
 
-import GridList from '@material-ui/core/GridList';
-import GridListTile from '@material-ui/core/GridListTile'
-
 // Settings
-import Settings from './playlistContainer'
+import Settings from './SettingsComponent/index'
+import Help from './HelpComponent/index'
 
 import { withStyles } from '@material-ui/core/styles';
 
@@ -42,6 +27,7 @@ class Template extends React.Component {
         this.state = {
             listening: false,
             settingsOpen: false,
+            helperOpen: false,
             activeSettings: false, // Deciding if first time set up or if user has opened the settings
             color: 'rgba(81,81,81,0)',
 
@@ -83,7 +69,7 @@ class Template extends React.Component {
                     });
                 } else {
                     this.setState({
-                        errorNotification: 'Error: Session timeout, please logout and then backin...',
+                        errorNotification: 'Error: Session timeout, please logout and then back in...',
                         warningSnack: true
                     })
                 }
@@ -115,68 +101,23 @@ class Template extends React.Component {
                     });
                 }
             }).catch(err =>{
-            switch(err.response.status){
-                case 502:
-                    this.setState({
-                        warningNotification: 'Warning: New update from server, please refresh...',
-                        warningSnack: true
-                    });
-                    break;
-                case 500:
-                case 401:
-                    this.setState({
-                        errorNotification: 'Error: Disconnected from the server, please refresh...',
-                    });
-                    break;
-            }
-            this.setState({listening: false})
+                switch(err.response.status){
+                    case 502:
+                        this.setState({
+                            warningNotification: 'Warning: New update from server, please refresh...',
+                            warningSnack: true
+                        });
+                        break;
+                    case 500:
+                    case 401:
+                        this.setState({
+                            errorNotification: 'Error: Disconnected from the server, please refresh...',
+                        });
+                        break;
+                }
+                this.setState({listening: false})
         })
     };
-
-    learn = () => {
-        // Resetting
-        this.setState({
-            warningNotification: '',
-            warningSnack: false,
-        });
-
-        let learningPlaylists = this.state.playlistNames;
-        let tmpArr = [];
-        let count=0;
-
-        for (let index in learningPlaylists){
-            count ++;
-            if(learningPlaylists[index].active){
-                tmpArr.push(learningPlaylists[index].id)
-            }
-        }
-
-        if(tmpArr.length){
-            Axios.get('grabPlaylistGenre', {
-                params: {
-                    username: this.state.profileUsername,
-                    access_token: this.state.profileAccessToken,
-                    playlists: tmpArr
-                }})
-                .then(resp => {
-                    console.log(resp)
-                    this.setState({playlistNames: resp})
-                }).catch(error => {
-                console.log(error);
-            });
-        } else if (count > 50) {
-            this.setState({
-                // Setting max of 50 playlists because that's the cap of the spotify music feature grabber.
-                warningNotification: 'You can only chose a max of 50 playlists',
-                warningSnack: true,
-            });
-        } else {
-            this.setState({
-                warningNotification: 'Please select at least one playlist...',
-                warningSnack: true,
-            });
-        }
-    }
 
     componentDidMount() {
         let cookie = JSON.parse(Cookies.get('spotify'));
@@ -219,7 +160,11 @@ class Template extends React.Component {
         //this.setState({ [target]: false });
     };
 
-    handleEventClose = target => {
+    handleSettingClose = target => {
+        this.setState({ [target]: false });
+    };
+
+    handleHelpClose = target => {
         this.setState({ [target]: false });
     };
 
@@ -236,7 +181,11 @@ class Template extends React.Component {
             listening: !this.state.listening,
             color: this.state.listening ? 'rgba(81,81,81,0)' : 'rgba(81,81,81,0.8)'
         });
-    }
+
+        this.grabCurrentSong();
+    };
+
+
 
     render(){
         const { classes } = this.props;
@@ -253,7 +202,7 @@ class Template extends React.Component {
                         <Button onClick={this.handleClickOpen('settingsOpen', true)} className={classes.profileSettings}><SettingsIcon style={{fontSize: '20'}}/></Button>
                     </Tooltip>
                     <Tooltip disableFocusListener disableTouchListener title="Help">
-                        <Button><HelpIcon style={{fontSize: '20'}}/></Button>
+                        <Button onClick={this.handleClickOpen('helperOpen', true)}><HelpIcon style={{fontSize: '20'}}/></Button>
                     </Tooltip>
                     <Tooltip disableFocusListener disableTouchListener title="Logout">
                         <Button onClick={this.handleLogout} ><LogoutIcon /> </Button>
@@ -280,12 +229,19 @@ class Template extends React.Component {
                         open={this.state.settingsOpen}
                         newUser={this.state.newUser}
                         close={this.handleClose}
-                        closeIt={this.handleEventClose}
+                        closeIt={this.handleSettingClose}
                         playlistNames={this.state.playlistNames}
                         profilePlaylists={this.state.profilePlaylists}
                         username={this.state.profileUsername}
                         accessToken={this.state.profileAccessToken}
                     />
+
+                    <Help
+                        open={this.state.helperOpen}
+                        close={this.handleClose}
+                        closeIt={this.handleHelpClose}
+                    />
+
                     <h1> {this.state.learning} </h1>
 
 

@@ -44,14 +44,6 @@ const styles = {
         marginBottom: '2em',
         color: 'white'
     },
-    mainButton: {
-        border: 'none',
-        borderRadius: '0.15em',
-        textDecoration: 'none',
-        outline: 'none',
-        margin: '2em',
-        userSelect: 'none',
-    },
 
     backHome: {
         position: 'fixed',

@@ -24,7 +24,8 @@ export default theme => ({
         flexGrow: '2',
         flexDirection: 'row',
         justifyContent: 'flex-end',
-        backgroundColor: '#d7d7d7'
+        backgroundColor: '#d7d7d7',
+        height: '4vh'
     },
     profilePic: {
         width: '75px',

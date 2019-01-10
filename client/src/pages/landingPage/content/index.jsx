@@ -8,7 +8,7 @@ import { withStyles } from '@material-ui/core/styles';
 import styles from './style';
 
 // Content
-import About from './aboutContent';
+import About from './AboutComponent/index';
 
 class Template extends React.Component {
     constructor(props) {

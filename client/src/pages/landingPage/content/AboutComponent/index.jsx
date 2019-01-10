@@ -52,44 +52,44 @@ class Template extends React.Component {
 
                     <ul>
                         <li>
-                            <Typography variant="title" gutterBottom style={{ fontWeight: "bold"}}> Playlist-modify-public </Typography>
+                            <Typography variant="title" gutterBottom style={{fontWeight: 'bold'}}> Playlist-modify-public </Typography>
                             <Typography variant="subheading" gutterBottom> We require access to your public playlist in order for MusicDEV to learn
                                 your taste in music.</Typography>
                         </li>
 
                         <li>
-                            <Typography variant="title" gutterBottom style={{ fontWeight: "bold"}}> Playlist-modify-private </Typography>
+                            <Typography variant="title" gutterBottom style={{fontWeight: 'bold'}}> Playlist-modify-private </Typography>
                             <Typography variant="subheading" gutterBottom> We require access to your private playlist in order for MusicDEV to learn
                                 your taste in music.</Typography>
                         </li>
 
                         <li>
-                            <Typography variant="title" gutterBottom style={{ fontWeight: "bold"}}>  User-read-private </Typography>
+                            <Typography variant="title" gutterBottom style={{fontWeight: 'bold'}}>  User-read-private </Typography>
                             <Typography variant="subheading" gutterBottom> Giving us the ability to search for tracks on playlists and to also show
                                 you your profile when logged in.</Typography>
                         </li>
 
                         <li>
-                            <Typography variant="title" gutterBottom style={{ fontWeight: "bold"}}>  User-top-read (Top tracks and playlists) </Typography>
+                            <Typography variant="title" gutterBottom style={{fontWeight: 'bold'}}>  User-top-read (Top tracks and playlists) </Typography>
                             <Typography variant="subheading" gutterBottom> Gives us the ability to find your most popular tracks/playlists that you
                                 listen to on a day-to-day basis. Will help us find the best recommended
                                 music when compared with your current favourite music.</Typography>
                         </li>
 
                         <li>
-                            <Typography variant="title" gutterBottom style={{ fontWeight: "bold"}}>  Playlist-read-collaborative (list of user playlists) </Typography>
+                            <Typography variant="title" gutterBottom style={{fontWeight: 'bold'}}>  Playlist-read-collaborative (list of user playlists) </Typography>
                             <Typography variant="subheading" gutterBottom> Gives us a list of your current playlists on your spotify account.</Typography>
                         </li>
 
                         <li>
-                            <Typography variant="title" gutterBottom style={{ fontWeight: "bold"}}>  User-modify-playback-state </Typography>
+                            <Typography variant="title" gutterBottom style={{fontWeight: 'bold'}}>  User-modify-playback-state </Typography>
                             <Typography variant="subheading" gutterBottom> This scope will give you full access to controlling your spotify music
                                 from MusicDEV, meaning you don’t have to fuss around trying to find your
                                 Spotify application.</Typography>
                         </li>
 
                         <li>
-                            <Typography variant="title" gutterBottom style={{ fontWeight: "bold"}}>  User-read-currently-playing </Typography>
+                            <Typography variant="title" gutterBottom style={{fontWeight: 'bold'}}>  User-read-currently-playing </Typography>
                             <Typography variant="subheading" gutterBottom> MusicDEV has a constant listening ability, that finds tracks that you
                                 may like and then automatically adds the track to your current playlist.</Typography>
                         </li>
@@ -105,7 +105,7 @@ class Template extends React.Component {
             </section>
         );
     }
-};
+}
 
 Template.propTypes = {
     classes: PropTypes.object.isRequired

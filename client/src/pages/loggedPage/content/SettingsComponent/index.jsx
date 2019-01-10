@@ -36,7 +36,6 @@ class Template extends React.Component {
             profileUsername: '',
             profileAccessToken: '',
 
-
             newUser: false,
         };
     }
@@ -170,11 +169,10 @@ class Template extends React.Component {
                 onClose={this.props.close('settingsOpen')}
                 aria-labelledby="form-dialog-title"
             >
-                {this.state.newUser ?
-                    <DialogTitle style={{backgroundColor: '#d2d2d2'}}>First time setup</DialogTitle> :
-                    <DialogTitle style={{backgroundColor: '#d2d2d2'}}>Settings Page</DialogTitle>}
-                <Card style={{backgroundColor: '#fbfbfb'}}>
-                    <section className={classes.body}>
+                <DialogTitle className={classes.settingsTitle}>{this.state.newUser ? "First time setup" : "Settings Page"}</DialogTitle>
+
+                <Card className={classes.settingsBody}>
+                    <section>
                         <FormGroup>
                             <FormLabel component="legend">Select your favourite playlists: (50 max)</FormLabel>
                             {this.state.profilePlaylists && this.state.profilePlaylists.map(tile => (

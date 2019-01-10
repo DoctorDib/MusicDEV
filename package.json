@@ -1,62 +1,66 @@
 {
-    "name": "musicdev",
-    "version": "0.0.5",
-    "description": "Final Year Project",
-    "main": "dependencies.js",
-    "scripts": {
-        "start": "pm2 start server.js --name MusicDEV --watch",
-        "devstart": "nodemon server.js",
-        "devbuild": "webpack --config webpack.config.js --watch",
-        "dev": "start nodemon server.js && start webpack --config webpack.config.js --watch",
-        "devmode": "nodejs-dashboard -- node -r nodejs-dashboard server.js"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/DoctorDib/MusicDEV.git"
-    },
-    "author": "James Dibnah",
-    "license": "ISC",
-    "bugs": {
-        "url": "https://github.com/DoctorDib/MusicDEV/issues"
-    },
-    "homepage": "https://github.com/DoctorDib/MusicDEV#readme",
-    "dependencies": {
-        "@material-ui/core": "^3.8.1",
-        "@material-ui/icons": "^3.0.1",
-        "axios": "^0.18.0",
-        "bcrypt-nodejs": "0.0.3",
-        "body-parser": "^1.18.3",
-        "brain.js": "^1.6.1",
-        "connect-flash": "^0.1.1",
-        "connect-mongo": "^2.0.3",
-        "cookie-parser": "^1.4.3",
-        "dependable": "^1.1.0",
-        "ejs": "^2.6.1",
-        "express": "^4.16.4",
-        "express-promise-router": "^3.0.3",
-        "express-session": "^1.15.6",
-        "express-validator": "^5.3.1",
-        "html-webpack-plugin": "^3.2.0",
-        "mongodb": "^3.1.10",
-        "passport": "^0.4.0",
-        "passport-spotify": "^1.0.1",
-        "react": "^16.7.0",
-        "react-dom": "^16.7.0",
-        "request": "^2.88.0",
-        "serve-favicon": "^2.5.0",
-        "spotify-web-api-node": "^4.0.0",
-        "webpack": "^4.28.3"
-    },
-    "devDependencies": {
-        "@babel/core": "^7.2.2",
-        "@babel/plugin-proposal-class-properties": "^7.2.3",
-        "@babel/preset-env": "^7.2.3",
-        "@babel/preset-react": "^7.0.0",
-        "babel-loader": "^8.0.4",
-        "html-loader": "^0.5.5",
-        "html-webpack-plugin": "^3.2.0",
-        "nodejs-dashboard": "^0.4.3",
-        "webpack-cli": "^3.1.2",
-        "webpack-dashboard": "^2.0.0"
-    }
+  "name": "musicdev",
+  "version": "0.0.5",
+  "description": "Final Year Project",
+  "main": "dependencies.js",
+  "scripts": {
+    "start": "pm2 start server.js --name MusicDEV --watch",
+    "devstart": "nodemon server.js",
+    "devbuild": "webpack --config webpack.config.js --watch",
+    "dev": "start nodemon server.js && start webpack --config webpack.config.js --watch",
+    "devmode": "nodejs-dashboard -- node -r nodejs-dashboard server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DoctorDib/MusicDEV.git"
+  },
+  "author": "James Dibnah",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/DoctorDib/MusicDEV/issues"
+  },
+  "homepage": "https://github.com/DoctorDib/MusicDEV#readme",
+  "dependencies": {
+    "@material-ui/core": "^3.8.1",
+    "@material-ui/icons": "^3.0.1",
+    "axios": "^0.18.0",
+    "bcrypt-nodejs": "0.0.3",
+    "body-parser": "^1.18.3",
+    "brain.js": "^1.6.1",
+    "connect-flash": "^0.1.1",
+    "connect-mongo": "^2.0.3",
+    "cookie-parser": "^1.4.3",
+    "dependable": "^1.1.0",
+    "ejs": "^2.6.1",
+    "express": "^4.16.4",
+    "express-promise-router": "^3.0.3",
+    "express-session": "^1.15.6",
+    "express-validator": "^5.3.1",
+    "html-webpack-plugin": "^3.2.0",
+    "mongodb": "^3.1.10",
+    "passport": "^0.4.0",
+    "passport-spotify": "^1.0.1",
+    "prop-types": "^15.6.2",
+    "react": "^16.7.0",
+    "react-dom": "^16.7.0",
+    "react-onscroll": "^1.0.4",
+    "request": "^2.88.0",
+    "serve-favicon": "^2.5.0",
+    "spotify-web-api-node": "^4.0.0",
+    "webpack": "^4.28.3"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.2.2",
+    "@babel/plugin-proposal-class-properties": "^7.2.3",
+    "@babel/preset-env": "^7.2.3",
+    "@babel/preset-react": "^7.0.0",
+    "babel-loader": "^8.0.4",
+    "html-loader": "^0.5.5",
+    "html-webpack-plugin": "^3.2.0",
+    "machinepack-spotify": "0.0.3",
+    "nodejs-dashboard": "^0.4.3",
+    "pushbullet": "^2.3.0",
+    "webpack-cli": "^3.1.2",
+    "webpack-dashboard": "^2.0.0"
+  }
 }

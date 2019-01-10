@@ -60,7 +60,7 @@ function workout(expected, actual, callback){
 }
 
 function round(input, dec){
-    input = Number(input.toFixed(21));
+    input = Number(input.toFixed(10));
     return Number(Math.round(input+'e'+dec)+'e-'+dec);
 }
 
