@@ -37,6 +37,7 @@ class Template extends React.Component {
             profileAccessToken: '',
 
             newUser: false,
+            learnDisabled: false,
         };
     }
 
@@ -55,7 +56,7 @@ class Template extends React.Component {
         this.setState({
             playlistNames: eat
         })
-    }
+    };
 
     componentWillReceiveProps(props){
         this.setState({
@@ -92,20 +93,28 @@ class Template extends React.Component {
         this.setState({
             warningNotification: '',
             warningSnack: false,
+            learnDisabled: false
         });
 
         let learningPlaylists = this.state.playlistNames;
         let tmpArr = [];
         let count=0;
 
-        for (let index in learningPlaylists){
-            count ++;
-            if(learningPlaylists[index].active){
-                tmpArr.push(learningPlaylists[index].id)
+        for (let index in learningPlaylists) {
+            if (learningPlaylists.hasOwnProperty(index)) {
+                count ++;
+                if (learningPlaylists[index].active) {
+                    tmpArr.push(learningPlaylists[index].id)
+                }
             }
         }
 
         if(tmpArr.length){
+            this.setState({
+                learnDisabled: true,
+                warningNotification: 'Learning',
+                warningSnack: true,
+            });
             Axios.get('grabPlaylistGenre', {
                 params: {
                     username: this.state.profileUsername,
@@ -115,6 +124,10 @@ class Template extends React.Component {
                 .then(resp => {
                     if(resp.data.success){
                         console.log("Closing window")
+                        this.setState({
+                            learnDisabled: false,
+                            warningSnack: false,
+                        });
                         this.props.closeIt('settingsOpen')
                     } else {
                         console.log("Please try again");
@@ -134,18 +147,17 @@ class Template extends React.Component {
                 warningSnack: true,
             });
         }
-    }
+    };
 
     slugify = name => {
         name = name.replace(/[$-/:-?{-~!"^_`\[\]]/g, '');
         return name.replace(/\s+/g, '_').toLowerCase();
     };
 
-    handleChange = playlist => event => {
+    handleChange = playlist => () => {
         let tmp = this.state.playlistNames;
 
         if(!tmp.hasOwnProperty(playlist.id)){
-            console
             tmp[playlist.id] = {
                 name: playlist.name,
                 id: playlist.id,
@@ -191,7 +203,7 @@ class Template extends React.Component {
                             ))}
                             {this.state.newUser ? null :
                                 <Button onClick={this.props.close('settingsOpen')}> X </Button>}
-                            <Button onClick={this.learn}> {this.state.newUser ? "Learn" : "Save"}</Button>
+                            <Button onClick={this.learn} disabled={this.state.learnDisabled}> {this.state.newUser ? "Learn" : "Save"}</Button>
                         </FormGroup>
                     </section>
                 </Card>

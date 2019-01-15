@@ -11,4 +11,7 @@ export default theme => ({
         userSelect: 'none',
         width: '16em'
     },
+    chip: {
+        margin: theme.spacing.unit,
+    },
 });

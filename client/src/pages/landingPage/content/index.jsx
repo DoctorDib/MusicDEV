@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 
 import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
+import SpotifyIcon from 'mdi-react/SpotifyIcon';
 
 import { withStyles } from '@material-ui/core/styles';
 import styles from './style';
@@ -39,7 +40,7 @@ class Template extends React.Component {
                     </section>
 
                     <section>
-                        <Button href={'/spotify_login'} color={'secondary'} variant='raised' size="large" className={classes.mainButton}>Spotify Login</Button>
+                        <Button href={'/spotify_login'} color={'secondary'} variant='raised' size="large" className={classes.mainButton}> <SpotifyIcon /> Login</Button>
                         <Button color={'secondary'} variant='raised' size="large" className={classes.mainButton} onClick={this.scrollTop}>About</Button>
                     </section>
                 </section>

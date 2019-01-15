@@ -224,5 +224,8 @@ module.exports = function(command, data, callback) {
                 }
             });
             break;
+
+        case 'grabToken':
+            callback(spotifyApi[data.username]);
     }
 }

@@ -6,7 +6,7 @@ const config = require('./config/config');
 
 // ==== Training models ==== \\
 const trainer = require('./helpers/train');
-//const trainer = require('./helpers/train-tree');
+const recommender = require('./helpers/recommend');
 //const trainer = require('./helpers/train-synaptic');
 
 const spotify = require('./helpers/spotifyApi');
@@ -128,9 +128,10 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
     let useCollection, saveCollection;
 
     const mongoAction = {
-        save: (collection, id, value) => {
+        save: (collection, id, value, callback) => {
             mongoAction.checkDelete(collection, id, () => {
                 collection.insert({id: id, [id]: value});
+                callback();
             });
         },
         insertArr: (collection, id, value) => {
@@ -485,7 +486,7 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
                         console.log("Found")
 
                         async.eachOfSeries(arr, function (value, keyFiles, callbackFiles) {
-                            readTextFile("./Data/trackData/" + value + ".json", function (json) {
+                            readTextFile("../Data/trackData/" + value + ".json", function (json) {
                                 async.eachOfSeries(json, function (jsonValue, jsonKey, jsonCallback) {
                                     let uriArray = [];
                                     async.eachOfSeries(jsonValue.tracks, function (trackValue, trackKey, trackCallback) {
@@ -520,10 +521,12 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
                                                                     if (uriArrayKey + 1 >= uriArray.length) {
                                                                         if (jsonKey + 1 >= Object.keys(json).length) {
                                                                             if (keyFiles + 1 >= arr.length) {
-                                                                                let body = `Database build has been completed with ${finalArray.length} entries.`;
-                                                                                push.send({
-                                                                                    title: "Database build complete",
-                                                                                    body: body
+                                                                                mongoAction.save(saveCollection, "master", finalArray, () => {
+                                                                                    let body = `Database build has been completed with ${finalArray.length} entries.`;
+                                                                                    push.send({
+                                                                                        title: "Database build complete",
+                                                                                        body: body
+                                                                                    });
                                                                                 });
                                                                             } else {
                                                                                 console.log('========================')
@@ -552,6 +555,31 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
                                 });
                             });
                         });
+                    }
+                });
+            });
+        },
+        recommend: function () {
+            let uri=process.argv[3]; // String
+            /*let genres=process.argv[4]; // Array
+            let quantity=process.argv[5];*/ // TODO - NOT REQUIRED AT THE MOMENT
+
+            /*genres = JSON.stringify(genres)
+            genres = JSON.parse(genres);*/
+
+            let genres = ["Blues"]
+
+            let tmpRecommendations={};
+
+            async.eachOfSeries(genres, function (genre, genreKey, genreCallback) {
+                recommender(spotifyApi, uri, genre, resp => {
+                    console.log("Response: ")
+
+                    if (genreKey <= genres.length) {
+                        // Finished
+                        callback()
+                    } else {
+                        genreCallback()
                     }
                 });
             });

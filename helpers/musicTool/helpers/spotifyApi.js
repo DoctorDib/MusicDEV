@@ -21,8 +21,7 @@ let self = {
                     tempo: boundary("tempo", value.tempo, null),
                 };
                 callback(features);
-            }, function(err) {
-                //console.log(trackURIList)
+            }).catch(function(err){
                 console.log("SINGLE TRACKS ERROR: " + err);
             });
     },

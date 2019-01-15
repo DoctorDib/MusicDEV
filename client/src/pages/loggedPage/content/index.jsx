@@ -12,13 +12,24 @@ import ListenIcon from '@material-ui/icons/Headset';
 import HelpIcon from '@material-ui/icons/Help';
 import Tooltip from '@material-ui/core/Tooltip';
 
+import Table from '@material-ui/core/Table';
+import TableBody from '@material-ui/core/TableBody';
+import TableCell from '@material-ui/core/TableCell';
+import TableHead from '@material-ui/core/TableHead';
+import TableRow from '@material-ui/core/TableRow';
+import Paper from '@material-ui/core/Paper';
+
 // Settings
 import Settings from './SettingsComponent/index'
 import Help from './HelpComponent/index'
+import GenreButtons from './GenreButtons/index'
+import RecommendationTable from './TableComponent/index'
 
 import { withStyles } from '@material-ui/core/styles';
 
 import styles from './style';
+
+const defaultTable = <TableRow> <TableCell>  </TableCell> <TableCell>  </TableCell> <TableCell>  </TableCell> </TableRow>;
 
 class Template extends React.Component {
     constructor(props) {
@@ -49,34 +60,10 @@ class Template extends React.Component {
             errorNotification: '',
             learningNotification: '',
             warningSnack: false,
+
+            tableRecommendation: defaultTable
         };
     }
-
-    initialLoad = (cookie) => {
-        Axios.get('initialLoad', {
-            params: {
-                username: cookie.username,
-                access_token: cookie.access_token
-            }})
-            .then(resp => {
-                console.log(">>", resp.data)
-                if(resp.data.success){
-                    this.setState({
-                        settingsOpen: resp.data.new_user,
-                        profilePlaylists: resp.data.playlists,
-                        newUser: resp.data.new_user,
-                        profileAccessToken: cookie.access_token
-                    });
-                } else {
-                    this.setState({
-                        errorNotification: 'Error: Session timeout, please logout and then back in...',
-                        warningSnack: true
-                    })
-                }
-            }).catch(error => {
-            console.log(error);
-        });
-    };
 
     grabCurrentSong = () => {
         Axios.get('currentSong', {
@@ -85,6 +72,7 @@ class Template extends React.Component {
             }
         })
             .then(resp => {
+                console.log(resp)
                 if(resp.data.isPlaying){
                     this.setState({
                         warningNotification: '', // Clearing the warnings
@@ -115,14 +103,38 @@ class Template extends React.Component {
                         });
                         break;
                 }
-                this.setState({listening: false})
-        })
+            this.setState({listening: false})
+        });
+    };
+
+    initialLoad = cookie => {
+        Axios.get('initialLoad', {
+            params: {
+                username: cookie.username,
+                access_token: cookie.access_token
+            }})
+            .then(resp => {
+                console.log(">>", resp.data)
+                if(resp.data.success){
+                    this.setState({
+                        settingsOpen: resp.data.new_user,
+                        profilePlaylists: resp.data.playlists,
+                        newUser: resp.data.new_user,
+                        profileAccessToken: cookie.access_token
+                    });
+                } else {
+                    this.setState({
+                        errorNotification: 'Error: Session timeout, please logout and then back in...',
+                        warningSnack: true
+                    });
+                }
+            }).catch(error => {
+                console.log(error);
+        });
     };
 
     componentDidMount() {
         let cookie = JSON.parse(Cookies.get('spotify'));
-        console.log(cookie)
-        console.log(cookie.username)
         this.setState({
             profileName: cookie.name,
             profileUsername: cookie.username,
@@ -131,20 +143,24 @@ class Template extends React.Component {
 
         this.initialLoad(cookie);
 
-
         window.setInterval(() => {
             if (this.state.listening){
+                console.log("trying")
                 this.grabCurrentSong();
             }
         }, 1000);
     };
 
-    refresh() {
+    refresh = () => {
         window.location.href = '/';
     };
 
-    relog() {
+    relog = () => {
         window.location.href = '/spotify_login';
+    };
+
+    handleLogout = () => {
+        window.location.href="logout";
     };
 
     handleClickOpen = (target, settings) => () => {
@@ -160,6 +176,11 @@ class Template extends React.Component {
         //this.setState({ [target]: false });
     };
 
+    updateState = (params) => {
+        console.log("PING")
+        this.setState({[params.title]: params.value});
+    };
+
     handleSettingClose = target => {
         this.setState({ [target]: false });
     };
@@ -168,24 +189,16 @@ class Template extends React.Component {
         this.setState({ [target]: false });
     };
 
-    handleLogout = () => {
-        window.location.href="logout";
-    }
-
     handleChange = name => event => {
         this.setState({ [name]: event.target.checked });
     };
 
-    handleListen = event => {
+    handleListen = () => {
         this.setState({
             listening: !this.state.listening,
             color: this.state.listening ? 'rgba(81,81,81,0)' : 'rgba(81,81,81,0.8)'
         });
-
-        this.grabCurrentSong();
     };
-
-
 
     render(){
         const { classes } = this.props;
@@ -242,8 +255,12 @@ class Template extends React.Component {
                         closeIt={this.handleHelpClose}
                     />
 
-                    <h1> {this.state.learning} </h1>
+                    <GenreButtons
+                        username={this.state.profileUsername}
+                        updateTable={(params) => this.updateState(params)}
+                    />
 
+                    <h1> {this.state.learning} </h1>
 
                     <section className={classes.currentContainer}>
                         <section className={classes.currentPlaying}>
@@ -259,6 +276,8 @@ class Template extends React.Component {
                     </section>
                 </section>
 
+                <RecommendationTable tableContent={this.state.tableRecommendation} />
+
                 <Snackbar
                     anchorOrigin={{
                         vertical: 'bottom',
@@ -271,9 +290,9 @@ class Template extends React.Component {
                             <Button key="undo" color="secondary" size="small" onClick={this.refresh}>
                                 Refresh
                             </Button> :
-                            this.state.errorNotification === 'Error: Session timeout, please logout and then backin...' ?
+                            this.state.errorNotification === 'Error: Session timeout, please logout and then back in...' ?
                                 <Button key="undo" color="secondary" size="small" onClick={this.relog}>
-                                    relog
+                                    ReLog
                                 </Button> : null
                     ]}
                     message={
