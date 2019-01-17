@@ -96,7 +96,7 @@ function predict (trackInfo, cats, callback){
 
             let pred = svm.predict(trackInfo[0]);
 
-            console.log(">> " + pred)
+            console.log(">>> " + pred)
 
             if(pred === -1){
                 x.splice(1, 1);

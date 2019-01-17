@@ -14,6 +14,8 @@ const querystring = require('querystring');
 const mongoose = require('../helpers/mongoose');
 const stateKey = 'spotify_auth_state';
 
+let authOptions = {};
+
 
 module.exports = function(command, data, callback) {
     switch(command){
@@ -51,7 +53,7 @@ module.exports = function(command, data, callback) {
 
         case 'refresh':
             // requesting access token from refresh token
-            var authOptions = {
+            authOptions = {
                 url: 'https://accounts.spotify.com/api/token',
                 headers: { 'Authorization': 'Basic ' + (new Buffer(client_id + ':' + client_secret).toString('base64')) },
                 form: {
@@ -103,7 +105,7 @@ module.exports = function(command, data, callback) {
             var state = data.state;
             var storedState = data.storedState;
 
-            var authOptions = {
+            authOptions = {
                 url: 'https://accounts.spotify.com/api/token',
                 form: {
                     code: code,
@@ -132,8 +134,6 @@ module.exports = function(command, data, callback) {
 
         case 'grabFeaturesFromTracks':
             spotifyApi[data.username].setAccessToken(data.access_token);
-            console.log("^%$%^%$%^%$%^")
-            console.log(data.trackURIs)
             otherSpotify.grabFeatures(spotifyApi[data.username], false, data.trackURIs, (list) => {
                 console.log(list)
                 callback(list)
@@ -155,15 +155,16 @@ module.exports = function(command, data, callback) {
                                 });
                             });
                             return playlist;
-                        }).catch(function(err){
+                        })
+                        .catch(function(err){
                             console.error(err);
                         });
                 }).then(function(resp){
-                callback({success: true, data: resp});
-            }).catch(function(err){
-                callback({success: false});
-                console.error("Get Me Error: ", err);
-            });
+                    callback({success: true, data: resp});
+                }).catch(function(err){
+                    console.error("Get Me Error: ", err);
+                    callback({success: false});
+                });
             break;
 
         case 'set_get':

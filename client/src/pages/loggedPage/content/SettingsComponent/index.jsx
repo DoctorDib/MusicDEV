@@ -2,19 +2,16 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import Button from '@material-ui/core/Button';
-import Typography from '@material-ui/core/Typography';
-import TextField from '@material-ui/core/TextField';
-
 import Card from '@material-ui/core/Card';
-import CardContent from '@material-ui/core/CardContent';
-import CardActions from '@material-ui/core/CardActions';
 import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import FormLabel from '@material-ui/core/FormLabel';
-import FormControl from '@material-ui/core/FormControl';
 import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
+import LinearProgress from '@material-ui/core/LinearProgress';
+
+import slugify from 'slugify';
 
 import Axios from 'axios';
 
@@ -38,23 +35,24 @@ class Template extends React.Component {
 
             newUser: false,
             learnDisabled: false,
+            loading: 'none'
         };
     }
 
     sortActiveButtons = () =>{
-        let tmp = this.state.activePlaylist;
-        let eat = this.state.playlistNames;
+        let tmpActivePlaylist = this.state.activePlaylist;
+        let tmpPlaylistNames = this.state.playlistNames;
 
-        for(let index in tmp){
-            if(!eat.hasOwnProperty(tmp[index])){
-                eat[tmp[index]] = {}
+        for(let index in tmpActivePlaylist){
+            if(!tmpPlaylistNames.hasOwnProperty(tmpActivePlaylist[index])){
+                tmpPlaylistNames[tmpActivePlaylist[index]] = {}
             }
-            eat[tmp[index]].id = tmp[index];
-            eat[tmp[index]].active = true
+            tmpPlaylistNames[tmpActivePlaylist[index]].id = tmpActivePlaylist[index];
+            tmpPlaylistNames[tmpActivePlaylist[index]].active = true;
         }
 
         this.setState({
-            playlistNames: eat
+            playlistNames: tmpPlaylistNames
         })
     };
 
@@ -69,20 +67,20 @@ class Template extends React.Component {
         });
 
         if(!props.newUser){
-            console.log("Settings")
-
             Axios.get('grabActivePlaylist', {
                 params: {
                     username: props.username,
-                }})
-                .then((resp) => {
-                    if(resp.data.playlists.length){
-                        this.setState({
-                            activePlaylist: resp.data.playlists
-                        });
-                        this.sortActiveButtons();
-                    }
-                }).catch((err) => {
+                }
+            })
+            .then((resp) => {
+                if(resp.data.playlists.length){
+                    this.setState({
+                        activePlaylist: resp.data.playlists
+                    });
+                    this.sortActiveButtons();
+                }
+            })
+            .catch((err) => {
                 console.log("Issue:", err)
             });
         }
@@ -93,7 +91,8 @@ class Template extends React.Component {
         this.setState({
             warningNotification: '',
             warningSnack: false,
-            learnDisabled: false
+            learnDisabled: false,
+            loading: 'none'
         });
 
         let learningPlaylists = this.state.playlistNames;
@@ -114,11 +113,12 @@ class Template extends React.Component {
                 learnDisabled: true,
                 warningNotification: 'Learning',
                 warningSnack: true,
+                loading: 'block'
             });
+
             Axios.get('grabPlaylistGenre', {
                 params: {
                     username: this.state.profileUsername,
-                    access_token: this.state.profileAccessToken,
                     playlists: tmpArr
                 }})
                 .then(resp => {
@@ -127,8 +127,9 @@ class Template extends React.Component {
                         this.setState({
                             learnDisabled: false,
                             warningSnack: false,
+                            loading: 'none'
                         });
-                        this.props.closeIt('settingsOpen')
+                        this.props.close('settingsOpen')
                     } else {
                         console.log("Please try again");
                     }
@@ -147,11 +148,6 @@ class Template extends React.Component {
                 warningSnack: true,
             });
         }
-    };
-
-    slugify = name => {
-        name = name.replace(/[$-/:-?{-~!"^_`\[\]]/g, '');
-        return name.replace(/\s+/g, '_').toLowerCase();
     };
 
     handleChange = playlist => () => {
@@ -194,17 +190,17 @@ class Template extends React.Component {
                                             <Switch
                                                 checked={this.state.playlistNames.hasOwnProperty(tile.id) ? this.state.playlistNames[tile.id].active : false}
                                                 onChange={this.handleChange(tile)}
-                                                value={this.slugify(tile.name)}
+                                                value={slugify(tile.name, '_')}
                                             />
                                         }
                                         label={tile.name}
                                     />
                                 </div>
                             ))}
-                            {this.state.newUser ? null :
-                                <Button onClick={this.props.close('settingsOpen')}> X </Button>}
+                            {this.state.newUser ? null : <Button onClick={this.props.close('settingsOpen')}> X </Button>}
                             <Button onClick={this.learn} disabled={this.state.learnDisabled}> {this.state.newUser ? "Learn" : "Save"}</Button>
                         </FormGroup>
+
                     </section>
                 </Card>
             </Dialog >

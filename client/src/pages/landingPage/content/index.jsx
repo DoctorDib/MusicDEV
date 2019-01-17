@@ -39,8 +39,15 @@ class Template extends React.Component {
                         <Typography variant='display1' className={classes.titleChild}> Finding the right music </Typography>
                     </section>
 
-                    <section>
-                        <Button href={'/spotify_login'} color={'secondary'} variant='raised' size="large" className={classes.mainButton}> <SpotifyIcon /> Login</Button>
+                    <section style={{display: 'flex', flexDirection: 'row'}}>
+                        <Button href={'/auth/spotify'} color={'secondary'} variant='raised' size="large" className={classes.mainButton}>
+                            <div style={{width: '25%'}}>
+                                <SpotifyIcon />
+                            </div>
+                            <div style={{width: '100%'}}>
+                                <Typography> Login </Typography>
+                            </div>
+                        </Button>
                         <Button color={'secondary'} variant='raised' size="large" className={classes.mainButton} onClick={this.scrollTop}>About</Button>
                     </section>
                 </section>

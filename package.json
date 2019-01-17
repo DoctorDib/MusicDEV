@@ -39,6 +39,7 @@
     "html-webpack-plugin": "^3.2.0",
     "mdi-react": "^5.1.0",
     "mongodb": "^3.1.10",
+    "nearestneighbour": "^0.1.0",
     "passport": "^0.4.0",
     "passport-spotify": "^1.0.1",
     "prop-types": "^15.6.2",

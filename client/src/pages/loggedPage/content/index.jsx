@@ -11,13 +11,7 @@ import LogoutIcon from '@material-ui/icons/ExitToApp';
 import ListenIcon from '@material-ui/icons/Headset';
 import HelpIcon from '@material-ui/icons/Help';
 import Tooltip from '@material-ui/core/Tooltip';
-
-import Table from '@material-ui/core/Table';
-import TableBody from '@material-ui/core/TableBody';
-import TableCell from '@material-ui/core/TableCell';
-import TableHead from '@material-ui/core/TableHead';
-import TableRow from '@material-ui/core/TableRow';
-import Paper from '@material-ui/core/Paper';
+import CircularProgress from '@material-ui/core/CircularProgress';
 
 // Settings
 import Settings from './SettingsComponent/index'
@@ -29,7 +23,6 @@ import { withStyles } from '@material-ui/core/styles';
 
 import styles from './style';
 
-const defaultTable = <TableRow> <TableCell>  </TableCell> <TableCell>  </TableCell> <TableCell>  </TableCell> </TableRow>;
 
 class Template extends React.Component {
     constructor(props) {
@@ -43,9 +36,12 @@ class Template extends React.Component {
             color: 'rgba(81,81,81,0)',
 
             // Profile information
-            profileName: 'Not logged in',
+            profileName: 'Loading...',
             profileUsername: '',
             profilePic: '',
+            profilePicLoading: 'block',
+            profilePicActive: 'none',
+            profileLink: 'https://www.spotify.com/uk/',
             profileAccessToken: '',
             profilePlaylists: [],
             playlistNames: {},
@@ -61,7 +57,7 @@ class Template extends React.Component {
             learningNotification: '',
             warningSnack: false,
 
-            tableRecommendation: defaultTable
+            tableRecommendation: []
         };
     }
 
@@ -107,20 +103,21 @@ class Template extends React.Component {
         });
     };
 
-    initialLoad = cookie => {
-        Axios.get('initialLoad', {
-            params: {
-                username: cookie.username,
-                access_token: cookie.access_token
-            }})
-            .then(resp => {
-                console.log(">>", resp.data)
+    initialLoad = () => {
+        Axios.get('initial')
+            .then((resp) => {
+                console.log(resp)
                 if(resp.data.success){
                     this.setState({
                         settingsOpen: resp.data.new_user,
                         profilePlaylists: resp.data.playlists,
                         newUser: resp.data.new_user,
-                        profileAccessToken: cookie.access_token
+                        profileName: resp.data.userAccount.name,
+                        profileUsername: resp.data.userAccount.id,
+                        profilePic: resp.data.userAccount.userImage,
+                        profileLink: resp.data.userAccount.profileUrl,
+                        profilePicLoading: 'none',
+                        profilePicActive: 'block'
                     });
                 } else {
                     this.setState({
@@ -128,39 +125,34 @@ class Template extends React.Component {
                         warningSnack: true
                     });
                 }
-            }).catch(error => {
-                console.log(error);
-        });
+            })
+            .catch((err) => {
+                console.log("Initial load error: ", err);
+            });
+    };
+
+    refreshToken = () => {
+        Axios.get('refreshToken')
+            .then((resp) => {
+
+            })
+            .catch((err) => {
+                console.log("Refresh token error: ", err);
+            });
     };
 
     componentDidMount() {
-        let cookie = JSON.parse(Cookies.get('spotify'));
-        this.setState({
-            profileName: cookie.name,
-            profileUsername: cookie.username,
-            profilePic: cookie.image
-        });
-
-        this.initialLoad(cookie);
+        this.initialLoad();
 
         window.setInterval(() => {
             if (this.state.listening){
-                console.log("trying")
                 this.grabCurrentSong();
             }
         }, 1000);
     };
 
-    refresh = () => {
-        window.location.href = '/';
-    };
-
-    relog = () => {
-        window.location.href = '/spotify_login';
-    };
-
-    handleLogout = () => {
-        window.location.href="logout";
+    handleRedirect = url => () => {
+        window.location.href=url;
     };
 
     handleClickOpen = (target, settings) => () => {
@@ -176,22 +168,10 @@ class Template extends React.Component {
         //this.setState({ [target]: false });
     };
 
-    updateState = (params) => {
-        console.log("PING")
+    updateState = params => {
         this.setState({[params.title]: params.value});
     };
 
-    handleSettingClose = target => {
-        this.setState({ [target]: false });
-    };
-
-    handleHelpClose = target => {
-        this.setState({ [target]: false });
-    };
-
-    handleChange = name => event => {
-        this.setState({ [name]: event.target.checked });
-    };
 
     handleListen = () => {
         this.setState({
@@ -218,17 +198,18 @@ class Template extends React.Component {
                         <Button onClick={this.handleClickOpen('helperOpen', true)}><HelpIcon style={{fontSize: '20'}}/></Button>
                     </Tooltip>
                     <Tooltip disableFocusListener disableTouchListener title="Logout">
-                        <Button onClick={this.handleLogout} ><LogoutIcon /> </Button>
+                        <Button onClick={this.handleRedirect('/logout')} ><LogoutIcon /> </Button>
                     </Tooltip>
                 </section>
 
-                <section id="accountHolder" className={classes.accountHolder}>
-                    <img id="profilePic" className={classes.profilePic} src={this.state.profilePic}/>
+                <a href={this.state.profileLink} id="accountHolder" className={classes.accountHolder}>
+                    <CircularProgress className={classes.progress} style={{display: this.state.profilePicLoading, width: '75px', height: '75px'}} />
+                    <img id="profilePic" className={classes.profilePic} style={{display: this.state.profilePicActive}} src={this.state.profilePic}/>
                     <section id="profileArea" className={classes.profileArea}>
                         <Typography id="profileUserName" className={classes.profileUserName}>{this.state.profileName}</Typography>
                         <Typography id="profileName" className={classes.profileName}>{this.state.profileUsername}</Typography>
                     </section>
-                </section>
+                </a>
 
                 <section className={classes.header}>
                     <section className={classes.titleContainer}>
@@ -241,8 +222,7 @@ class Template extends React.Component {
                     <Settings
                         open={this.state.settingsOpen}
                         newUser={this.state.newUser}
-                        close={this.handleClose}
-                        closeIt={this.handleSettingClose}
+                        close={(params) => this.handleClose(params)}
                         playlistNames={this.state.playlistNames}
                         profilePlaylists={this.state.profilePlaylists}
                         username={this.state.profileUsername}
@@ -251,8 +231,7 @@ class Template extends React.Component {
 
                     <Help
                         open={this.state.helperOpen}
-                        close={this.handleClose}
-                        closeIt={this.handleHelpClose}
+                        close={(params) => this.handleClose(params)}
                     />
 
                     <GenreButtons
@@ -287,11 +266,11 @@ class Template extends React.Component {
                     variant="warning"
                     action={[
                         this.state.warningNotification === 'Warning: New update from server, please refresh...' ?
-                            <Button key="undo" color="secondary" size="small" onClick={this.refresh}>
+                            <Button key="undo" color="secondary" size="small" onClick={this.handleRedirect('/')}>
                                 Refresh
                             </Button> :
                             this.state.errorNotification === 'Error: Session timeout, please logout and then back in...' ?
-                                <Button key="undo" color="secondary" size="small" onClick={this.relog}>
+                                <Button key="undo" color="secondary" size="small" onClick={this.refreshToken}>
                                     ReLog
                                 </Button> : null
                     ]}

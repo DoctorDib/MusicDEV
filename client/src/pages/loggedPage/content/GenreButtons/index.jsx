@@ -15,12 +15,6 @@ import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
 import InputLabel from '@material-ui/core/InputLabel';
 import Checkbox from '@material-ui/core/Checkbox';
-import Table from '@material-ui/core/Table';
-import TableBody from '@material-ui/core/TableBody';
-import TableCell from '@material-ui/core/TableCell';
-import TableHead from '@material-ui/core/TableHead';
-import TableRow from '@material-ui/core/TableRow';
-import Paper from '@material-ui/core/Paper';
 
 import WorkoutIcon from 'mdi-react/WeightsIcon';
 import ChillIcon from 'mdi-react/CouchIcon';
@@ -33,7 +27,6 @@ import DinnerIcon from 'mdi-react/RestaurantIcon';
 import TravelIcon from 'mdi-react/DirectionsCarIcon';
 import EAndDIcon from 'mdi-react/GuitarElectricIcon';
 import RandomisedIcon from 'mdi-react/Die5Icon';
-import PlayButtonIcon from 'mdi-react/PlayCircleFilledIcon';
 
 import Axios from "axios";
 
@@ -49,8 +42,6 @@ const iconList = {
     Travel: <TravelIcon />,
     Electronic_and_Dance: <EAndDIcon />,
 };
-
-let tableContent = <TableRow> <TableCell> empty </TableCell> <TableCell> empty </TableCell> <TableCell> empty </TableCell> </TableRow>;
 
 const genres = [
     {
@@ -99,7 +90,7 @@ const defaultStates = {
     buttonColors: {},
     musicQuantity: 1,
     savePlaylist: false,
-    table: tableContent
+    table: {}
 };
 
 class Template extends React.Component {
@@ -182,18 +173,7 @@ class Template extends React.Component {
         })
         .then(resp => {
            console.log(resp)
-            let newTable = resp.data.data.map(recom =>
-                <TableRow>
-                    <Tooltip disableFocusListener disableTouchListener title={recom.activity}>
-                        <TableCell align="center" style={{width: "2%"}}> {iconList[recom.activity]} </TableCell>
-                    </Tooltip>
-                    <TableCell> {recom.name} </TableCell>
-                    <TableCell> {recom.genre} </TableCell>
-                    <TableCell style={{width: '1%'}}>
-                        <Button href={"https://open.spotify.com/track/" + recom.id}> <PlayButtonIcon /> </Button>
-                    </TableCell>
-                </TableRow>
-            );
+            let newTable = resp.data.data;
 
            this.props.updateTable({title: "tableRecommendation", value: newTable});
         })
@@ -223,10 +203,10 @@ class Template extends React.Component {
                         onChange={this.handleChange("musicQuantity")}
                     >
                         <option value={1}>1</option>
+                        <option value={2}>2</option>
                         <option value={5}>5</option>
                         <option value={10}>10</option>
                         <option value={20}>20</option>
-                        <option value={50}>50</option>
                     </Select>
                 </FormControl>
 

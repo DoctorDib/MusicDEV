@@ -6,14 +6,15 @@ const async = require('async');
 const trainer = require('../helpers/frontTraining');
 const recommender = require('../helpers/musicTool/helpers/recommend');
 
-module.exports = function(){
+module.exports = function () {
     return {
         setRouting: function (router) {
-            router.get('/initialLoad', this.initialLoad);
             router.get('/currentSong', this.currentSong);
             router.get('/grabPlaylistGenre', this.grabPlaylistGenre);
             router.get('/grabActivePlaylist', this.grabActivePlaylist);
             router.get('/recommend', this.recommendingMusic);
+            router.get('/initial', this.initial);
+            router.get('/refreshToken', this.refreshToken);
         },
 
         recommendingMusic: function(req, res) {
@@ -39,35 +40,6 @@ module.exports = function(){
                 });
             });
         },
-        initialLoad: function(req, res) {
-            spotify('new_user', {username: req.query.username}, () => {
-                //spotify('refresh', {username: req.query.ID, token: req.user.spotify.refresh_token}, () => {
-                spotify('grabPlaylists', {username: req.query.username, access_token: req.query.access_token}, (playlists) => {
-                    if(playlists.success){
-                        MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, database) {
-                            if (err) return console.error(err);
-                            const db = database.db("musicDEV");
-
-                            useCollection = db.collection("users");
-                            useCollection.findOne({id: req.query.username, activePlaylists: {$exists: true}, playlist: {$exists: true}}, function (err, resp) {
-                                if(err) console.log("Mongo error: ", err);
-                                res.json({
-                                    name: req.query.username,
-                                    username: req.query.name,
-                                    pic: req.query.image,
-                                    new_user: (!resp || resp === null),
-                                    playlists: playlists.data,
-                                    success: true
-                                });
-                            });
-                        });
-                    } else {
-                        res.json({success: false});
-                    }
-                });
-                //});
-            });
-        },
         currentSong: function(req, res) {
             spotify("grabCurrentMusic", {username: req.query.username}, data => {
                 res.json({ 
@@ -81,14 +53,15 @@ module.exports = function(){
             MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, database) {
                 if (err) return console.error(err);
                 const db = database.db("musicDEV");
-
                 useCollection = db.collection("users");
                 useCollection.update({id: req.query.username}, { $set: { activePlaylists: req.query.playlists } }, { upsert: true } );
-
-                trainer("grabURI", req.query.username, req.query.access_token, req.query.playlists, () => {
-                    console.log("Job done")
-                    res.json({
-                        success: true
+                useCollection.findOne({id: req.query.username}, (err, resp) => {
+                    if(err)return console.log(err);
+                    trainer("grabURI", req.user.id, resp.spotify.access_token, req.query.playlists, () => {
+                        console.log("Job done")
+                        res.json({
+                            success: true
+                        });
                     });
                 });
             });
@@ -97,9 +70,8 @@ module.exports = function(){
             MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, database) {
                 if (err) return console.error(err);
                 const db = database.db("musicDEV");
-
                 useCollection = db.collection("users");
-                useCollection.findOne({id: req.query.username}, { activePlaylists: { $exists: true } }, (err, resp) => {
+                useCollection.findOne({id: req.user.id}, { activePlaylists: { $exists: true } }, (err, resp) => {
                     if (err) console.log(err);
 
                     if(resp !== null){
@@ -114,6 +86,55 @@ module.exports = function(){
                     }
                 });
             });
+        },
+        initial: function (req, res) {
+            console.log(req.user.id)
+
+            spotify('new_user', {username: req.user.id}, () => {
+
+                MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, database) {
+                    if (err) return console.error(err);
+                    const db = database.db("musicDEV");
+
+                    useCollection = db.collection("users");
+                    useCollection.findOne({id: req.user.id}, function(err, resp){
+                        if (err) return console.log(err)
+
+                        spotify('grabPlaylists', {
+                            username: req.user.id,
+                            access_token: resp.spotify.access_token
+                        }, (playlists) => {
+                            if (playlists.success) {
+                                res.json({
+                                    new_user: !Object.keys(playlists.data).length,
+                                    userAccount: req.user,
+                                    playlists: playlists.data,
+                                    success: true,
+                                    access_token: resp.spotify.access_token
+                                });
+                            } else {
+                                res.json({success: false});
+                            }
+                        });
+                    })
+                })
+            });
+        },
+        refreshToken: function (req, res) {
+            MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, database) {
+                if (err) return console.error(err);
+                const db = database.db("musicDEV");
+
+                useCollection = db.collection("users");
+                useCollection.findOne({username: req.user.id}, function(err, resp){
+                    if (err) return console.log(err)
+
+                    spotify('refresh', {username: req.user.id, token: resp.spotify.refresh_token}, (data) => {
+                        useCollection.update({username: req.user.id}, {'spotify': {access_token: data.access_token, refresh_token: data.refresh_token}});
+                        res.redirect('/');
+                    });
+                })
+            })
         }
     };
 };

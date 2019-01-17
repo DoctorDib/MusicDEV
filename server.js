@@ -28,7 +28,7 @@ function configureExpress(app){
         store: new MongoStore({mongooseConnection: mongoose.connection}),
     }));
     app.use(flash());
-    require('./config/passport')(passport);
+    require('./config/passport-spotify')(passport);
     app.use(passport.initialize());
     app.use(passport.session());
 }

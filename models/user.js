@@ -1,31 +1,15 @@
-var mongoose = require('mongoose');
-var bcrypt   = require('bcrypt-nodejs');
+const mongoose = require('mongoose');
 
-/*var userSchema = mongoose.Schema({
-    username : String,
-    password : String,
-    picture : String,
+const userSchema = mongoose.Schema({
+    id: {type: String, unique: true},
+    username: {type: String, unique: true},
+    name: {type: String},
+    userImage: {type: String},
+    newUser: {type: Boolean, default: true},
     spotify: {
-        user_id: String,
-        access_token: String,
-        refresh_token: String,
-        playlists: []
-    }
-});*/
-
-var userSchema = mongoose.Schema({
-    spotify: {
-        playlists: []
-
+        access_token: {type: String},
+        refresh_token: {type: String}
     }
 });
-
-userSchema.methods.generateHash = function(password) {
-    return bcrypt.hashSync(password, bcrypt.genSaltSync(8), null);
-};
-
-userSchema.methods.validPassword = function(password) {
-    return bcrypt.compareSync(password, this.password);
-};
 
 module.exports = mongoose.model('User', userSchema);

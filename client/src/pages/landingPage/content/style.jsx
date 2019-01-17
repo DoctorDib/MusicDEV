@@ -9,7 +9,8 @@ export default theme => ({
         outline: 'none',
         margin: '2em',
         userSelect: 'none',
-        width: '16em'
+        width: '16em',
+        display: 'flex',
     },
     chip: {
         margin: theme.spacing.unit,

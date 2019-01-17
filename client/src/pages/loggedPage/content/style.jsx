@@ -6,6 +6,7 @@ export default theme => ({
     accountHolder: {
         backgroundColor: '#d7d7d7',
         width: '22em',
+        minHeight: '5vh',
         right: '0',
         position: 'fixed',
         display: 'flex',
@@ -18,6 +19,7 @@ export default theme => ({
         border: 'solid 0.2em #d7d7d7',
         borderRight: '0',
         userSelect: 'none',
+        textDecoration: 'none'
     },
     topBar: {
         display: 'flex',
@@ -41,7 +43,7 @@ export default theme => ({
         justifyContent: 'center',
         flexDirection: 'column',
         userSelect: 'none',
-        width: '100%'
+        width: '80%'
     },
     profileUserName: {
         fontSize: '1.1em',
