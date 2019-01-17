@@ -106,7 +106,7 @@ module.exports = function () {
                         }, (playlists) => {
                             if (playlists.success) {
                                 res.json({
-                                    new_user: !Object.keys(playlists.data).length,
+                                    new_user: !resp.activePlaylist.length,
                                     userAccount: req.user,
                                     playlists: playlists.data,
                                     success: true,

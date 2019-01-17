@@ -112,9 +112,9 @@ class Template extends React.Component {
                         settingsOpen: resp.data.new_user,
                         profilePlaylists: resp.data.playlists,
                         newUser: resp.data.new_user,
-                        profileName: resp.data.userAccount.name,
+                        profileName: resp.data.userAccount.displayName,
                         profileUsername: resp.data.userAccount.id,
-                        profilePic: resp.data.userAccount.userImage,
+                        profilePic: resp.data.userAccount.photos[0],
                         profileLink: resp.data.userAccount.profileUrl,
                         profilePicLoading: 'none',
                         profilePicActive: 'block'
