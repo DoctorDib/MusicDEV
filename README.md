@@ -36,10 +36,10 @@ Databases:
   6. `node app.js build` - Builds the collected music (with the new genre) to a graphical database Neo4j.
   7. `cd ../../` - Returning to the main directory.
   8. To run the application:
-    - 8.1. `npm run dev` - Dev mode for windows.
-    - 8.2. `npm run devmode` - Dev mode for Linux
-    - 8.3. `npm run devstart` - Dev mode only running server.js (without building) for Linux/Windows 
-    - 8.4. `npm run start` - Run server for Linux / Windows
+  - 8.1. `npm run dev` - Dev mode for windows.
+  - 8.2. `npm run devmode` - Dev mode for Linux
+  - 8.3. `npm run devstart` - Dev mode only running server.js (without building) for Linux/Windows 
+  - 8.4. `npm run start` - Run server for Linux / Windows
     
 ## Future plans
   - Open the program to more music platforms, e.g YouTube music etc...
