@@ -2,7 +2,7 @@
 Final Year Project - Spotify Recommendation and Continuation System.
 
 ## The purpose
-I have created MusicDEV for the soul purpose of finding new ways to explore and discover new music. I myself have a terrible taste in music and sometimes have a habbit of listening to the same music each day everyday when I program. Since I listen to music while I program, I do not really get the time to explore new music. 
+I have created MusicDEV for the sole purpose of finding new ways to explore and discover new music. I myself have a terrible taste in music and sometimes have a habit of listening to the same music each day everyday when I program. Since I listen to music while I program, I do not really get the time to explore new music. 
 
 ## Required files
 You are required to have a `secretKeys.json` within the 'helpers/' directory.
@@ -16,7 +16,7 @@ Contents of `secretkeys.json`:
    - Api key
    - More information about the Pushbullet API can be found here: https://docs.pushbullet.com/
    
-You are also required to collect your own data. The data required for *step 3* is however accessible for use (a list of playlist URI's with the correct classification of genre).
+You are also required to collect your own data. The data required for *step 3* is ,however, accessible for use (a list of playlist URI's with the correct classification of genre).
 
 Data *music* be store in '/helpers/Data' folder.
 
