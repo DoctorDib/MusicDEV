@@ -1,10 +1,13 @@
 import createMuiTheme from '@material-ui/core/styles/createMuiTheme';
 
-import green from '@material-ui/core/colors/green';
 import amber from '@material-ui/core/colors/amber';
 
 export default createMuiTheme({
+    spacing: {
+        unit: 5
+    },
     palette: {
+        type: 'dark',
         primary: {
             light: '#eeeeee',
             main: '#444444',

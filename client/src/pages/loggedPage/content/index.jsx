@@ -13,15 +13,18 @@ import HelpIcon from '@material-ui/icons/Help';
 import Tooltip from '@material-ui/core/Tooltip';
 import CircularProgress from '@material-ui/core/CircularProgress';
 
+import theme from '../../../styles/theme'
+
 // Settings
-import Settings from './SettingsComponent/index'
-import Help from './HelpComponent/index'
-import GenreButtons from './GenreButtons/index'
-import RecommendationTable from './TableComponent/index'
+import Settings from './SettingsComponent';
+import Help from './HelpComponent';
+import GenreButtons from './FooterComponents/RecommendationComponent/index';
+import FooterComponent from './FooterComponents';
 
 import { withStyles } from '@material-ui/core/styles';
 
 import styles from './style';
+import Paper from "@material-ui/core/Paper/Paper";
 
 
 class Template extends React.Component {
@@ -46,10 +49,12 @@ class Template extends React.Component {
             profilePlaylists: [],
             playlistNames: {},
             newUser: false,
+            privatePlaylist: false,
 
             // Current playing
             currentPlayingSong: '',
             currentPlayingAuthor: '',
+            currentPlayingImage: '',
 
             // Notifications
             warningNotification: '',
@@ -74,6 +79,7 @@ class Template extends React.Component {
                         warningNotification: '', // Clearing the warnings
                         currentPlayingSong: resp.data.song,
                         currentPlayingAuthor: resp.data.artist,
+                        currentPlayingImage: resp.data.image,
                         warningSnack: false,
                     });
                 } else {
@@ -81,6 +87,7 @@ class Template extends React.Component {
                         warningNotification: 'Warning: Spotify paused',
                         currentPlayingSong: '',
                         currentPlayingAuthor: '',
+                        currentPlayingImage: 'https://visualpharm.com/assets/129/Question%20Mark-595b40b85ba036ed117dc3b0.svg',
                         warningSnack: true,
                     });
                 }
@@ -104,8 +111,10 @@ class Template extends React.Component {
     };
 
     initialLoad = () => {
+        console.log("call")
         Axios.get('initial')
             .then((resp) => {
+                theme.palette.type = "light"
                 console.log(resp)
                 if(resp.data.success){
                     this.setState({
@@ -117,9 +126,13 @@ class Template extends React.Component {
                         profilePic: resp.data.userAccount.photos[0],
                         profileLink: resp.data.userAccount.profileUrl,
                         profilePicLoading: 'none',
-                        profilePicActive: 'block'
+                        profilePicActive: 'block',
+                        privatePlaylist: resp.data.privatePlaylist,
+                        playlistName: resp.data.playlistName
                     });
                 } else {
+                    console.log("here")
+                    console.log(resp)
                     this.setState({
                         errorNotification: 'Error: Session timeout, please logout and then back in...',
                         warningSnack: true
@@ -132,13 +145,12 @@ class Template extends React.Component {
     };
 
     refreshToken = () => {
-        Axios.get('refreshToken')
-            .then((resp) => {
-
-            })
-            .catch((err) => {
-                console.log("Refresh token error: ", err);
-            });
+        console.log("Refreshed")
+        Axios.post('refreshToken',  {
+            params: {
+                username: this.state.profileUsername
+            }
+        });
     };
 
     componentDidMount() {
@@ -186,20 +198,32 @@ class Template extends React.Component {
         return (
             <section className={classes.body}>
                 <section className={classes.topBar}>
-                    <Tooltip disableFocusListener disableTouchListener title="Toggle Listen">
-                        <Button style={{backgroundColor: this.state.color}} onClick={this.handleListen}>
-                            <ListenIcon style={{fontSize: '20'}}/>
-                        </Button>
-                    </Tooltip>
-                    <Tooltip disableFocusListener disableTouchListener title="Settings">
-                        <Button onClick={this.handleClickOpen('settingsOpen', true)} className={classes.profileSettings}><SettingsIcon style={{fontSize: '20'}}/></Button>
-                    </Tooltip>
-                    <Tooltip disableFocusListener disableTouchListener title="Help">
-                        <Button onClick={this.handleClickOpen('helperOpen', true)}><HelpIcon style={{fontSize: '20'}}/></Button>
-                    </Tooltip>
-                    <Tooltip disableFocusListener disableTouchListener title="Logout">
-                        <Button onClick={this.handleRedirect('/logout')} ><LogoutIcon /> </Button>
-                    </Tooltip>
+                    <div>
+                        <Paper square className={classes.listenDetails} color="secondary" style={{display: this.state.currentPlayingImage.length}}>
+                            <img src={this.state.currentPlayingImage} style={{height: '100%', width: '50px'}}/>
+                            <div className={classes.listenText}>
+                                <Typography noWrap={true} >{this.state.currentPlayingSong}</Typography>
+                                <Typography noWrap={true} variant="caption">{this.state.currentPlayingAuthor}</Typography>
+                            </div>
+                        </Paper>
+                    </div>
+
+                    <div className={classes.topButtonOptions}>
+                        <Tooltip disableFocusListener disableTouchListener title="Toggle Listen">
+                            <Button style={{backgroundColor: this.state.color}} onClick={this.handleListen}>
+                                <ListenIcon style={{fontSize: '20'}}/>
+                            </Button>
+                        </Tooltip>
+                        <Tooltip disableFocusListener disableTouchListener title="Settings">
+                            <Button onClick={this.handleClickOpen('settingsOpen', true)} className={classes.profileSettings}><SettingsIcon style={{fontSize: '20'}}/></Button>
+                        </Tooltip>
+                        <Tooltip disableFocusListener disableTouchListener title="Help">
+                            <Button onClick={this.handleClickOpen('helperOpen', true)}><HelpIcon style={{fontSize: '20'}}/></Button>
+                        </Tooltip>
+                        <Tooltip disableFocusListener disableTouchListener title="Logout">
+                            <Button onClick={this.handleRedirect('/logout')} ><LogoutIcon /> </Button>
+                        </Tooltip>
+                    </div>
                 </section>
 
                 <a href={this.state.profileLink} id="accountHolder" className={classes.accountHolder}>
@@ -211,10 +235,10 @@ class Template extends React.Component {
                     </section>
                 </a>
 
-                <section className={classes.header}>
-                    <section className={classes.titleContainer}>
-                        <Typography variant='display4' className={classes.title}> MusicDEV </Typography>
-                        <Typography variant='display1' className={classes.titleChild}> Finding the right music </Typography>
+                <section className={classes.header} style={{zIndex: '1'}}>
+                    <section className={classes.titleContainer} style={{position: 'fixed', zIndex: '0', top: '110px'}}>
+                        <Typography variant='display4' className={classes.title} style={{color: 'rgba(0, 0, 0, 0.46)', fontSize: '4.5em'}}> MusicDEV </Typography>
+                        <Typography variant='display1' className={classes.titleChild} style={{color: 'rgba(0, 0, 0, 0.46)', fontSize: '1em'}}> Finding the right music </Typography>
                     </section>
 
                     <Typography id={"Error"}>{this.state.errorNotification}</Typography>
@@ -227,6 +251,7 @@ class Template extends React.Component {
                         profilePlaylists={this.state.profilePlaylists}
                         username={this.state.profileUsername}
                         accessToken={this.state.profileAccessToken}
+                        privatePlaylist={this.state.privatePlaylist}
                     />
 
                     <Help
@@ -234,28 +259,17 @@ class Template extends React.Component {
                         close={(params) => this.handleClose(params)}
                     />
 
-                    <GenreButtons
-                        username={this.state.profileUsername}
-                        updateTable={(params) => this.updateState(params)}
-                    />
-
                     <h1> {this.state.learning} </h1>
-
-                    <section className={classes.currentContainer}>
-                        <section className={classes.currentPlaying}>
-                            <section className={classes.currentInformation}>
-                                <Typography className={classes.currentTitle}>Song:</Typography>
-                                <Typography className={classes.currentInfo}>{this.state.currentPlayingSong}</Typography>
-                            </section>
-                            <section className={classes.currentInformation}>
-                                <Typography className={classes.currentTitle}>Author:</Typography>
-                                <Typography className={classes.currentInfo}>{this.state.currentPlayingAuthor}</Typography>
-                            </section>
-                        </section>
-                    </section>
                 </section>
 
-                <RecommendationTable tableContent={this.state.tableRecommendation} />
+                <FooterComponent
+                    tableContent={this.state.tableRecommendation}
+                    currentPlayingSong={this.state.currentPlayingSong}
+                    currentPlayingAuthor={this.state.currentPlayingAuthor}
+                    currentPlayingImage={this.state.currentPlayingImage}
+                    username={this.state.profileUsername}
+                    updateTable={(params) => this.updateState(params)}
+                />
 
                 <Snackbar
                     anchorOrigin={{
@@ -270,7 +284,7 @@ class Template extends React.Component {
                                 Refresh
                             </Button> :
                             this.state.errorNotification === 'Error: Session timeout, please logout and then back in...' ?
-                                <Button key="undo" color="secondary" size="small" onClick={this.refreshToken}>
+                                <Button key="undo" color="secondary" size="small" onClick={this.refreshToken()}>
                                     ReLog
                                 </Button> : null
                     ]}

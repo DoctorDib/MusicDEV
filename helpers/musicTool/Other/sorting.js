@@ -65,9 +65,6 @@ function grabFeatures(trackURI, callback) {
         });
 }
 
-let x;
-let y;
-
 function predict (trackInfo, cats, callback){
 
     let x = [];

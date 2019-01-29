@@ -12,7 +12,9 @@ const recommender = require('./helpers/recommend');
 const spotify = require('./helpers/spotifyApi');
 const sample = require('./helpers/sample');
 const predict = require('./helpers/predict');
-const push = require('./helpers/pushbullet')
+const push = require('./helpers/pushbullet');
+const neo4j = require('./helpers/neo4j');
+const recommendConfig = require('./config/recommendConfig');
 
 const secretKeys = require('../secretKeys.json');
 const client_id = secretKeys.spotify.client_id;
@@ -154,7 +156,7 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
                 }
             });
         }
-    }
+    };
 
     const run = {
         grabGenre: function (respMemory, inputData, genreCallback) {
@@ -184,18 +186,20 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
             });
         },
         cut: function () {
-            let memory = {}, catCount = 0;
+            let trainingSet = [], testingSet = [],
+                catCount = 0, limit=0;
 
             useCollection = db.collection("masterMusicCats");
-            saveCollection = db.collection("musicCats");
+            saveCollection = db.collection("samples");
 
             useCollection.findOne({}).then(function (data) {
-                console.log(data)
                 if (!data || Object.keys(data.musicCats).length !== 9) {
                     console.warn("No music categories found... please teach me by running the following command")
                     console.log("                   - node app.js learn initial") // TODO - Temp.
                     process.exit(1);
                 }
+
+                console.log(data)
 
                 if (process.argv[3]) {
                     limit = Number(process.argv[3]);
@@ -213,35 +217,48 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
 
                     let tmpLimit = Math.ceil(catValue.length * (limit / 100));
                     console.log(tmpLimit)
+                    async.eachOfSeries(catValue, function (catTracksValue, catTracksKey, catTracksCallback) {
 
-                    memory[catKey] = catValue.splice(0, tmpLimit);
+                        if( catTracksKey +1 < tmpLimit) {
+                            trainingSet.push(catTracksValue)
+                        } else {
+                            testingSet.push(catTracksValue)
+                        }
 
-                    if (catCount === Object.keys(data.musicCats).length) {
-                        saveCollection.findOne({"id": 'musicCats'}, function (err, respData) {
-                            if (respData === null) {
-                                // Insert new record
-                                console.log("Inserting new record to Database")
-                                saveCollection.insert({id: "musicCats", "musicCats": memory});
-                            } else {
-                                // Replace with existing one.
-                                console.log("Existing record found...")
-                                saveCollection.drop(function (err, delOK) {
-                                    if (err) return console.log("ERRRRROR")
-                                    console.log("Replacing existing record")
-                                    saveCollection.insert({id: "musicCats", "musicCats": memory});
+                        if (catTracksKey+1 >= catValue.length) {
+                            if (catCount === Object.keys(data.musicCats).length) {
+                                saveCollection.findOne({"id": 'musicCats'}, function (err, respData) {
+                                    if (respData === null) {
+                                        // Insert new record
+                                        console.log("Inserting new record to Database")
+                                        saveCollection.insert({id: "musicCats", trainingSet: trainingSet, testingSet: testingSet});
+                                    } else {
+                                        // Replace with existing one.
+                                        console.log("Existing record found...")
+                                        saveCollection.drop(function (err, delOK) {
+                                            if (err) return console.log("ERRRRROR")
+                                            console.log("Replacing existing record")
+                                            saveCollection.insert({id: "musicCats", trainingSet: trainingSet, testingSet: testingSet});
+                                        });
+                                    }
                                 });
+                            } else {
+                                catCallback();
                             }
-                        });
-                    } else {
-                        catCallback();
-                    }
+                        } else {
+                            catTracksCallback();
+                        }
+                    });
                 });
             });
         },
         learn: function () {
             let limit, type;
 
-            limit = false
+            let savedUriTracks = {};
+            let savedTracks = {};
+
+            limit = false;
             saveCollection = db.collection("masterMusicCats");
             if (process.argv[3] && process.argv[3] !== "initial") {
                 // Default save location - musicCats
@@ -250,72 +267,100 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
                 limit = Number(process.argv[3]);
             }
 
+            function finished(){
+                console.log(savedUriTracks);
+            }
+
             async.eachOfSeries(dictionary, function (dictionaryValue, mainKey, dictionaryCallback) {
                 type = dictionaryValue.category;
 
                 async.eachOfSeries(dictionaryValue.uriList, function (uriValue, uriKey, uriCallback) {
                     spotify.grabPlaylists(spotifyApi, dictionaryValue.category, uriValue, (data) => {
-                        if (!memory[type]) {
-                            memory[type] = []
-                        }
 
-                        memory[type] = [...memory[type], ...data];
+                        let tracks = [];
+                        async.eachOfSeries(data, function (track, trackKey, trackCallback) {
+                            if (savedUriTracks.hasOwnProperty(track.id)) {
+                                console.log("Already existing track")
 
-                        if (limit) {
-                            memory[type] = memory[type].splice(0, limit);
-                        }
-
-                        if (uriKey + 1 >= dictionaryValue.uriList.length) {
-                            if ((mainKey + 1) !== dictionary.length) {
-                                dictionaryCallback();
+                                // Wanting to save both so I can compare the genres that the data has
+                                if(!savedTracks.hasOwnProperty(track.id)){
+                                    savedTracks[track.id] = [savedUriTracks[track.id]]; // Pushing the original
+                                }
+                                savedTracks[track.id].push(track); // Saving duplicated one
                             } else {
-                                saveCollection.findOne({"id": 'musicCats'}, function (err, respData) {
-                                    if (respData === null) {
-                                        // Insert new record
-                                        console.log("Inserting new record to Database")
-                                        saveCollection.insert({id: "musicCats", "musicCats": memory});
+                                savedUriTracks[track.id] = track;
+                                tracks.push(track.features);
+                            }
+
+                            if(trackKey+1 >= data.length) {
+                                if (!memory[type]) {
+                                    memory[type] = []
+                                }
+
+                                memory[type] = [...memory[type], ...tracks];
+
+                                if (limit) {
+                                    memory[type] = memory[type].splice(0, limit);
+                                }
+
+                                if (uriKey + 1 >= dictionaryValue.uriList.length) {
+                                    if ((mainKey + 1) !== dictionary.length) {
+                                        dictionaryCallback();
                                     } else {
-                                        // Replace with existing one.
-                                        console.log("Existing record found...")
-                                        saveCollection.drop(function (err, delOK) {
-                                            if (err) return console.log("ERRRRROR")
-                                            console.log("Replacing existing record")
-                                            saveCollection.insert({id: "musicCats", "musicCats": memory});
+                                        finished();
+                                        saveCollection.findOne({"id": 'musicCats'}, function (err, respData) {
+                                            if (respData === null) {
+                                                // Insert new record
+                                                console.log("Inserting new record to Database")
+                                                saveCollection.insert({id: "musicCats", "musicCats": memory});
+                                            } else {
+                                                // Replace with existing one.
+                                                console.log("Existing record found...")
+                                                saveCollection.drop(function (err) {
+                                                    if (err) return console.log("ERRRRROR")
+                                                    console.log("Replacing existing record")
+                                                    saveCollection.insert({id: "musicCats", "musicCats": memory});
+                                                });
+                                            }
                                         });
                                     }
-                                });
-                            }
-                        } else {
-                            console.log("==========================================================================");
-                            console.log(type + ' - ' + (uriKey + 1) + '/' + dictionaryValue.uriList.length);
-                            console.log("TOTAL: " + ' - ' + (mainKey + 1) + '/' + dictionary.length);
-                            console.log("==========================================================================");
-
-
-                            if (limit && memory[type].length >= limit) {
-                                if (mainKey + 1 === dictionary.length) {
-                                    saveCollection.findOne({"id": 'musicCats'}, function (err, respData) {
-                                        if (respData === null) {
-                                            // Insert new record
-                                            console.log("Inserting new record to Database")
-                                            saveCollection.insert({id: "musicCats", "musicCats": memory});
-                                        } else {
-                                            // Replace with existing one.
-                                            console.log("Existing record found...")
-                                            saveCollection.drop(function (err, delOK) {
-                                                if (err) return console.log("ERRRRROR")
-                                                console.log("Replacing existing record")
-                                                saveCollection.insert({id: "musicCats", "musicCats": memory});
-                                            });
-                                        }
-                                    });
                                 } else {
-                                    dictionaryCallback();
+                                    console.log("==========================================================================");
+                                    console.log(type + ' - ' + (uriKey + 1) + '/' + dictionaryValue.uriList.length);
+                                    console.log("TOTAL: " + ' - ' + (mainKey + 1) + '/' + dictionary.length);
+                                    console.log("==========================================================================");
+                                    if (limit && memory[type].length >= limit) {
+                                        if (mainKey + 1 === dictionary.length) {
+                                            finished();
+                                            saveCollection.findOne({"id": 'musicCats'}, function (err, respData) {
+                                                if (respData === null) {
+                                                    // Insert new record
+                                                    console.log("Inserting new record to Database")
+                                                    saveCollection.insert({id: "musicCats", "musicCats": memory});
+                                                } else {
+                                                    // Replace with existing one.
+                                                    console.log("Existing record found...")
+                                                    saveCollection.drop(function (err, delOK) {
+                                                        if (err) return console.log("ERRRRROR")
+                                                        console.log("Replacing existing record")
+                                                        saveCollection.insert({
+                                                            id: "musicCats",
+                                                            "musicCats": memory
+                                                        });
+                                                    });
+                                                }
+                                            });
+                                        } else {
+                                            dictionaryCallback();
+                                        }
+                                    } else {
+                                        uriCallback();
+                                    }
                                 }
                             } else {
-                                uriCallback();
+                                trackCallback();
                             }
-                        }
+                        });
                     });
                 });
             });
@@ -369,49 +414,57 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
         },
         train: function () {
             // Using data from saved collection musicCats and saving to musicMemory
-            useCollection = db.collection("musicCats");
+            useCollection = db.collection("samples");
             saveCollection = db.collection("musicMemory");
 
-            useCollection.findOne({})
+            useCollection.findOne({trainingSet: {$exists: true}})
                 .then(function (data) {
+                    if (err) return console.log(err);
+                    //console.log(data)
                     console.log(`Attempt ${timeoutCount++}`)
-                    if (data !== null) {
-                        trainer(spotifyApi, data.musicCats, (trainResp) => {
-                            if (trainResp.error) {
-                                if (timeoutCount <= timeoutIntervals) {
-                                    run[process.argv[2]]();
-                                } else {
-                                    console.log("ERROR: Unable to run application.")
-                                    process.exit(1)
-                                }
+                    trainer(spotifyApi, data.trainingSet, (trainResp) => {
+                        if (trainResp.error) {
+                            if (timeoutCount <= timeoutIntervals) {
+                                run[process.argv[2]]();
                             } else {
-                                console.log("Returned")
-                                saveCollection.findOne({"id": 'memory'}, function (err, respData) {
-                                    console.log("Searching")
-                                    if (respData === null) {
-                                        // Saving a new record
-                                        console.log("Saving as new record")
-                                        saveCollection.insert({id: "memory", "memory": trainResp.training});
-                                    } else {
-                                        // Saving to existing record
-                                        saveCollection.drop(function (err, delOK) {
-                                            if (err) return console.log("ERRRRROR");
-                                            console.log("Replacing with existing record")
-                                            saveCollection.insert({id: "memory", "memory": trainResp.training})
-                                        });
-                                    }
-                                });
+                                console.log("ERROR: Unable to run application.")
+                                process.exit(1)
                             }
-                        });
-                    } else {
-                        console.log("Database not found, please run:");
-                        console.log("    - node app.js learn");
-                        process.exit(1);
-                    }
-                })
-                .catch(function (err) {
+                        } else {
+                            console.log("Returned")
+                            saveCollection.findOne({"id": 'memory'}, function (err, respData) {
+                                console.log("Searching")
+                                if (respData === null) {
+                                    // Saving a new record
+                                    console.log("Saving as new record")
+                                    saveCollection.insert({id: "memory", "memory": trainResp.training});
+                                } else {
+                                    // Saving to existing record
+                                    saveCollection.drop(function (err, delOK) {
+                                        if (err) return console.log("ERRRRROR");
+                                        console.log("Replacing with existing record")
+                                        saveCollection.insert({id: "memory", "memory": trainResp.training})
+                                    });
+                                }
+                            });
+                        }
+                    });
+                }).catch(function(err){
                     console.log(err);
-                });
+            });
+
+
+                /*console.log(err)
+                console.log(`Attempt ${timeoutCount++}`)
+                if (data !== null) {
+
+                } else {
+                    console.log("Database not found, please run:");
+                    console.log("    - node app.js learn");
+                    process.exit(1);
+                }
+            })*/
+
         },
         predict: function () {
             useCollection = db.collection("musicMemory");
@@ -447,115 +500,181 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
         },
         sample: function () {
             let useCollectionMemory = db.collection("musicMemory");
-            let useCollectionCats = db.collection("masterMusicCats");
+            let useCollectionCats = db.collection("samples");
 
             useCollectionMemory.findOne({"id": 'memory'}, function (err, resp) {
                 if (!resp || resp === null) {
                     console.log("Memory not found... Please teach me...");
                     process.exit(1);
                 } else {
-                    useCollectionCats.findOne({}, (err, cats) => {
+                    useCollectionCats.findOne({testingSet: {$exists: true}}, (err, cats) => {
+                        console.log(cats.testingSet)
                         if (!cats || cats === null) {
                             console.log("Cats not found... please teach me");
                             process.exit(1);
                         } else {
-                            sample(spotifyApi, resp, cats.musicCats)
+                            sample(spotifyApi, resp, cats.testingSet)
                         }
                     });
                 }
             });
         },
-        build: function () {
-            const arr = _.range(parseInt(process.argv[3]));
-            console.log(arr)
-
-            let finalObject = {};
-            let finalArray = [];
-            let count=0;
-
-            useCollection = db.collection("musicMemory");
-            saveCollection = db.collection("masterMusic");
-
-            // Resetting collection
-            mongoAction.checkDelete(saveCollection, "master", () => {
-                useCollection.findOne({"id": 'memory'}, function (err, resp) {
-                    if (!resp || resp === null) {
-                        console.log("Memory not found... Please teach me...");
-                        process.exit(1);
+        relate: function () {
+            async.eachOfSeries(recommendConfig.genres, function (genre, genreKey, genreCallback) {
+                neo4j('masterLearn', {genre: genre}, function () {
+                    if(genreKey+1 >= recommendConfig.genres.length) {
+                        console.log("Done")
                     } else {
-                        console.log("Found")
+                        genreCallback();
+                    }
+                });
+            });
+        },
+        build: function () {
+            neo4j('masterDelete', {}, function () { // Resetting
 
-                        async.eachOfSeries(arr, function (value, keyFiles, callbackFiles) {
-                            readTextFile("../Data/trackData/" + value + ".json", function (json) {
-                                async.eachOfSeries(json, function (jsonValue, jsonKey, jsonCallback) {
-                                    let uriArray = [];
-                                    async.eachOfSeries(jsonValue.tracks, function (trackValue, trackKey, trackCallback) {
-                                        let uri = trackValue.track_uri.split(':');
-                                        uri = uri[uri.length - 1];
-                                        uriArray.push(uri); // Adding uri to array
-                                        finalObject[uri] = {name: trackValue.track_name, id: uri}; // Creating empty object
+                neo4j('initialise', {id: "Spotify", genres: recommendConfig.genres}, function () { // Initialising database
 
-                                        if (trackKey + 1 >= Object.keys(jsonValue.tracks).length) {
-                                            uriArray = uriArray.chunk(50);
-                                            async.eachOfSeries(uriArray, function (uriArrayValue, uriArrayKey, uriArrayCallback) {
-                                                setTimeout(function () {
-                                                    spotify.grabFeatures(spotifyApi, false, uriArrayValue, (data) => {
-                                                        async.eachOfSeries(data, function (featuresValue, featuresKey, featuresCallback) {
-                                                            let ident = featuresValue.id;
-                                                            delete featuresValue.id; // Sorting out data
+                    const arr = _.range(parseInt(process.argv[3]));
+                    console.log(arr)
 
-                                                            // Grabbing the predicted Genre
-                                                            run.grabGenre(resp.memory, featuresValue, (genre) => {
-                                                                finalObject[ident].features = featuresValue;
-                                                                finalObject[ident].genre = genre;
-                                                                finalArray.push(finalObject[ident]);
+                    let finalObject = {};
+                    let finalArray = [];
+                    let count = 0;
 
-                                                                count++
+                    useCollection = db.collection("musicMemory");
+                    saveCollection = db.collection("masterMusic");
 
-                                                                let finalResponse = `==================================================\nID: ${count}\nName: ${finalObject[ident].name}\nGenre: ${genre}`;
-                                                                console.log(finalResponse)
+                    // Resetting collection
+                    mongoAction.checkDelete(saveCollection, "master", () => {
+                        useCollection.findOne({"id": 'memory'}, function (err, resp) {
+                            if (!resp || resp === null) {
+                                console.log("Memory not found... Please teach me...");
+                                process.exit(1);
+                            } else {
+                                console.log("Found")
+                                async.eachOfSeries(arr, function (value, keyFiles, callbackFiles) {
+                                    readTextFile("../Data/trackData/" + value + ".json", function (json) {
+                                        async.eachOfSeries(json, function (jsonValue, jsonKey, jsonCallback) {
+                                            let uriArray = [];
+                                            async.eachOfSeries(jsonValue.tracks, function (trackValue, trackKey, trackCallback) {
+                                                let uri = trackValue.track_uri.split(':');
+                                                uri = uri[uri.length - 1];
+                                                count++;
 
-                                                                //mongoAction.insertArr(saveCollection, "master", {finalObject[ident].genre: finalObject[ident]})
+                                                if (finalObject.hasOwnProperty(uri)) {
+                                                    console.log("DUPLICATED")
+                                                    if (jsonKey + 1 >= Object.keys(json).length) {
+                                                        if (keyFiles + 1 >= arr.length) {
 
-                                                                if (featuresKey + 1 >= data.length) {
-                                                                    if (uriArrayKey + 1 >= uriArray.length) {
-                                                                        if (jsonKey + 1 >= Object.keys(json).length) {
-                                                                            if (keyFiles + 1 >= arr.length) {
-                                                                                mongoAction.save(saveCollection, "master", finalArray, () => {
-                                                                                    let body = `Database build has been completed with ${finalArray.length} entries.`;
-                                                                                    push.send({
-                                                                                        title: "Database build complete",
-                                                                                        body: body
-                                                                                    });
-                                                                                });
-                                                                            } else {
-                                                                                console.log('========================')
-                                                                                console.log(`${value}.json complete`)
-                                                                                console.log("Next file")
-                                                                                callbackFiles();
-                                                                            }
-                                                                        } else {
-                                                                            jsonCallback();
-                                                                        }
+                                                            async.eachOfSeries(recommendConfig.genres, function (genre, genreKey, genreCallback) {
+                                                                neo4j('masterLearn', {genre: genre}, function () {
+                                                                    if (genreKey + 1 >= recommendConfig.genres.length) {
+                                                                        let body = `Database build has been completed with ${finalArray.length} entries.`;
+                                                                        push.send({
+                                                                            title: "Database build complete",
+                                                                            body: body
+                                                                        });
                                                                     } else {
-                                                                        uriArrayCallback();
+                                                                        genreCallback();
                                                                     }
-                                                                } else {
-                                                                    featuresCallback();
-                                                                }
+                                                                });
                                                             });
+                                                        } else {
+                                                            console.log('========================')
+                                                            console.log(`${value}.json complete`)
+                                                            console.log("Next file")
+                                                            callbackFiles();
+                                                        }
+                                                    } else {
+                                                        jsonCallback();
+                                                    }
+                                                } else {
+
+                                                    uriArray.push(uri); // Adding uri to array
+                                                    finalObject[uri] = {name: trackValue.track_name, id: uri}; // Creating empty object for duplicated data detection
+
+                                                    if (trackKey + 1 >= Object.keys(jsonValue.tracks).length) {
+                                                        console.log("here")
+                                                        uriArray = uriArray.chunk(50);
+                                                        console.log("Then here")
+                                                        async.eachOfSeries(uriArray, function (uriArrayValue, uriArrayKey, uriArrayCallback) {
+                                                            setTimeout(function () {
+                                                                spotify.grabFeatures(spotifyApi, false, uriArrayValue, (data) => {
+                                                                    async.eachOfSeries(data, function (featuresValue, featuresKey, featuresCallback) {
+                                                                        let ident = featuresValue.id;
+                                                                        delete featuresValue.id; // Sorting out data
+
+                                                                        // Grabbing the predicted Genre
+                                                                        run.grabGenre(resp.memory, featuresValue, (genre) => {
+
+                                                                            finalObject[ident].features = featuresValue;
+                                                                            finalObject[ident].genre = genre;
+                                                                            finalArray.push(finalObject[ident]);
+
+                                                                            let tmpObj = finalObject[ident];
+
+                                                                            neo4j('create', {
+                                                                                count: count,
+                                                                                params: tmpObj,
+                                                                                single: false
+                                                                            }, function (resp) {
+                                                                                if (!resp.success) console.log("Create Error: ", resp.error);
+                                                                                // else continue with life
+
+                                                                                let finalResponse = `==================================================\nID: ${count}\nName: ${finalObject[ident].name}\nGenre: ${genre}`;
+                                                                                console.log(finalResponse)
+
+                                                                                if (featuresKey + 1 >= data.length) {
+                                                                                    if (uriArrayKey + 1 >= uriArray.length) {
+                                                                                        if (jsonKey + 1 >= Object.keys(json).length) {
+                                                                                            if (keyFiles + 1 >= arr.length) {
+
+                                                                                                async.eachOfSeries(recommendConfig.genres, function (genre, genreKey, genreCallback) {
+                                                                                                    neo4j('masterLearn', {genre: genre}, function () {
+                                                                                                        if (genreKey + 1 >= recommendConfig.genres.length) {
+                                                                                                            let body = `Database build has been completed with ${finalArray.length} entries.`;
+                                                                                                            push.send({
+                                                                                                                title: "Database build complete",
+                                                                                                                body: body
+                                                                                                            });
+                                                                                                        } else {
+                                                                                                            genreCallback();
+                                                                                                        }
+                                                                                                    });
+                                                                                                });
+                                                                                            } else {
+                                                                                                console.log('========================')
+                                                                                                console.log(`${value}.json complete`)
+                                                                                                console.log("Next file")
+                                                                                                callbackFiles();
+                                                                                            }
+                                                                                        } else {
+                                                                                            jsonCallback();
+                                                                                        }
+                                                                                    } else {
+                                                                                        uriArrayCallback();
+                                                                                    }
+                                                                                } else {
+                                                                                    featuresCallback();
+                                                                                }
+                                                                            });
+                                                                        });
+                                                                    });
+                                                                });
+                                                            }, 100);
                                                         });
-                                                    });
-                                                }, 100);
+                                                    } else {
+                                                        trackCallback();
+                                                    }
+                                                }
                                             });
-                                        } else {
-                                            trackCallback();
-                                        }
+                                        });
                                     });
                                 });
-                            });
+                            }
                         });
-                    }
+                    });
                 });
             });
         },

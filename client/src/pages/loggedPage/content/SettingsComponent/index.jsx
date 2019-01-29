@@ -10,6 +10,9 @@ import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
 import LinearProgress from '@material-ui/core/LinearProgress';
+import Divider from '@material-ui/core/Divider';
+import Checkbox from '@material-ui/core/Checkbox';
+import TextField from '@material-ui/core/TextField';
 
 import slugify from 'slugify';
 
@@ -35,7 +38,10 @@ class Template extends React.Component {
 
             newUser: false,
             learnDisabled: false,
-            loading: 'none'
+            loading: 'none',
+
+            playlistName: '',
+            playlist_privacy: true
         };
     }
 
@@ -44,16 +50,18 @@ class Template extends React.Component {
         let tmpPlaylistNames = this.state.playlistNames;
 
         for(let index in tmpActivePlaylist){
-            if(!tmpPlaylistNames.hasOwnProperty(tmpActivePlaylist[index])){
-                tmpPlaylistNames[tmpActivePlaylist[index]] = {}
+            if(tmpActivePlaylist.hasOwnProperty(index)){
+                if(!tmpPlaylistNames.hasOwnProperty(tmpActivePlaylist[index])){
+                    tmpPlaylistNames[tmpActivePlaylist[index]] = {}
+                }
+                tmpPlaylistNames[tmpActivePlaylist[index]].id = tmpActivePlaylist[index];
+                tmpPlaylistNames[tmpActivePlaylist[index]].active = true;
             }
-            tmpPlaylistNames[tmpActivePlaylist[index]].id = tmpActivePlaylist[index];
-            tmpPlaylistNames[tmpActivePlaylist[index]].active = true;
         }
 
         this.setState({
             playlistNames: tmpPlaylistNames
-        })
+        });
     };
 
     componentWillReceiveProps(props){
@@ -63,7 +71,9 @@ class Template extends React.Component {
             profilePlaylists: props.profilePlaylists,
             newUser: props.newUser,
             profileUsername: props.username,
-            profileAccessToken: props.accessToken
+            profileAccessToken: props.accessToken,
+            privatePlaylist : props.privatePlaylist,
+            playlistName : props.playlistName
         });
 
         if(!props.newUser){
@@ -73,7 +83,7 @@ class Template extends React.Component {
                 }
             })
             .then((resp) => {
-                if(resp.data.playlists.length){
+                if(resp.data.hasOwnProperty('playlists')){
                     this.setState({
                         activePlaylist: resp.data.playlists
                     });
@@ -107,6 +117,8 @@ class Template extends React.Component {
                 }
             }
         }
+
+        console.log(tmpArr)
 
         if(tmpArr.length){
             this.setState({
@@ -165,7 +177,44 @@ class Template extends React.Component {
             id: playlist.id,
             active: !tmp[playlist.id].active,
         };
+
+        console.log(tmp)
+
         this.setState({ playlistNames: tmp});
+    };
+
+    handleTextChange = name => event => {
+        this.setState({
+            [name]: event.target.value,
+        });
+    };
+
+    handleBooleanChange = name => () => {
+        this.setState({
+            [name]: !this.state[name]
+        });
+    };
+
+    managePlaylist = task => () => {
+        let data = {};
+
+        if (task === 'change_name') {
+            data.new_name = this.state.playlistName;
+            data.privatePlaylist = this.state.privatePlaylist;
+        }
+
+        Axios.get('managePlaylist', {
+            params: {
+                task: task,
+                data: data
+            }
+        }).then(function (resp) {
+            if (resp.success) {
+                // Notify user
+            }
+        }).catch(function(err) {
+            console.error("Manage playlist: ", err)
+        })
     };
 
     render(){
@@ -199,8 +248,37 @@ class Template extends React.Component {
                             ))}
                             {this.state.newUser ? null : <Button onClick={this.props.close('settingsOpen')}> X </Button>}
                             <Button onClick={this.learn} disabled={this.state.learnDisabled}> {this.state.newUser ? "Learn" : "Save"}</Button>
-                        </FormGroup>
 
+                            {this.state.newUser ? null :
+                            <div>
+                                <Divider />
+                                <FormLabel component="legend">Saved playlist</FormLabel>
+                                <TextField
+                                    id="standard-with-placeholder"
+                                    label="With placeholder"
+                                    placeholder="Placeholder"
+                                    margin="normal"
+                                    value={this.state.playlistName}
+                                    onChange={this.handleTextChange('playlistName')}
+                                />
+                                <Divider />
+                                <Button onClick={this.managePlaylist('change_name')}>Save Name</Button>
+                                <Checkbox
+                                    checked={this.state.privatePlaylist}
+                                    onChange={this.handleBooleanChange('privatePlaylist')}
+                                    value="privatePlaylist"
+                                />
+                                <Button onClick={this.managePlaylist('clear')}>Save playlist changes</Button>
+                                <Divider />
+                                <Button onClick={this.managePlaylist('clear')}>Clear Playlist</Button>
+                                <Button onClick={this.managePlaylist('delete')}>Delete Playlist</Button>
+
+                                <Divider />
+                                <Button disabled={true} onClick={this.managePlaylist('delete')}>Delete Account</Button>
+                            </div>}
+
+                        </FormGroup>
+                        <LinearProgress style={{display: this.state.loading}} />
                     </section>
                 </Card>
             </Dialog >

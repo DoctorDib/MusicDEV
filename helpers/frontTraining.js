@@ -8,6 +8,19 @@ const async = require('async');
 const brain = require('brain.js');
 const MongoClient = require('mongodb').MongoClient;
 
+function chunk(array, size) {
+    const arrayChunk = [];
+    for (let i = 0; i < array.length; i++) {
+        const last = arrayChunk[arrayChunk.length - 1];
+        if (!last || last.length === size) {
+            arrayChunk.push([array[i]]);
+        } else {
+            last.push(array[i]);
+        }
+    }
+    return arrayChunk;
+}
+
 module.exports = (func, username, accessToken, playlists, callback) => {
 
     MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, database) {
@@ -18,51 +31,41 @@ module.exports = (func, username, accessToken, playlists, callback) => {
         const run = {
             grabGenre: function (respMemory, inputData, genreCallback) {
                 let final=[];
-
                 async.eachOfSeries(inputData, function (memoryValue, memoryKey, memoryCallback) {
                     count++;
-
                     let net = new brain.NeuralNetwork(config.predict);
                     net.fromJSON(respMemory);
-
                     predict(net, memoryValue.features, (resp) => {
                         memoryValue.genre = resp;
-
-                        console.log(memoryValue)
                         final.push(memoryValue);
-
                         if(count < Object.keys(inputData).length){
-                            console.log(count)
-                            console.log("nexty")
-                            console.log(Object.keys(inputData).length)
                             memoryCallback();
                         } else {
                             count=0;
-                            console.log("fin")
                             genreCallback(final);
-
                         }
                     });
                 });
             },
-            sort: function (memory, callback) {
+            sort: function (memory, trackInfo, callback) {
                 let resp = {};
                 async.eachOfSeries(memory, function (memoryValue, memoryKey, memoryCallback) {
                     resp[memoryValue.id] = {
                         id: memoryValue.id,
+                        name: trackInfo[memoryValue.id],
                         features: {
-                            danceability: memoryValue.danceability,
-                            energy: memoryValue.energy,
-                            key: memoryValue.key,
-                            loudness: memoryValue.loudness,
-                            speechiness: memoryValue.speechiness,
-                            acousticness: memoryValue.acousticness,
-                            instrumentalness: memoryValue.instrumentalness,
-                            liveness: memoryValue.liveness,
-                            valence: memoryValue.valence,
-                            tempo: memoryValue.tempo,
+                            danceability: memoryValue.features.danceability,
+                            energy: memoryValue.features.energy,
+                            key: memoryValue.features.key,
+                            loudness: memoryValue.features.loudness,
+                            speechiness: memoryValue.features.speechiness,
+                            acousticness: memoryValue.features.acousticness,
+                            instrumentalness: memoryValue.features.instrumentalness,
+                            liveness: memoryValue.features.liveness,
+                            valence: memoryValue.features.valence,
+                            tempo: memoryValue.features.tempo,
                         }
-                    }
+                    };
 
                     if (memoryKey+1 >= memory.length) {
                         callback(resp);
@@ -73,12 +76,11 @@ module.exports = (func, username, accessToken, playlists, callback) => {
             },
             grabURI: function (username, playlists, callback) {
                 let memory = [];
+                let trackInfo = {};
 
                 async.eachOfSeries(playlists, function (playlistValue, playlistKey, playlistCallback) {
-                    let format = playlistValue.split(':')
+                    let format = playlistValue.split(':');
                     format = format[format.length-1];
-
-                    console.log("1. " + format )
 
                     //grabTracks
                     spotify("grabTracksFromPlaylist", {username: username, access_token: accessToken, playlist: format}, (trackURIList) => {
@@ -87,18 +89,36 @@ module.exports = (func, username, accessToken, playlists, callback) => {
                              tmpTrackList.push(trackValue.track.id);
 
                              if (trackKey+1 >= trackURIList.length){
-                                 spotify("grabFeaturesFromTracks", {username: username, access_token: accessToken, trackURIs: tmpTrackList}, (features) => {
-                                     memory = [...memory, ...features];
+                                 let choppedArray = chunk(tmpTrackList, 50)
 
-                                     if (playlistKey+1 >= playlists.length){
-                                         run.sort(memory, (sortedObject) => {
-                                             run.grabGenreUserPlaylist(username, sortedObject, () => {
-                                                 callback("finished")
+                                 console.log(choppedArray.length)
+
+                                 async.eachOfSeries(choppedArray, function (uriValues, uriKey, uriCallback) {
+                                     spotify("grabTrackInfo", {username: username, access_token: accessToken, tracks: uriValues}, (respTrackInfo) => {
+
+                                         let agg = respTrackInfo.body.tracks;
+                                         for (let tmp = 0; tmp < agg.length; tmp++) {
+                                             trackInfo[agg[tmp].id] = agg[tmp].name;
+                                         }
+
+                                         if(uriKey+1 >= choppedArray.length) {
+                                             // finished
+                                             spotify("grabFeaturesFromTracks", {username: username, access_token: accessToken, trackURIs: tmpTrackList}, (features) => {
+                                                 memory = [...memory, ...features];
+                                                 if (playlistKey+1 >= playlists.length){
+                                                     run.sort(memory, trackInfo, (sortedObject) => {
+                                                         run.grabGenreUserPlaylist(username, sortedObject, () => {
+                                                             callback("finished")
+                                                         });
+                                                     });
+                                                 } else {
+                                                     playlistCallback();
+                                                 }
                                              });
-                                         });
-                                     } else {
-                                         playlistCallback();
-                                     }
+                                         } else {
+                                             uriCallback();
+                                         }
+                                     });
                                  });
                              } else {
                                  trackCallback();
@@ -118,8 +138,6 @@ module.exports = (func, username, accessToken, playlists, callback) => {
                     } else {
                         console.log("Found");
                         run.grabGenre(resp.memory, playlists, (finalResp) => {
-
-                            console.log("Hi")
                             console.log(finalResp)
 
                             saveCollection.update({id: username}, {$set: {"playlist": finalResp} }, {upsert: true});

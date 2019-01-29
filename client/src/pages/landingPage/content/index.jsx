@@ -24,29 +24,21 @@ class Template extends React.Component {
         });
     };
 
-    handleClose = target => () => {
-        this.setState({ [target]: false });
-    };
-
     render(){
         const { classes } = this.props;
 
         return (
             <section className={classes.body}>
-                <section className={classes.header}>
+                <section className={classes.header} style={{height: '100%'}}>
                     <section className={classes.titleContainer}>
-                        <Typography variant='display4' className={classes.title}> MusicDEV </Typography>
+                        <Typography variant='display4' className={classes.title} style={{font: '150px'}}> MusicDEV </Typography>
                         <Typography variant='display1' className={classes.titleChild}> Finding the right music </Typography>
                     </section>
 
                     <section style={{display: 'flex', flexDirection: 'row'}}>
                         <Button href={'/auth/spotify'} color={'secondary'} variant='raised' size="large" className={classes.mainButton}>
-                            <div style={{width: '25%'}}>
-                                <SpotifyIcon />
-                            </div>
-                            <div style={{width: '100%'}}>
-                                <Typography> Login </Typography>
-                            </div>
+                            <div style={{width: '25%'}}><SpotifyIcon/></div>
+                            <div style={{width: '100%'}}><Typography>Login</Typography></div>
                         </Button>
                         <Button color={'secondary'} variant='raised' size="large" className={classes.mainButton} onClick={this.scrollTop}>About</Button>
                     </section>

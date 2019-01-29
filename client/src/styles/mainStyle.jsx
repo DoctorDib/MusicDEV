@@ -2,7 +2,7 @@ import theme from './theme';
 
 const styles = {
     header: {
-        height: '75vh',
+        height: theme.spacing.unit * 49,
         [theme.breakpoints.down('sm')]: {
             height: '100vh',
         },

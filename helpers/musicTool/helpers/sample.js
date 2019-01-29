@@ -69,48 +69,41 @@ module.exports = function(spotifyApi, netOptions, data) {
 
     net.fromJSON(netOptions.memory);
 
-    async.eachOfSeries(data, function (catValue, catKey, catCallback) {
+    catNum ++;
+    async.eachOfSeries(data, function (trackValue, trackKey, trackCallback) {
+        let catKey = Object.keys(trackValue.output)[0]; // Grabbing the expected Genre
 
-        catNum ++;
-        async.eachOfSeries(catValue, function (trackValue, trackKey, trackCallback) {
-            predict(net, trackValue.input, (resp) => {
-                initial.count[catKey] ++;
-                initial.count.overall ++;
+        predict(net, trackValue.input, (resp) => {
+            initial.count[catKey] ++;
+            initial.count.overall ++;
 
-                workout(catKey, resp, function(){
-                    console.log(catKey + ": " + round(initial.percent[catKey], 2) + "%");
-                    console.log("OVERALL: " + round(initial.percent.overall, 2) + "%");
-                    console.log("===============================================")
+            workout(catKey, resp, function(){
+                console.log(catKey + ": " + round(initial.percent[catKey], 2) + "%");
+                console.log("OVERALL: " + round(initial.percent.overall, 2) + "%");
+                console.log("===============================================")
 
-                    if(trackKey >= catValue){
-                        catCallback();
-                    } else {
-                        trackCallback()
-                    }
-                });
+                if(trackKey+1 >= data.length){
+                    console.log("===============SAMPLES=================")
+                    console.log("Pop: " + round(initial.percent.Pop, 2) + "% - " + initial.errors.Pop + "/" + initial.count.Pop);
+                    console.log("HipHop: " + round(initial.percent.HipHop, 2) + "% - " + initial.errors.HipHop + "/" + initial.count.HipHop);
+                    console.log("Chill: " + round(initial.percent.Chill, 2) + "% - " + initial.errors.Chill + "/" + initial.count.Chill);
+                    console.log("ElectronicAndDance: " + round(initial.percent.ElectronicAndDance, 2) + "% - " + initial.errors.ElectronicAndDance + "/" + initial.count.ElectronicAndDance);
+                    console.log("RnB: " + round(initial.percent.RnB, 2) + "% - " + initial.errors.RnB + "/" + initial.count.RnB);
+                    console.log("Rock: " + round(initial.percent.Rock, 2) + "% - " + initial.errors.Rock + "/" + initial.count.Rock);
+                    console.log("Jazz: " + round(initial.percent.Jazz, 2) + "% - " + initial.errors.Jazz + "/" + initial.count.Jazz);
+                    console.log("Classical: " + round(initial.percent.Classical, 2) + "% - " + initial.errors.Classical + "/" + initial.count.Classical);
+                    console.log("Blues: " + round(initial.percent.Blues, 2) + "% - " + initial.errors.Blues + "/" + initial.count.Blues);
+                    console.log("===============OVERALL=================")
+                    console.log("Overall: " + initial.errors.overall + "/" + initial.count.overall)
+                    console.log(round(initial.percent.overall, 2) + "%");
+                    console.log("================================================")
+                } else {
+                    trackCallback()
+                }
             });
         });
 
-        if (catNum >= Object.keys(data).length){
-            catNum = 0;
-            console.log("===============SAMPLES=================")
-            console.log("Pop: " + round(initial.percent.Pop, 2) + "% - " + initial.errors.Pop + "/" + initial.count.Pop);
-            console.log("HipHop: " + round(initial.percent.HipHop, 2) + "% - " + initial.errors.HipHop + "/" + initial.count.HipHop);
-            console.log("Chill: " + round(initial.percent.Chill, 2) + "% - " + initial.errors.Chill + "/" + initial.count.Chill);
-            console.log("ElectronicAndDance: " + round(initial.percent.ElectronicAndDance, 2) + "% - " + initial.errors.ElectronicAndDance + "/" + initial.count.ElectronicAndDance);
-            console.log("RnB: " + round(initial.percent.RnB, 2) + "% - " + initial.errors.RnB + "/" + initial.count.RnB);
-            console.log("Rock: " + round(initial.percent.Rock, 2) + "% - " + initial.errors.Rock + "/" + initial.count.Rock);
-            console.log("Jazz: " + round(initial.percent.Jazz, 2) + "% - " + initial.errors.Jazz + "/" + initial.count.Jazz);
-            console.log("Classical: " + round(initial.percent.Classical, 2) + "% - " + initial.errors.Classical + "/" + initial.count.Classical);
-            console.log("Blues: " + round(initial.percent.Blues, 2) + "% - " + initial.errors.Blues + "/" + initial.count.Blues);
-            console.log("===============OVERALL=================")
-            console.log("Overall: " + initial.errors.overall + "/" + initial.count.overall)
-            console.log(round(initial.percent.overall, 2) + "%");
-            console.log("================================================")
 
-        } else {
-            catCallback();
-        }
 
     });
 };

@@ -1,113 +1,161 @@
 const MongoClient = require('mongodb').MongoClient;
 const spotify = require('./spotifyApi');
 const genreMapping = require('../config/recommendConfig');
+const mongo = require('../../mongo');
+const neo = require('./neo4j');
 
 const async = require('async');
+
+const spotifyHelper = require('../../spotify_api');
+
+function addSongs (username, playlistOptions, music, callback) {
+    spotifyHelper('saveToPlaylist', {username: username, playlistOptions: playlistOptions, music: music}, (resp) => {
+        callback()
+    });
+}
+
+function saveRecommendedMusic (username, music, callback) {
+    mongo('grabOne', 'users', {identifier: {id: username}}, (data) => {
+        // Checking if there is already a musicDEV playlist
+        if (JSON.parse(data.records.playlistOptions.is_active)) {
+            // Add songs
+            addSongs(username, data.records.playlistOptions, music, () => {
+                callback();
+            });
+        } else {
+            // Create playlist
+            spotifyHelper('createPlaylist', {username: username, playlistOptions: data.records.playlistOptions}, (resp) => {
+                if (JSON.parse(resp.success)) {
+                    let newPlaylistOptions = data.records.playlistOptions;
+                    newPlaylistOptions.is_active = true;
+                    newPlaylistOptions.id = resp.data.body.id;
+
+                    mongo('update', 'users', {identifier: {id: username}, data: {playlistOptions: newPlaylistOptions}});
+                    console.log("Saved new playlist")
+                    addSongs(username, newPlaylistOptions, music, () => {
+                        callback();
+                    });
+                }
+            });
+        }
+    });
+}
 
 module.exports = function (spotifyApi, data, callback) {
     MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, database) {
         const db = database.db("musicDEV");
         if (err) return callback({success: false, error: err});
 
-        let useCollection = db.collection("masterMusic");
         let userCollection = db.collection("users");
-        let finalReturn = [];
+        let finalReturn = [], errorReturn = [];
+
+        console.log("Start")
 
         async.eachOfSeries(data.genres, function (genre, genreKey, genreCallback) {
             let genreCollection = genreMapping.activities[genre];
+            console.log("Searcing for: " + genreCollection);
 
-            useCollection.aggregate(
+            let indexSelections = {};
+
+            userCollection.aggregate(
                 [
-                    { '$match': {"id": "master"} },
-                    { '$unwind': '$master'},
-                    { '$match': {'master.genre': { $in: genreCollection }}}
+                    { '$match': {"id": data.username} },
+                    { '$unwind': '$playlist'},
+                    { '$match': {'playlist.genre': { $in: genreCollection }}}
                 ]
             ).toArray(function(err, docs) {
-                if(err) console.log(err);
+                if (err) console.log(docs)
 
-                let databaseData = [], featureData = [];
+                let userPlaylist = [], userFeatureList = [], warningFlag=false;
                 for (let index in docs) {
                     if (docs.hasOwnProperty(index)) {
-                        databaseData.push(docs[index].master);
-                        featureData.push(docs[index].master.features);
+                        userPlaylist.push(docs[index].playlist);
+                        userFeatureList.push(docs[index].playlist.features);
                     }
                 }
 
-                userCollection.aggregate(
-                    [
-                        { '$match': {"id": data.username} },
-                        { '$unwind': '$playlist'},
-                        { '$match': {'playlist.genre': { $in: genreCollection }}}
-                    ]
-                ).toArray(function(err, docs) {
-                    if (err) console.log(docs)
+                let ewwArray = [];
+                for (let eww=0; eww<data.musicQuantity; eww++){
+                    ewwArray.push(eww);
+                }
 
-                    let userPlaylist = [], userFeatureList = [];
-                    for (let index in docs) {
-                        if (docs.hasOwnProperty(index)) {
-                            userPlaylist.push(docs[index].playlist);
-                            userFeatureList.push(docs[index].playlist.features);
+                async.eachOfSeries(ewwArray, function (quantity, quantityKey, quantityCallback) {
+                    let random = Math.floor(Math.random() * userPlaylist.length);
+                    if (indexSelections[random]){
+                        // Song has already been selected
+                        if (Object.keys(indexSelections).length >= userPlaylist.length) {
+                            if (quantityKey+1 >= ewwArray.length){
+                                if (genreKey+1 >= data.genres.length ) {
+                                    // Finished
+                                    if (JSON.parse(data.savePlaylist) && finalReturn.length) {
+                                        saveRecommendedMusic(data.username, finalReturn, function (resp) {
+                                            callback({success: !warningFlag, savePlaylist: data.savePlaylist, successData: finalReturn, failedSongs: errorReturn});
+                                        });
+                                    } else {
+                                        callback({success: !warningFlag, savePlaylist: data.savePlaylist, successData: finalReturn, failedSongs: errorReturn});
+                                    }
+                                } else {
+                                    genreCallback()
+                                }
+                            } else {
+                                quantityCallback();
+                            }
                         }
-                    }
-
-                    console.log(typeof data.musicQuantity)
-                    let ewwArray = [];
-                    for (let eww=0; eww<data.musicQuantity; eww++){
-                        ewwArray.push(eww);
-                    }
-
-                    console.log(ewwArray)
-
-                    //while (tmpIndex < data.musicQuantity) {
-                    async.eachOfSeries(ewwArray, function (quantity, quantityKey, quantityCallback) {
-                        console.log("hi")
-                        let config = {objects: featureData, number: 1};
-                        let nearestNeighbour = require('nearestneighbour')(config)
-                        console.log("pi")
-                        let random = Math.floor(Math.random() * userPlaylist.length);
-                        console.log("hi")
-                        let uri = userPlaylist[random].id.split(':')
-                        uri = uri[uri.length - 1];
-
-                        console.log(uri);
+                    } else {
+                        indexSelections[random] = true;
+                        let selectedSong =  userPlaylist[random];
 
                         try {
-                            spotify.grabSingleFeature(spotifyApi, uri, function (respData) {
+                            console.log(userPlaylist[random])
+                            console.log("Started learning from:")
 
-                                console.log("hier")
-                                let resultList = nearestNeighbour.nearest(respData)[0]
-                                console.log(resultList)
+                            console.log(selectedSong);
 
-                                console.log("Started")
-                                for (let i in databaseData) {
-                                    if (Object.is(databaseData[i].features, resultList)) {
-                                        console.log("I recommend:");
-                                        console.log(databaseData[i]);
-                                        databaseData[i].activity = genre;
-                                        finalReturn.push(databaseData[i]);
-
+                            neo('exists', {genre: userPlaylist[random].genre, id: selectedSong.id}, (resp) => {
+                                if (resp.success) {
+                                    neo('recommend', {genre: userPlaylist[random].genre, song: selectedSong}, (resp) => {
+                                        finalReturn.push(resp.data[0].returnedNode.properties);
                                         if (quantityKey+1 >= ewwArray.length){
                                             if (genreKey+1 >= data.genres.length ) {
                                                 // Finished
-                                                callback({success: true, data: finalReturn})
+                                                if (JSON.parse(data.savePlaylist) && finalReturn.length) {
+                                                    saveRecommendedMusic(data.username, finalReturn, function (resp) {
+                                                        callback({success: !warningFlag, savePlaylist: data.savePlaylist, successData: finalReturn, failedSongs: errorReturn});
+                                                    });
+                                                } else {
+                                                    callback({success: !warningFlag, savePlaylist: data.savePlaylist, successData: finalReturn, failedSongs: errorReturn});
+                                                }
                                             } else {
                                                 genreCallback()
                                             }
                                         } else {
                                             quantityCallback();
                                         }
-                                        break;
+                                    });
+                                } else {
+                                    warningFlag = true; // There is at least one error existing
+                                    console.log("HERE")
+                                    selectedSong.success = false;
+                                    errorReturn.push(selectedSong);
+                                    if (quantityKey+1 >= ewwArray.length){
+                                        if (genreKey+1 >= data.genres.length ) {
+                                            // Finished
+                                            callback({success: !warningFlag, successData: finalReturn, failedSongs: errorReturn})
+                                        } else {
+                                            genreCallback()
+                                        }
+                                    } else {
+                                        quantityCallback();
                                     }
                                 }
                             });
                         } catch(e) {
                             callback({success: false})
                         }
-                    });
-
-                    // }
+                    }
                 });
             });
         });
     });
+    //});
 };

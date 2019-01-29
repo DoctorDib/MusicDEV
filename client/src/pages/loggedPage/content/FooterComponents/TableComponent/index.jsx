@@ -47,19 +47,20 @@ class Template extends React.Component {
         super(props);
 
         this.state = {
-            tableRecommendation: []
+            tableContent: []
         };
     }
 
     componentDidMount(props) {
         this.setState({
-            tableRecommendation: this.props.tableContent,
+            tableContent: this.props.tableContent,
         });
     };
 
     componentWillReceiveProps(nextProps){
+        console.log("Table: ", nextProps.tableContent)
         this.setState({
-            tableRecommendation: nextProps.tableContent,
+            tableContent: nextProps.tableContent || [],
         });
     }
 
@@ -67,7 +68,7 @@ class Template extends React.Component {
     render(){
         const { classes } = this.props;
 
-        let newTable = this.state.tableRecommendation.map(recom =>
+        let newTable = this.state.tableContent.map(recom =>
             <TableRow>
                 <Tooltip disableFocusListener disableTouchListener title={recom.activity}>
                     <TableCell align="center" style={{width: "2%"}}> {iconList[recom.activity]} </TableCell>
@@ -81,7 +82,7 @@ class Template extends React.Component {
         );
 
         return (
-            <Paper className={classes.root}>
+            <Paper className={classes.main} square>
                 <Table className={classes.table}>
                     <TableHead>
                         <TableRow>
