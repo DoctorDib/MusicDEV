@@ -98,22 +98,6 @@ module.exports = function(passport){
             });*/
         },
 
-        spotifyRefresh: function(req, res){
-            res.send(spotify('refresh', {
-                token: req.query.refresh_token
-            }));
-        },
-
-        // Logging into spotify account
-        spotifyLogin: function(req, res){
-            let state = generateRandomString(16);
-            res.cookie(stateKey, state);
-
-            res.redirect(spotify('login', {
-                state: state
-            }));
-        },
-
         homeTest: function(req, res){
             console.log("Pong")
 
@@ -121,65 +105,5 @@ module.exports = function(passport){
              title: 'musicDEV'
              });*/
         },
-
-        spotifyCallback: function(req, res){
-            let cookie = req.cookies ? req.cookies[stateKey] : null;
-            let callback = spotify('callback', {
-                code : req.query.code,
-                state: req.query.state,
-                storedState: cookie,
-            });
-
-            if(callback.response === 'failed'){
-                res.redirect(callback.command);
-            } else {
-                res.clearCookie(callback.command);
-
-                let authOptions = spotify('callbackV2', {
-                    code : req.query.code,
-                    state: req.query.state,
-                    storedState: cookie,
-                });
-
-                request.post(authOptions, (error, response, body) => {
-                    if (!error && response.statusCode === 200) {
-                        let access_token = body.access_token,
-                            refresh_token = body.refresh_token;
-
-                        var options = {
-                            url: 'https://api.spotify.com/v1/me',
-                            headers: { 'Authorization': 'Bearer ' + access_token },
-                            json: true
-                        };
-
-                        let data = {
-                            "access_token": access_token,
-                            "refresh_token": refresh_token
-                        };
-
-                        spotify('getMe', {access_token: data.access_token}, (accountResponse) => {
-                            spotify('set_get', {
-                                data: data,
-                                access_token: access_token,
-                                username: accountResponse.username
-                            }, () => {
-                                let data = {
-                                    access_token: access_token,
-                                    username: accountResponse.username,
-                                    name: accountResponse.name,
-                                    image: accountResponse.image,
-                                };
-                                let maxAge = (60000 * 1440) // 6000ms to 1 minute => 24 hours
-                                res.cookie('spotify', JSON.stringify(data), {maxAge: maxAge});
-                                res.redirect('/');
-                            });
-                        });
-                    } else {
-                        res.redirect('/'); // Redirecting to homepage, if not loged in, then the user will be
-                        // redirected to the landing page.
-                    }
-                });
-            }
-        }
     };
 };

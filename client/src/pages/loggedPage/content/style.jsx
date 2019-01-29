@@ -25,11 +25,15 @@ export default theme => ({
         display: 'flex',
         flexGrow: '2',
         flexDirection: 'row',
-        justifyContent: 'flex-end',
         backgroundColor: '#d7d7d7',
         height: '4vh',
         position: 'fixed',
         width: '100%'
+    },
+    topButtonOptions: {
+        display: 'flex',
+        justifyContent: 'flex-end',
+        marginLeft: 'auto'
     },
     profilePic: {
         width: '75px',
@@ -68,36 +72,6 @@ export default theme => ({
         }
     },
 
-    // Current music
-    currentContainer: {
-        backgroundColor: '#d5d1d1',
-        textAlign: 'center',
-        position: 'fixed',
-        bottom: '0',
-        width: '100%',
-        height: '3vh',
-        justifyContent: 'center',
-    },
-    currentPlaying: {
-        height: '2vh',
-        width: '75%',
-        display: 'flex',
-        justifyContent: 'space-around',
-        marginLeft: 'auto',
-        marginRight: 'auto',
-    },
-    currentInformation: {
-        display: 'flex',
-        justifyContent: 'space-around',
-        minWidth: '49%'
-    },
-    currentTitle: {
-        fontWeight: 'bold'
-    },
-    currentInfo: {
-        color: 'blue'
-    },
-
     // Snackbars
     warningSnackbar: {
         display: 'flex',
@@ -106,5 +80,17 @@ export default theme => ({
         width: '100%',
         padding: '0.1em',
         paddingRight: '0.5em',
-    }
+    },
+
+    listenDetails: {
+        display: 'flex',
+        flexDirection: 'row',
+        paddingRight: theme.spacing.unit * 4,
+        height: '100%',
+    },
+    listenText: {
+        marginLeft: theme.spacing.unit * 4,
+        display: 'flex',
+        flexDirection: 'column'
+    },
 });

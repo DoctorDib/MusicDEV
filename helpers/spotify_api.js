@@ -29,6 +29,16 @@ module.exports = function(command, data, callback) {
                     console.log('Something went wrong!', err);
                 });
             break;
+        case 'grabTrackInfo':
+            console.log(data.tracks.length)
+            spotifyApi[data.username].setAccessToken(data.access_token);
+            spotifyApi[data.username].getTracks(data.tracks)
+                .then(function(resp){
+                    callback(resp);
+                }).catch(function(err){
+                console.error('Somethingwent wrong!', err);
+            });
+            break;
         case 'grabCurrentMusic':
             spotifyApi[data.username].getMyCurrentPlaybackState({})
                 .then(function(resp) {
@@ -162,7 +172,7 @@ module.exports = function(command, data, callback) {
                 }).then(function(resp){
                     callback({success: true, data: resp});
                 }).catch(function(err){
-                    console.error("Get Me Error: ", err);
+                    console.log("Get Me Error: ", err);
                     callback({success: false});
                 });
             break;
@@ -228,5 +238,127 @@ module.exports = function(command, data, callback) {
 
         case 'grabToken':
             callback(spotifyApi[data.username]);
+            break;
+
+
+        // PLAYLIST CONTROLS
+        /*case 'checkRecommendPlaylistExists':
+            spotifyApi[data.username].getAudioFeatures(data.trackURI)
+                .then(function(data) {
+                    // Output items
+                    callback(data.body.item);
+                    console.log("Now Playing: ",data.body.item.name);
+                }, function(err) {
+                    console.log('Something went wrong!', err);
+                });
+            break;*/
+        case 'createPlaylist':
+            spotifyApi[data.username].createPlaylist(data.username, data.playlistOptions.name, {public: !JSON.parse(data.playlistOptions.is_private)})
+                .then(function(data) {
+                    callback({success: true, data:data})
+                }, function(err) {
+                    console.log("Creating Playlist error: ", err)
+                    callback({success: false, function: 'Creating Playlist', error:err})
+                });
+            break;
+        case 'saveToPlaylist':
+            spotifyApi[data.username].getPlaylistTracks(data.playlistOptions.id)
+            .then(function(returnedData){
+                let existingTracks = {};
+
+                let tracks = returnedData.body.items;
+                for (let index = 0; index < tracks.length; index ++) {
+                    if(tracks[index].track.id){
+                        existingTracks[tracks[index].track.id] = true;
+                    }
+                }
+
+                let uriArray = [];
+                for (let index in data.music) {
+                    if (data.music.hasOwnProperty(index) && !existingTracks.hasOwnProperty(data.music[index].id)) { // Ensuring no duplication
+                        console.log(">>", data.music[index]);
+                        uriArray.push("spotify:track:" + data.music[index].id);
+                    }
+                }
+
+                if(uriArray.length){
+                    console.log("Saving to:")
+                    console.log(data.playlistOptions.id)
+                    console.log(uriArray)
+
+                    spotifyApi[data.username].addTracksToPlaylist(data.playlistOptions.id, uriArray)
+                        .then(function(data){
+                            callback({success: true, data:data})
+                        }).catch(function(err){
+                        console.log("Adding to playlist error: ", err);
+                        callback({success: false, function: 'Adding songs to playlist', error:err})
+                    });
+                } else {
+                    callback({success: false, function: "Adding songs to playlist", error: "Song or songs already exist within the playlist"})
+                }
+            }).catch(function(err){
+                callback({success: false, function: "Grabbing tracks from saved playlist", error: err})
+            });
+            break;
+        case 'changePlaylistInformation': // TODO - Enable detail changes.
+           let newChanges = JSON.parse(data.new_changes);
+            spotifyApi[data.username].changePlaylistDetails(data.playlistOptions.id,
+               {
+                   name: newChanges.new_name,
+                   public : newChanges.privatePlaylist
+               }).then(function(data) {
+               console.log(data)
+               console.log(data.playlistOptions.id)
+               callback({success:true, data: {name: data.new_changes.new_name, is_private: data.new_changes.privatePlaylist}})
+            }, function(err) {
+               console.log('Modifying playlist details: ', err);
+               callback({success:false, function: 'Modifying playlist information', error: err})
+            });
+            break;
+        case 'clearPlaylist':
+            spotifyApi[data.username].getPlaylistTracks(data.playlistOptions.id)
+                .then(function(returnedData) {
+                    let existingTracks = [];
+
+                    let tracks = returnedData.body.items;
+                    for (let index = 0; index < tracks.length; index++) {
+                        if (tracks[index].track.id) {
+                            existingTracks.push({uri: "spotify:track:"+tracks[index].track.id});
+                        }
+                    }
+
+                    if (existingTracks.length) {
+                        console.log(existingTracks)
+                        const options = {  };
+                        spotifyApi[data.username].removeTracksFromPlaylist(data.playlistOptions.id, existingTracks, options)
+                            .then(function() {
+                                console.log("Success")
+                                callback({success: true});
+                            })
+                            .catch(function(err){
+                                console.log("FAILED at deleting: ", err)
+                                callback({success: false, function: "Clearing playlist", error: err})
+                            });
+                    } else {
+                        callback({success: false, function: "Finding tracks", error: "No tracks found?"})
+                    }
+                }).catch(function(err) {
+                console.log("FAILED at deleting2: ", err)
+                callback({success: false, function: "Grabbing tracks from saved playlist to clear everything", error: err})
+            });
+            break;
+        case 'deletePlaylist': // TODO - Adding a deleting recommended playlist on user profile.
+                console.log(data)
+                spotifyApi[data.username].unfollowPlaylist(data.playlistOptions.id)
+                    .then(function() {
+                        callback({success: true})
+                    }, function(err) {
+                        console.log("Error while deleting playlist: ", err)
+                        callback({success: false, function: "Deleting playlist", error: err})
+                    });
+            break;
+        case 'setAccessToken':
+            spotifyApi[data.username].setAccessToken(data.access_token);
+            break;
     }
-}
+};

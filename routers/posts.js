@@ -1,10 +1,13 @@
 const spotify = require('../helpers/spotify_api.js');
-const mongoose = require('../helpers/mongoose');
-const MongoClient = require('mongodb').MongoClient;
-const async = require('async');
+const mongo = require('../helpers/mongo');
 
 const trainer = require('../helpers/frontTraining');
 const recommender = require('../helpers/musicTool/helpers/recommend');
+
+const neo = require('../helpers/musicTool/helpers/neo4j');
+const async = require('async');
+
+const passportRefreshToken = require('passport-oauth2-refresh');
 
 module.exports = function () {
     return {
@@ -13,8 +16,11 @@ module.exports = function () {
             router.get('/grabPlaylistGenre', this.grabPlaylistGenre);
             router.get('/grabActivePlaylist', this.grabActivePlaylist);
             router.get('/recommend', this.recommendingMusic);
-            router.get('/initial', this.initial);
-            router.get('/refreshToken', this.refreshToken);
+            router.get('/initial', this.initialise);
+            router.get('/consentLearn', this.consentLearn);
+            router.get('/managePlaylist', this.managePlaylist);
+
+            router.post('/refreshToken', this.refreshToken);
         },
 
         recommendingMusic: function(req, res) {
@@ -30,11 +36,8 @@ module.exports = function () {
                 }
             }
 
-            spotify('grabToken', {username: req.query.username}, token => {
-                console.log(tmpGenres)
-                console.log(tmpGenres.length)
-
-                recommender(token, {genres: tmpGenres, username: req.query.username, musicQuantity: req.query.musicQuantity}, resp => {
+            spotify('grabToken', {username: req.user.id}, token => {
+                recommender(token, {user: req.user, genres: tmpGenres, username: req.user.id, musicQuantity: req.query.musicQuantity, savePlaylist: req.query.savePlaylist}, resp => {
                     console.log("Response: ", resp);
                     res.json(resp);
                 });
@@ -42,99 +45,157 @@ module.exports = function () {
         },
         currentSong: function(req, res) {
             spotify("grabCurrentMusic", {username: req.query.username}, data => {
-                res.json({ 
+                res.json({
                     isPlaying: data.is_playing,
                     song: data.item.name,
-                    artist: data.item.artists[0].name
+                    artist: data.item.artists[0].name,
+                    image: data.item.album.images[0].url
                 });
             });
         },
         grabPlaylistGenre: function(req, res) {
-            MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, database) {
-                if (err) return console.error(err);
-                const db = database.db("musicDEV");
-                useCollection = db.collection("users");
-                useCollection.update({id: req.query.username}, { $set: { activePlaylists: req.query.playlists } }, { upsert: true } );
-                useCollection.findOne({id: req.query.username}, (err, resp) => {
-                    if(err)return console.log(err);
-                    trainer("grabURI", req.user.id, resp.spotify.access_token, req.query.playlists, () => {
-                        console.log("Job done")
-                        res.json({
-                            success: true
-                        });
-                    });
+            mongo('update', 'users', { identifier: { id: req.user.id }, data: { activePlaylists: req.query.playlists } } );
+            mongo('grabOne', 'users', { identifier: {id: req.user.id } }, (resp) => {
+                trainer("grabURI", req.user.id, resp.records.spotify.access_token, req.query.playlists, () => {
+                    res.json({success: true});
                 });
             });
         },
         grabActivePlaylist: function(req, res) {
-            MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, database) {
-                if (err) return console.error(err);
-                const db = database.db("musicDEV");
-                useCollection = db.collection("users");
-                useCollection.findOne({id: req.user.id}, { activePlaylists: { $exists: true } }, (err, resp) => {
-                    if (err) console.log(err);
-
-                    if(resp !== null){
-                        if(resp.activePlaylists !== null){
-                            res.json({
-                                success: true,
-                                playlists: resp.activePlaylists
-                            });
-                        }
-                    } else {
-                        res.json({success: false});
+            mongo('grabOne', 'users', { identifier: { id: req.user.id }, options: { activePlaylists: { $exists: true } } }, resp => {
+                if (resp.records !== null) {
+                    if (resp.records.activePlaylists !== null) {
+                        res.json({
+                            success: true,
+                            playlists: resp.records.activePlaylists
+                        });
                     }
+                } else {
+                    res.json({success: false});
+                }
+            });
+        },
+        initialise: function (req, res) {
+            spotify('new_user', {username: req.user.id}, () => {
+                mongo('grabOne', 'users', {identifier: {id: req.user.id}}, resp => {
+                    spotify('grabPlaylists', {
+                        username: req.user.id,
+                        access_token: resp.records.spotify.access_token
+                    }, playlists => {
+
+                        console.log(">>", playlists)
+
+                        if (playlists.success) {
+                            res.json({
+                                new_user: !resp.records.hasOwnProperty('playlist'),
+                                userAccount: req.user,
+                                playlists: playlists.data,
+                                success: true,
+                                access_token: resp.records.spotify.access_token,
+                                privatePlaylist: resp.records.playlistOptions.is_private,
+                                playlistName: resp.records.playlistOptions.name
+                            });
+                        } else {
+                            console.log(req.user.id);
+                            console.log(resp.records);
+                            res.json({success: false});
+                        }
+                    });
                 });
             });
         },
-        initial: function (req, res) {
-            console.log(req.user.id)
+        refreshToken: function (req, res) {
+            mongo('grabOne', 'users', {identifier: {username: req.user.id}}, resp => {
+                passportRefreshToken.requestNewAccessToken('spotify', resp.records.spotify.refresh_token, {}, function (err, accessToken, refreshToken) {
+                    if (err) return console.log("Refresh Token error: ", err);
+                    let newRefreshToken = refreshToken == null ? resp.records.spotify.refresh_token : refreshToken;
 
-            spotify('new_user', {username: req.user.id}, () => {
+                    console.log("New token: " + accessToken);
+                    spotify('setAccessToken', {username: req.user.id, access_token: accessToken});
 
-                MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, database) {
-                    if (err) return console.error(err);
-                    const db = database.db("musicDEV");
-
-                    useCollection = db.collection("users");
-                    useCollection.findOne({id: req.user.id}, function(err, resp){
-                        if (err) return console.log(err)
-
-                        spotify('grabPlaylists', {
-                            username: req.user.id,
-                            access_token: resp.spotify.access_token
-                        }, (playlists) => {
-                            if (playlists.success) {
-                                res.json({
-                                    new_user: !resp.activePlaylist.length,
-                                    userAccount: req.user,
-                                    playlists: playlists.data,
-                                    success: true,
-                                    access_token: resp.spotify.access_token
-                                });
-                            } else {
-                                res.json({success: false});
-                            }
-                        });
-                    })
-                })
+                    mongo('update', 'users', {identifier: {username: req.user.id}, data: {'spotify': {access_token: accessToken, refresh_token: newRefreshToken}}});
+                    res.redirect('/');
+                });
             });
         },
-        refreshToken: function (req, res) {
-            MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, database) {
-                if (err) return console.error(err);
-                const db = database.db("musicDEV");
+        consentLearn: function (req, res) {
+            console.log("Recieved...")
+            let failedSongs = req.query.songs;
+            console.log(failedSongs)
+            async.eachOfSeries(failedSongs, function (song, songKey, songCallback) {
+                console.log(">>", song)
 
-                useCollection = db.collection("users");
-                useCollection.findOne({username: req.user.id}, function(err, resp){
-                    if (err) return console.log(err)
+                song = JSON.parse(song);
 
-                    spotify('refresh', {username: req.user.id, token: resp.spotify.refresh_token}, (data) => {
-                        useCollection.update({username: req.user.id}, {'spotify': {access_token: data.access_token, refresh_token: data.refresh_token}});
-                        res.redirect('/');
+                neo('create', {
+                    params: song,
+                    single: true
+                }, function (resp) {
+                    if (!resp.success) return console.log(resp.error);
+                    console.log("Created")
+
+                    console.log(song.genre)
+                    neo('masterLearn', {genre: song.genre}, function (resper) {
+                        console.log("Learnt")
+                        console.log(resper)
+
+                        if (songKey+1 >= failedSongs.length) {
+                            res.json({success: true});
+                        } else {
+                            songCallback();
+                        }
                     });
-                })
+                });
             })
+        },
+        managePlaylist: function (req, res) {
+            console.log("Managing playlist")
+            let task = req.query.task;
+
+            mongo('grabOne', 'users', { identifier: { id: req.user.id }, options: { playlistOptions: { $exists: true } } }, resp => {
+                //console.log(resp)
+                switch(task){
+                    case 'clear':
+                        console.log("Preparing to delete")
+                        spotify("clearPlaylist", {username: req.user.id, playlistOptions: resp.records.playlistOptions}, data => {
+                            console.log("Deleted")
+                            res.json(data);
+                        });
+                        break;
+                    case 'change_name':
+                        spotify("changePlaylistInformation", {username: req.user.id, new_changes: req.query.data, playlistOptions: resp.records.playlistOptions}, data => {
+                            if(data.success){
+                                let newPlaylistOptions = resp.records.playlistOptions;
+                                newPlaylistOptions.name = data.new_name;
+                                newPlaylistOptions.is_private = data.is_private;
+                                mongo('update', 'users', { identifier: { id: req.user.id }, data: { playlistOptions: req.query.playlists } } );
+                                console.log("Changed")
+                                res.json(data);
+                            }
+                        });
+                        break;
+                    case 'delete':
+                       try {
+                           console.log("Preparing to delete playlist")
+                           console.log(resp.records)
+                           spotify("deletePlaylist", {username: req.user.id, playlistOptions: resp.records.playlistOptions}, data => {
+                               if(data.success){
+                                   let newPlaylistOptions = resp.records.playlistOptions;
+                                   newPlaylistOptions.name = '';
+                                   newPlaylistOptions.id = '';
+                                   newPlaylistOptions.is_private = true;
+                                   newPlaylistOptions.is_active = false;
+                                   mongo('update', 'users', { identifier: { id: req.user.id }, data: { playlistOptions: req.query.playlists } } );
+                                   console.log("Delete playlist")
+                                   res.json(data);
+                               }
+                           });
+                           break;
+                       } catch(e) {
+                           console.log(e)
+                       }
+                }
+            });
         }
     };
 };

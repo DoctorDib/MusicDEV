@@ -1,11 +1,13 @@
 function check(outcome, callback) {
     let high = 0, highLabel;
 
-    for (index in outcome) {
-        let tmpOut = outcome[index];
-        if (tmpOut > high) {
-            high = tmpOut;
-            highLabel = index;
+    for (let index in outcome) {
+        if(outcome.hasOwnProperty(index)){
+            let tmpOut = outcome[index];
+            if (tmpOut > high) {
+                high = tmpOut;
+                highLabel = index;
+            }
         }
     }
 
@@ -17,10 +19,13 @@ function check(outcome, callback) {
     callback(highLabel);
 }
 
+
 module.exports = function (net, data, callback) {
+
+
     let outcome = net.run(data);
     console.log(outcome)
     check(outcome, (resp)=>{
         callback(resp)
     });
-}
+};

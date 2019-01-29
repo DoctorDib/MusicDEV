@@ -57,12 +57,12 @@ let self = {
                                 output: {
                                     [type]: 1
                                 }
-                            };
+                            }
                         } else {
                             features.id = value.id;
                         }
 
-                        tmpMemory.push(features);
+                        tmpMemory.push({id: value.id, features: features});
 
                         if(key+1 >= data.body.audio_features.length){
                             callback(tmpMemory);
