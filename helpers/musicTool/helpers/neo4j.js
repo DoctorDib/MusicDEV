@@ -15,24 +15,29 @@ module.exports = function (func, data, callback) {
             console.log(data)
             let song = data.params;
 
+            console.log("================================")
+            console.log(song)
+            console.log(song.genre)
+            console.log("================================")
+
             let propertyCreate = ` {
                 name: ${JSON.stringify(song.name)},
                 id: \"${song.id}\",
                 genre: \"${song.genre}\",
-                danceability: ${song.features.danceability},
-                energy: ${song.features.energy},
-                key: ${song.features.key},
-                loudness: ${song.features.loudness},
-                speechiness: ${song.features.speechiness},
-                acousticness: ${song.features.acousticness},
-                instrumentalness: ${song.features.instrumentalness},
-                liveness: ${song.features.liveness},
-                valence: ${song.features.valence},
-                tempo: ${song.features.tempo}
+                danceability: ${song.features.features.danceability},
+                energy: ${song.features.features.energy},
+                key: ${song.features.features.key},
+                loudness: ${song.features.features.loudness},
+                speechiness: ${song.features.features.speechiness},
+                acousticness: ${song.features.features.acousticness},
+                instrumentalness: ${song.features.features.instrumentalness},
+                liveness: ${song.features.features.liveness},
+                valence: ${song.features.features.valence},
+                tempo: ${song.features.features.tempo}
             }`;
 
             db.cypher({
-                query: ` MATCH(a:${song.genre}_Genre {id: "Genre"}) CREATE (a2:${song.genre} ${propertyCreate})-[:GENRE_IS]->(a)`,
+                query: `MATCH(a:${song.genre}_Genre {id: "Genre"}) CREATE (a2:${song.genre} ${propertyCreate})-[:GENRE_IS]->(a)`,
             }, function (err, returnedData) {
                 if (err) {
                     console.log(err)
@@ -42,12 +47,12 @@ module.exports = function (func, data, callback) {
                 }
             });
             break;
-
         case 'masterLearn':
             console.log('-------------------------------------------')
             console.log(`Relation learning stated for: ${data.genre}`)
 
-            let query = `MATCH (a:${data.genre})
+            try {
+                let query = `MATCH (a:${data.genre})
                         WITH id(a) as id, [
                             a["danceability"], 
                             a["energy"], 
@@ -75,17 +80,21 @@ module.exports = function (func, data, callback) {
                         
                         RETURN true`;
 
-            db.cypher({
-                query: query,
-            }, function (err, data) {
-                if (err) {
-                    console.log(err)
-                    //callback({success: false, error: err});
-                } else {
-                    console.log('FINISHED')
-                    callback({success: true, data: data});
-                }
-            });
+                db.cypher({
+                    query: query,
+                }, function (err, data) {
+                    if (err) {
+                        console.log(err)
+                        //callback({success: false, error: err});
+                    } else {
+                        console.log('FINISHED')
+                        callback({success: true, data: data});
+                    }
+                });
+                break;
+            } catch(e) {
+                console.log(e)
+            }
             break;
         case 'masterDelete':
             let deleteQuery = `MATCH (n)
@@ -179,7 +188,8 @@ module.exports = function (func, data, callback) {
                 console.log("Created node successfully")
 
                 console.log("Learning")
-                let query = `MATCH (a:${data.genre})
+                let query = `
+                    MATCH (a:${data.genre})
                     WITH id(a) as id, [
                     a["danceability"], 
                     a["energy"], 
