@@ -532,6 +532,7 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
         },
         build: function () {
             neo4j('masterDelete', {}, function () { // Resetting
+                console.log("Done")
 
                 neo4j('initialise', {id: "Spotify", genres: recommendConfig.genres}, function () { // Initialising database
 
