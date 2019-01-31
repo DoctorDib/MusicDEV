@@ -39,7 +39,6 @@ class Template extends React.Component {
                 <Tabs
                     value={this.state.value}
                     indicatorColor="secondary"
-                    textColor="primary"
                     onChange={this.handleChange}
                 >
                     <div className={classes.tabParent}>

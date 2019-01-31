@@ -11,7 +11,11 @@ import LogoutIcon from '@material-ui/icons/ExitToApp';
 import ListenIcon from '@material-ui/icons/Headset';
 import HelpIcon from '@material-ui/icons/Help';
 import Tooltip from '@material-ui/core/Tooltip';
+import Switch from '@material-ui/core/Switch';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
 import CircularProgress from '@material-ui/core/CircularProgress';
+
+import LogoIcon from '../../../img/icon.png';
 
 import theme from '../../../styles/theme'
 
@@ -36,7 +40,6 @@ class Template extends React.Component {
             settingsOpen: false,
             helperOpen: false,
             activeSettings: false, // Deciding if first time set up or if user has opened the settings
-            color: 'rgba(81,81,81,0)',
 
             // Profile information
             profileName: 'Loading...',
@@ -111,11 +114,8 @@ class Template extends React.Component {
     };
 
     initialLoad = () => {
-        console.log("call")
         Axios.get('initial')
             .then((resp) => {
-                theme.palette.type = "light"
-                console.log(resp)
                 if(resp.data.success){
                     this.setState({
                         settingsOpen: resp.data.new_user,
@@ -131,8 +131,6 @@ class Template extends React.Component {
                         playlistName: resp.data.playlistName
                     });
                 } else {
-                    console.log("here")
-                    console.log(resp)
                     this.setState({
                         errorNotification: 'Error: Session timeout, please logout and then back in...',
                         warningSnack: true
@@ -187,8 +185,7 @@ class Template extends React.Component {
 
     handleListen = () => {
         this.setState({
-            listening: !this.state.listening,
-            color: this.state.listening ? 'rgba(81,81,81,0)' : 'rgba(81,81,81,0.8)'
+            listening: !this.state.listening
         });
     };
 
@@ -197,46 +194,34 @@ class Template extends React.Component {
 
         return (
             <section className={classes.body}>
-                <section className={classes.topBar}>
+                <Paper square className={classes.topBar}>
                     <div>
-                        <Paper square className={classes.listenDetails} color="secondary" style={{display: this.state.currentPlayingImage.length}}>
-                            <img src={this.state.currentPlayingImage} style={{height: '100%', width: '50px'}}/>
-                            <div className={classes.listenText}>
-                                <Typography noWrap={true} >{this.state.currentPlayingSong}</Typography>
-                                <Typography noWrap={true} variant="caption">{this.state.currentPlayingAuthor}</Typography>
-                            </div>
-                        </Paper>
+                        <img src={LogoIcon} style={{backgroundColor: '#bcbdbc', height: '100%', width: '50px'}}/>
+                        {this.state.currentPlayingImage ? <img src={this.state.currentPlayingImage} style={{height: '100%', width: '50px'}}/> : null}
+                        <div className={classes.listenText}>
+                            <Typography noWrap={true} >{this.state.currentPlayingSong}</Typography>
+                            <Typography noWrap={true} variant="caption">{this.state.currentPlayingAuthor}</Typography>
+                        </div>
                     </div>
 
                     <div className={classes.topButtonOptions}>
                         <Tooltip disableFocusListener disableTouchListener title="Toggle Listen">
-                            <Button style={{backgroundColor: this.state.color}} onClick={this.handleListen}>
-                                <ListenIcon style={{fontSize: '20'}}/>
-                            </Button>
-                        </Tooltip>
-                        <Tooltip disableFocusListener disableTouchListener title="Settings">
-                            <Button onClick={this.handleClickOpen('settingsOpen', true)} className={classes.profileSettings}><SettingsIcon style={{fontSize: '20'}}/></Button>
+                            <FormControlLabel control={<Switch checked={this.state.listening} onClick={this.handleListen} />} label="Toggle Listening" />
                         </Tooltip>
                         <Tooltip disableFocusListener disableTouchListener title="Help">
                             <Button onClick={this.handleClickOpen('helperOpen', true)}><HelpIcon style={{fontSize: '20'}}/></Button>
+                        </Tooltip>
+                        <Tooltip disableFocusListener disableTouchListener title="Settings">
+                            <Button onClick={this.handleClickOpen('settingsOpen', true)}><SettingsIcon style={{fontSize: '20'}}/></Button>
                         </Tooltip>
                         <Tooltip disableFocusListener disableTouchListener title="Logout">
                             <Button onClick={this.handleRedirect('/logout')} ><LogoutIcon /> </Button>
                         </Tooltip>
                     </div>
-                </section>
-
-                <a href={this.state.profileLink} id="accountHolder" className={classes.accountHolder}>
-                    <CircularProgress className={classes.progress} style={{display: this.state.profilePicLoading, width: '75px', height: '75px'}} />
-                    <img id="profilePic" className={classes.profilePic} style={{display: this.state.profilePicActive}} src={this.state.profilePic}/>
-                    <section id="profileArea" className={classes.profileArea}>
-                        <Typography id="profileUserName" className={classes.profileUserName}>{this.state.profileName}</Typography>
-                        <Typography id="profileName" className={classes.profileName}>{this.state.profileUsername}</Typography>
-                    </section>
-                </a>
+                </Paper>
 
                 <section className={classes.header} style={{zIndex: '1'}}>
-                    <section className={classes.titleContainer} style={{position: 'fixed', zIndex: '0', top: '110px'}}>
+                    <section className={classes.titleContainer} style={{position: 'fixed', zIndex: '0', top: '100px'}}>
                         <Typography variant='display4' className={classes.title} style={{color: 'rgba(0, 0, 0, 0.46)', fontSize: '4.5em'}}> MusicDEV </Typography>
                         <Typography variant='display1' className={classes.titleChild} style={{color: 'rgba(0, 0, 0, 0.46)', fontSize: '1em'}}> Finding the right music </Typography>
                     </section>
@@ -269,6 +254,13 @@ class Template extends React.Component {
                     currentPlayingImage={this.state.currentPlayingImage}
                     username={this.state.profileUsername}
                     updateTable={(params) => this.updateState(params)}
+
+                    profileName={this.state.profileName}
+                    profileUsername={this.state.profileUsername}
+                    profilePic={this.state.profilePic}
+                    profilePicLoading={this.state.profilePicLoading}
+                    profilePicActive={this.state.profilePicActive}
+                    profileLink={this.state.profileLink}
                 />
 
                 <Snackbar
@@ -284,7 +276,7 @@ class Template extends React.Component {
                                 Refresh
                             </Button> :
                             this.state.errorNotification === 'Error: Session timeout, please logout and then back in...' ?
-                                <Button key="undo" color="secondary" size="small" onClick={this.refreshToken()}>
+                                <Button key="undo" size="small" onClick={this.refreshToken()}>
                                     ReLog
                                 </Button> : null
                     ]}

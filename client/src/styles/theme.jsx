@@ -16,6 +16,10 @@ export default createMuiTheme({
             light: '#444444',
             main: '#eeeeee',
         },
+        tertiary: {
+            light: '#efefef',
+            main: '#efefef',
+        },
         error: {
             light: '#dc3636',
             main: '#dc3636'
@@ -23,7 +27,6 @@ export default createMuiTheme({
         warning: {
             backgroundColor: amber[700],
         },
-
         message: {
             display: 'flex',
             alignItems: 'center',

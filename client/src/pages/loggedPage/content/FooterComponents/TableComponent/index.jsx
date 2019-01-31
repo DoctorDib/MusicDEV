@@ -45,10 +45,7 @@ const iconList = {
 class Template extends React.Component {
     constructor(props) {
         super(props);
-
-        this.state = {
-            tableContent: []
-        };
+        this.state = {tableContent: []};
     }
 
     componentDidMount(props) {
@@ -58,7 +55,7 @@ class Template extends React.Component {
     };
 
     componentWillReceiveProps(nextProps){
-        console.log("Table: ", nextProps.tableContent)
+        console.log(`Table: ${nextProps.tableContent}`)
         this.setState({
             tableContent: nextProps.tableContent || [],
         });
@@ -68,15 +65,15 @@ class Template extends React.Component {
     render(){
         const { classes } = this.props;
 
-        let newTable = this.state.tableContent.map(recom =>
+        let newTable = this.state.tableContent.map(recommended =>
             <TableRow>
-                <Tooltip disableFocusListener disableTouchListener title={recom.activity}>
-                    <TableCell align="center" style={{width: "2%"}}> {iconList[recom.activity]} </TableCell>
+                <Tooltip disableFocusListener disableTouchListener title={recommended.activity}>
+                    <TableCell align="center" style={{width: "2%"}}> {iconList[recommended.activity]} </TableCell>
                 </Tooltip>
-                <TableCell> {recom.name} </TableCell>
-                <TableCell> {recom.genre} </TableCell>
+                <TableCell> {recommended.name} </TableCell>
+                <TableCell> {recommended.genre} </TableCell>
                 <TableCell asign="center" style={{width: '2%'}}>
-                    <Button href={"https://open.spotify.com/track/" + recom.id}> <PlayButtonIcon /> </Button>
+                    <Button href={"https://open.spotify.com/track/" + recommended.id}> <PlayButtonIcon /> </Button>
                 </TableCell>
             </TableRow>
         );

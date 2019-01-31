@@ -248,7 +248,6 @@ module.exports = function (func, data, callback) {
                 query: recommendQuery,
             }, function (err, data) {
                 console.log("response?")
-                console.log(err)
                 console.log(data)
                 if (err) {
                     console.log(err)

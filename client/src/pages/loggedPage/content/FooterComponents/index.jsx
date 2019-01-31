@@ -6,22 +6,19 @@ import RecommendationComponent  from './RecommendationComponent';
 import { withStyles } from '@material-ui/core/styles';
 
 import styles from './style';
-import Typography from "@material-ui/core/Typography/Typography";
 import AppBar from '@material-ui/core/AppBar';
 import classNames from 'classnames';
 import Drawer from '@material-ui/core/Drawer';
 import Divider from '@material-ui/core/Divider';
 import Toolbar from '@material-ui/core/Toolbar';
 import Tooltip from '@material-ui/core/Tooltip';
-import Paper from '@material-ui/core/Paper';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import IconButton from '@material-ui/core/IconButton';
-import Tabs from '@material-ui/core/Tabs';
-import Tab from '@material-ui/core/Tab';
+import CircularProgress from '@material-ui/core/CircularProgress';
 
 import RecentIcon from 'mdi-react/RecentIcon';
 import BrainIcon from 'mdi-react/BrainIcon';
@@ -31,17 +28,17 @@ import MenuIcon from '@material-ui/icons/Menu';
 
 const buttonContent = [
     {
-        id: 0,
+        id: 1,
         name: 'Recommendation',
         icon: <BrainIcon />
     },
     {
-        id: 1,
+        id: 2,
         name: 'Music Manager',
         icon: <ManagerIcon />
     },
     {
-        id: 2,
+        id: 3,
         name: 'All History',
         icon: <RecentIcon />
     }
@@ -63,9 +60,16 @@ class Template extends React.Component {
             menuKey: 0,
             value: 0,
 
-            selectedIndex: 0,
+            selectedIndex: 1,
 
-            buttonList: buttonContent
+            buttonList: buttonContent,
+
+            profileName: 'Loading...',
+            profileUsername: '',
+            profilePic: '',
+            profilePicLoading: 'block',
+            profilePicActive: 'none',
+            profileLink: 'https://www.spotify.com/uk/',
         }
     }
 
@@ -78,24 +82,27 @@ class Template extends React.Component {
     };
 
     handleListItemClick = (event, index) => {
-        this.setState({ selectedIndex: index });
+        this.setState({ selectedIndex: index, open: false});
     };
 
     listCreator = (list)  => {
         return list.map(val =>
-            <Tooltip disableFocusListener disableTouchListener title={val.name} placement="right">
+            <Tooltip disableHoverListener={this.state.open} disableFocusListener disableTouchListener title={val.name} placement="right">
                 <ListItem
                     button
                     selected={this.state.selectedIndex === val.id}
                     onClick={event => this.handleListItemClick(event, val.id)}
                 >
-                    <ListItemIcon>
-                        {val.icon}
-                    </ListItemIcon>
+                    <ListItemIcon>{val.icon}</ListItemIcon>
                     <ListItemText primary={val.name} />
                 </ListItem>
             </Tooltip>
         );
+    };
+
+    visitProfile = () => {
+        window.open(this.state.profileLink, '_blank');
+        this.setState({open: false});
     };
 
     componentDidMount(props) {
@@ -106,6 +113,13 @@ class Template extends React.Component {
             updateTable: this.props.updateTable,
             currentPlayingAuthor: this.props.currentPlayingAuthor,
             currentPlayingImage: this.props.currentPlayingImage,
+
+            profileName: this.props.profileName,
+            profileUsername: this.props.profileUsername,
+            profilePic: this.props.profilePic,
+            profilePicLoading: this.props.profilePicLoading,
+            profilePicActive: this.props.profilePicActive,
+            profileLink: this.props.profileLink,
         });
     };
 
@@ -117,6 +131,13 @@ class Template extends React.Component {
             updateTable: nextProps.updateTable,
             currentPlayingAuthor: nextProps.currentPlayingAuthor,
             currentPlayingImage: nextProps.currentPlayingImage,
+
+            profileName: nextProps.profileName,
+            profileUsername: nextProps.profileUsername,
+            profilePic: nextProps.profilePic,
+            profilePicLoading: nextProps.profilePicLoading,
+            profilePicActive: nextProps.profilePicActive,
+            profileLink: nextProps.profileLink,
         });
     }
 
@@ -169,6 +190,20 @@ class Template extends React.Component {
                         <Divider />
 
                         <List component="nav">
+                            <Tooltip disableHoverListener={this.state.open} disableFocusListener disableTouchListener title="Visit profile" placement="right">
+                                <ListItem
+                                    button
+                                    onClick={this.visitProfile}
+                                    style={{paddingLeft: '10px'}}
+                                >
+                                    <ListItemIcon>
+                                        <CircularProgress color="secondary" style={{display: this.state.profilePicLoading, width: '35px', height: '35px'}} />
+                                        <img src={this.state.profilePic} className={classes.profilePic} style={{display: this.state.profilePicActive}}/>
+                                    </ListItemIcon>
+                                    <ListItemText primary={this.state.profileUsername} />
+                                </ListItem>
+                            </Tooltip>
+                            <Divider />
                             {this.listCreator(this.state.buttonList)}
                         </List>
                     </Drawer>
@@ -177,13 +212,13 @@ class Template extends React.Component {
                     <main className={classes.content}>
                         <div className={classes.toolbar} />
 
-                        {this.state.selectedIndex === 0 && <RecommendationComponent
+                        {this.state.selectedIndex === 1 && <RecommendationComponent
                             updateTable={this.state.updateTable}
                             username={this.state.username}
                         />}
 
-                        {this.state.selectedIndex === 1 && <div>Item Two</div>}
-                        {this.state.selectedIndex === 2 && <div>Item Three</div>}
+                        {this.state.selectedIndex === 2 && <div>Item Two</div>}
+                        {this.state.selectedIndex === 3 && <div>Item Three</div>}
                     </main>
                 </div>
             </section>

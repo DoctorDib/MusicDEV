@@ -17,9 +17,9 @@ module.exports = function () {
             router.get('/grabActivePlaylist', this.grabActivePlaylist);
             router.get('/recommend', this.recommendingMusic);
             router.get('/initial', this.initialise);
-            router.get('/consentLearn', this.consentLearn);
             router.get('/managePlaylist', this.managePlaylist);
 
+            router.post('/consentLearn', this.consentLearn);
             router.post('/refreshToken', this.refreshToken);
         },
 

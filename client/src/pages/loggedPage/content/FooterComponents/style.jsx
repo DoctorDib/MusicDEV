@@ -84,9 +84,9 @@ export default theme => ({
             duration: theme.transitions.duration.leavingScreen,
         }),
         overflowX: 'hidden',
-        width: theme.spacing.unit * 7 + 1+9,
+        width: theme.spacing.unit * 11 + 3,
         [theme.breakpoints.up('sm')]: {
-            width: theme.spacing.unit * 9 + 1+9,
+            width: theme.spacing.unit * 11 + 3,
         },
         position: 'relative'
     },
@@ -107,5 +107,12 @@ export default theme => ({
         flexDirection: 'row',
         flexGrow: '2',
         height: '100%',
+    },
+
+    profilePic: {
+        width: theme.spacing.unit * 7,
+        height: theme.spacing.unit * 7,
+        borderRadius: '100%',
+        userSelect: 'none',
     },
 });

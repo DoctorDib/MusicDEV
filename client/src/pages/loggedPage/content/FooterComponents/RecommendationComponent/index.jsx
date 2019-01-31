@@ -86,7 +86,6 @@ const Randomised = <Chip
     avatar={<RandomisedIcon style={{backgroundColor: '#ffffff00'}} />}
     label="Randomised"
     style={{margin: '.5em', padding: '1em'}}
-    color="primary"
 />;
 
 const defaultStates = {
@@ -150,7 +149,6 @@ class Template extends React.Component {
                     avatar={tag.icon}
                     label={tag.title}
                     style={{margin: '.5em', padding: '1em'}}
-                    color="primary"
                 />
             );
         }
@@ -189,6 +187,7 @@ class Template extends React.Component {
     };
 
     handleClose = target => () => {
+        console.log("CLOSINGGGG")
         this.setState({ [target]: false });
     };
 
@@ -279,11 +278,10 @@ class Template extends React.Component {
                             checked={this.state.savePlaylist}
                             onChange={this.handleBooleanChange('savePlaylist')}
                             value="Save Playlist"
-                            color="primary"
                         />
                         <section className={classes.buttonHolder}>
-                            <Button variant="contained" style={{width: '15vw'}} onClick={this.recommendMusic}>Recommend</Button>
-                            <Button variant="contained" style={{width: '15vw'}} onClick={this.clear}>Clear</Button>
+                            <Button variant="contained" style={{width: '10vw'}} onClick={this.recommendMusic}>Recommend</Button>
+                            <Button variant="contained" style={{width: '10vw'}} onClick={this.clear}>Clear</Button>
                         </section>
                     </div>
 

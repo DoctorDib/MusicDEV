@@ -25,7 +25,6 @@ export default theme => ({
         display: 'flex',
         flexGrow: '2',
         flexDirection: 'row',
-        backgroundColor: '#d7d7d7',
         height: '4vh',
         position: 'fixed',
         width: '100%'

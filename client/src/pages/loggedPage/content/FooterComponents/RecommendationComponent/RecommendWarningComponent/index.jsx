@@ -59,20 +59,13 @@ class Template extends React.Component {
     }
 
     consentLearn = () => {
-        console.log("Started learning")
-        Axios('consentLearn', {
+        Axios.post('consentLearn', null, {
             params: {
                 songs: this.state.failedSongs
             }
-        }).then((data) => {
-            if(data.data.success){
-                this.props.close('recommendWarningOpen');
-            } else {
-                console.log("Something went wrong during the consent learning...")
-            }
-        }).catch(function(err){
-            console.log(err);
         });
+
+        this.props.close('recommendWarningOpen')
     };
 
     render(){
@@ -81,13 +74,9 @@ class Template extends React.Component {
         let failedSongsContent = this.state.failedSongs.map((song) =>
             <Card style={{backgroundColor: 'grey', margin: '10px'}}>
                 <CardContent>
-                    <Typography>
-                        Name: {song.name}
-                    </Typography>
+                    <Typography>Name: {song.name}</Typography>
                     <Divider />
-                    <Typography>
-                        Genre: {song.genre}
-                    </Typography>
+                    <Typography>Genre: {song.genre}</Typography>
                 </CardContent>
             </Card>
         );
@@ -97,19 +86,19 @@ class Template extends React.Component {
                 <DialogTitle>Oops, I have not learnt that yet!</DialogTitle>
                 <section style={{padding: '20px'}}>
                     <Typography>
-                        Sorry, it seems like we don't have the follow song(s) on record. Please help up by clicking accept
-                        so our program can expand to more songs. The average wait time is between 5-10 minutes per song.
+                        Sorry, it seems like we don't have the follow song(s) on record. Please help us by clicking accept
+                        so MusicDEV can widen their songs. The average wait time is between 5-10 minutes per song.
                     </Typography>
                     <Typography>
-                        If you do not wish to wait, then that's no problem at all! Just click 'Skip' or try again. Sorry for
-                        any inconvenience.
+                        If you do not wish to add the following songs, then that's no problem at all! Just click
+                        'Skip' or try again. Sorry for any inconvenience.
                     </Typography>
                     <Divider />
                     {failedSongsContent}
                 </section>
                 <section>
-                    <Button onClick={this.consentLearn}> I accept </Button>
-                    <Button onClick={this.props.close('recommendWarningOpen')}> I do not accept </Button>
+                    <Button onClick={this.consentLearn}>Learn</Button>
+                    <Button onClick={this.props.close('recommendWarningOpen')}>Close</Button>
                 </section>
             </Dialog>
         );
