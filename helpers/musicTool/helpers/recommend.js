@@ -89,15 +89,19 @@ module.exports = function (spotifyApi, data, callback) {
                                     // Finished
                                     if (JSON.parse(data.savePlaylist) && finalReturn.length) {
                                         saveRecommendedMusic(data.username, finalReturn, function (resp) {
-                                            callback({success: !warningFlag, savePlaylist: data.savePlaylist, successData: finalReturn, failedSongs: errorReturn});
+                                            console.log(3)
+                                            callback({success: !warningFlag, savePlaylist: data.savePlaylist, successSongs: finalReturn, failedSongs: errorReturn});
                                         });
                                     } else {
-                                        callback({success: !warningFlag, savePlaylist: data.savePlaylist, successData: finalReturn, failedSongs: errorReturn});
+                                        console.log(4)
+                                        callback({success: !warningFlag, savePlaylist: data.savePlaylist, successSongs: finalReturn, failedSongs: errorReturn});
                                     }
                                 } else {
+                                    console.log(5)
                                     genreCallback()
                                 }
                             } else {
+                                console.log(6)
                                 quantityCallback();
                             }
                         }
@@ -120,15 +124,19 @@ module.exports = function (spotifyApi, data, callback) {
                                                 // Finished
                                                 if (JSON.parse(data.savePlaylist) && finalReturn.length) {
                                                     saveRecommendedMusic(data.username, finalReturn, function (resp) {
-                                                        callback({success: !warningFlag, savePlaylist: data.savePlaylist, successData: finalReturn, failedSongs: errorReturn});
+                                                        console.log("Callback")
+                                                        callback({success: !warningFlag, savePlaylist: data.savePlaylist, successSongs: finalReturn, failedSongs: errorReturn});
                                                     });
                                                 } else {
-                                                    callback({success: !warningFlag, savePlaylist: data.savePlaylist, successData: finalReturn, failedSongs: errorReturn});
+                                                    console.log("failed?")
+                                                    callback({success: !warningFlag, savePlaylist: data.savePlaylist, successSongs: finalReturn, failedSongs: errorReturn});
                                                 }
                                             } else {
+                                                console.log(1)
                                                 genreCallback()
                                             }
                                         } else {
+                                            console.log(2)
                                             quantityCallback();
                                         }
                                     });
@@ -140,7 +148,7 @@ module.exports = function (spotifyApi, data, callback) {
                                     if (quantityKey+1 >= ewwArray.length){
                                         if (genreKey+1 >= data.genres.length ) {
                                             // Finished
-                                            callback({success: !warningFlag, successData: finalReturn, failedSongs: errorReturn})
+                                            callback({success: !warningFlag, successSongs: finalReturn, failedSongs: errorReturn})
                                         } else {
                                             genreCallback()
                                         }

@@ -1,4 +1,4 @@
-import styles from '../../../../styles/mainStyle';
+import styles from 'styles/mainStyle';
 
 const drawerWidth = 240;
 
@@ -35,12 +35,31 @@ export default theme => ({
         width: '6vw'
     },
 
+    closeButton: {
+        position: 'absolute',
+        marginTop: 'auto',
+        marginBottom: 'auto'
+    },
 
-    root: {
+    menuButtons: {
         display: 'flex',
-        position: 'fixed',
-        width: '100%',
+        flexDirection:'column',
+        justifyContent: 'space-between',
         height: '100%',
+        overflow: 'hidden'
+    },
+    title: {
+        textAlign: 'center',
+        marginTop: 'auto',
+        marginBottom: 'auto'
+    },
+
+    main: {
+        height: '76vh',
+        backgroundColor: '#6ed786'
+    },
+    root: {
+        width: '100%',
     },
     appBar: {
         zIndex: theme.zIndex.drawer + 1,
@@ -84,9 +103,9 @@ export default theme => ({
             duration: theme.transitions.duration.leavingScreen,
         }),
         overflowX: 'hidden',
-        width: theme.spacing.unit * 7 + 1+9,
+        width: theme.spacing.unit * 11 + 3,
         [theme.breakpoints.up('sm')]: {
-            width: theme.spacing.unit * 9 + 1+9,
+            width: theme.spacing.unit * 11 + 3,
         },
         position: 'relative'
     },
@@ -95,7 +114,6 @@ export default theme => ({
         alignItems: 'center',
         justifyContent: 'flex-end',
         padding: '0 8px',
-        ...theme.mixins.toolbar,
     },
     content: {
         flexGrow: 1,
@@ -107,5 +125,12 @@ export default theme => ({
         flexDirection: 'row',
         flexGrow: '2',
         height: '100%',
+    },
+
+    profilePic: {
+        width: theme.spacing.unit * 7,
+        height: theme.spacing.unit * 7,
+        borderRadius: '100%',
+        userSelect: 'none',
     },
 });

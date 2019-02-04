@@ -1,9 +1,10 @@
-import styles from '../../../../styles/mainStyle';
+import styles from 'styles/mainStyle';
 
 export default theme => ({
     ...styles,
     dialogWidth: {
-        maxWidth: '90%'
+        maxWidth: '90%',
+        zIndex: 50
     },
     helperBody: {
         display: 'flex',
@@ -20,8 +21,8 @@ export default theme => ({
 
     helperHeader: {
         padding: '1em',
-        backgroundColor: '#eaeaea',
-        borderRadius: '10px 10px 0px 0px'
+        borderRadius: '10px 10px 0px 0px',
+        position: 'relative'
     },
     helperCard: {
         padding: '1.5em',
@@ -37,5 +38,12 @@ export default theme => ({
     },
     helperSubtitle: {
         fontSize: '1em'
+    },
+
+    menuHeader: {
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        position: 'relative'
     }
 });

@@ -6,15 +6,22 @@ export default createMuiTheme({
     spacing: {
         unit: 5
     },
+    zIndex: {
+        drawer: 5
+    },
     palette: {
         type: 'dark',
         primary: {
             light: '#eeeeee',
-            main: '#444444',
+            main: '#6ed786',
         },
         secondary: {
-            light: '#444444',
-            main: '#eeeeee',
+            light: '#eeeeee',
+            main: '#232323',
+        },
+        tertiary: {
+            light: '#efefef',
+            main: '#efefef',
         },
         error: {
             light: '#dc3636',
@@ -23,7 +30,6 @@ export default createMuiTheme({
         warning: {
             backgroundColor: amber[700],
         },
-
         message: {
             display: 'flex',
             alignItems: 'center',

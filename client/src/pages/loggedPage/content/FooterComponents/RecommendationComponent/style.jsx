@@ -1,9 +1,9 @@
-import styles from '../../../../../styles/mainStyle';
+import styles from 'styles/mainStyle';
 
 export default theme => ({
     ...styles,
     main: {
-        width: theme.spacing.unit * 80,
+        width: theme.spacing.unit * 90,
         height: '100%',
         zIndex: '1',
         padding: '2em',
@@ -13,7 +13,7 @@ export default theme => ({
     },
 
     quantityControl: {
-        width: '75%'
+        width: '100%'
     },
 
     mainController: {
@@ -30,7 +30,6 @@ export default theme => ({
     },
 
     selectionContainer: {
-        //height: theme.spacing.unit * 7 + '%',
         overflowY: 'auto'
     },
 

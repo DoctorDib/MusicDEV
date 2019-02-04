@@ -2,30 +2,22 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Axios from 'axios';
 
-import Typography from '@material-ui/core/Typography';
-import Button from '@material-ui/core/Button';
-import Snackbar from '@material-ui/core/Snackbar';
-import WarningIcon from '@material-ui/icons/Warning';
-import SettingsIcon from '@material-ui/icons/Settings';
-import LogoutIcon from '@material-ui/icons/ExitToApp';
-import ListenIcon from '@material-ui/icons/Headset';
-import HelpIcon from '@material-ui/icons/Help';
-import Tooltip from '@material-ui/core/Tooltip';
-import CircularProgress from '@material-ui/core/CircularProgress';
-
-import theme from '../../../styles/theme'
+import LogoIcon from 'img/icon.png';
 
 // Settings
-import Settings from './SettingsComponent';
-import Help from './HelpComponent';
-import GenreButtons from './FooterComponents/RecommendationComponent/index';
 import FooterComponent from './FooterComponents';
+import WarningComponent from '../../warningComponent';
 
 import { withStyles } from '@material-ui/core/styles';
 
 import styles from './style';
-import Paper from "@material-ui/core/Paper/Paper";
 
+import Paper from "@material-ui/core/Paper/Paper";
+import Typography from '@material-ui/core/Typography';
+import Tooltip from '@material-ui/core/Tooltip';
+import Switch from '@material-ui/core/Switch';
+import AppBar from '@material-ui/core/AppBar';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
 
 class Template extends React.Component {
     constructor(props) {
@@ -33,10 +25,6 @@ class Template extends React.Component {
 
         this.state = {
             listening: false,
-            settingsOpen: false,
-            helperOpen: false,
-            activeSettings: false, // Deciding if first time set up or if user has opened the settings
-            color: 'rgba(81,81,81,0)',
 
             // Profile information
             profileName: 'Loading...',
@@ -48,8 +36,10 @@ class Template extends React.Component {
             profileAccessToken: '',
             profilePlaylists: [],
             playlistNames: {},
+            activePlaylists: [],
             newUser: false,
             privatePlaylist: false,
+            history: [],
 
             // Current playing
             currentPlayingSong: '',
@@ -62,7 +52,15 @@ class Template extends React.Component {
             learningNotification: '',
             warningSnack: false,
 
-            tableRecommendation: []
+            tableRecommendation: [],
+
+            buttonOptions: {
+                active: false,
+                title: ''
+            },
+            warningOpen: false,
+            warningError: false,
+            warningMessage: '',
         };
     }
 
@@ -76,33 +74,44 @@ class Template extends React.Component {
                 console.log(resp)
                 if(resp.data.isPlaying){
                     this.setState({
-                        warningNotification: '', // Clearing the warnings
                         currentPlayingSong: resp.data.song,
                         currentPlayingAuthor: resp.data.artist,
                         currentPlayingImage: resp.data.image,
-                        warningSnack: false,
+
+                        warningOpen: false,
+                        warningError: false,
+                        warningMessage: '',
+                        buttonOptions: {active:false, title: ''},
                     });
                 } else {
                     this.setState({
-                        warningNotification: 'Warning: Spotify paused',
                         currentPlayingSong: '',
                         currentPlayingAuthor: '',
                         currentPlayingImage: 'https://visualpharm.com/assets/129/Question%20Mark-595b40b85ba036ed117dc3b0.svg',
-                        warningSnack: true,
+
+                        warningOpen: true,
+                        warningError: false,
+                        warningMessage: 'Warning: Spotify paused',
+                        buttonOptions: {active:false, title: ''},
                     });
                 }
             }).catch(err =>{
                 switch(err.response.status){
                     case 502:
                         this.setState({
-                            warningNotification: 'Warning: New update from server, please refresh...',
-                            warningSnack: true
+                            warningOpen: true,
+                            warningError: false,
+                            warningMessage: 'Warning: New update from server, please refresh...',
+                            buttonOptions: {active:true, title: 'Refresh'},
                         });
                         break;
                     case 500:
                     case 401:
                         this.setState({
-                            errorNotification: 'Error: Disconnected from the server, please refresh...',
+                            warningOpen: true,
+                            warningError: true,
+                            warningMessage: 'Error: Disconnected from the server, please refresh...',
+                            buttonOptions: {active:true, title: 'Refresh'},
                         });
                         break;
                 }
@@ -111,46 +120,36 @@ class Template extends React.Component {
     };
 
     initialLoad = () => {
-        console.log("call")
         Axios.get('initial')
             .then((resp) => {
-                theme.palette.type = "light"
-                console.log(resp)
+                console.log("initial data: ", resp)
                 if(resp.data.success){
                     this.setState({
-                        settingsOpen: resp.data.new_user,
+                        profilePicLoading: 'none',
+                        profilePicActive: 'block',
+                        profilePic: resp.data.userAccount.photos[0],
                         profilePlaylists: resp.data.playlists,
                         newUser: resp.data.new_user,
                         profileName: resp.data.userAccount.displayName,
                         profileUsername: resp.data.userAccount.id,
-                        profilePic: resp.data.userAccount.photos[0],
                         profileLink: resp.data.userAccount.profileUrl,
-                        profilePicLoading: 'none',
-                        profilePicActive: 'block',
                         privatePlaylist: resp.data.privatePlaylist,
-                        playlistName: resp.data.playlistName
+                        playlistName: resp.data.playlistName,
+                        activePlaylists: resp.data.activePlaylists,
+                        history: resp.data.history,
                     });
                 } else {
-                    console.log("here")
-                    console.log(resp)
                     this.setState({
-                        errorNotification: 'Error: Session timeout, please logout and then back in...',
-                        warningSnack: true
+                        warningOpen: true,
+                        warningError: true,
+                        warningMessage: 'Error: Session timeout, please logout and then back in...',
+                        buttonOptions: {active:false, title: ''},
                     });
                 }
             })
             .catch((err) => {
                 console.log("Initial load error: ", err);
             });
-    };
-
-    refreshToken = () => {
-        console.log("Refreshed")
-        Axios.post('refreshToken',  {
-            params: {
-                username: this.state.profileUsername
-            }
-        });
     };
 
     componentDidMount() {
@@ -167,19 +166,6 @@ class Template extends React.Component {
         window.location.href=url;
     };
 
-    handleClickOpen = (target, settings) => () => {
-        if(settings){
-            this.setState({activeSettings: true})
-        }
-        this.setState({ [target]: true });
-    };
-
-    //handleClose = target => () => {
-    handleClose = target => () => {
-        this.setState({ [target]: false });
-        //this.setState({ [target]: false });
-    };
-
     updateState = params => {
         this.setState({[params.title]: params.value});
     };
@@ -187,8 +173,7 @@ class Template extends React.Component {
 
     handleListen = () => {
         this.setState({
-            listening: !this.state.listening,
-            color: this.state.listening ? 'rgba(81,81,81,0)' : 'rgba(81,81,81,0.8)'
+            listening: !this.state.listening
         });
     };
 
@@ -197,70 +182,29 @@ class Template extends React.Component {
 
         return (
             <section className={classes.body}>
-                <section className={classes.topBar}>
+                <Paper square className={classes.topBar}>
                     <div>
-                        <Paper square className={classes.listenDetails} color="secondary" style={{display: this.state.currentPlayingImage.length}}>
-                            <img src={this.state.currentPlayingImage} style={{height: '100%', width: '50px'}}/>
-                            <div className={classes.listenText}>
-                                <Typography noWrap={true} >{this.state.currentPlayingSong}</Typography>
-                                <Typography noWrap={true} variant="caption">{this.state.currentPlayingAuthor}</Typography>
-                            </div>
-                        </Paper>
+                        <img src={LogoIcon} style={{marginLeft: '5px', height: '100%', width: '50px'}}/>
+                        {this.state.currentPlayingImage ? <img src={this.state.currentPlayingImage} style={{height: '100%', width: '50px'}}/> : null}
+                        <div className={classes.listenText}>
+                            <Typography noWrap={true} >{this.state.currentPlayingSong}</Typography>
+                            <Typography noWrap={true} variant="caption">{this.state.currentPlayingAuthor}</Typography>
+                        </div>
                     </div>
 
                     <div className={classes.topButtonOptions}>
                         <Tooltip disableFocusListener disableTouchListener title="Toggle Listen">
-                            <Button style={{backgroundColor: this.state.color}} onClick={this.handleListen}>
-                                <ListenIcon style={{fontSize: '20'}}/>
-                            </Button>
-                        </Tooltip>
-                        <Tooltip disableFocusListener disableTouchListener title="Settings">
-                            <Button onClick={this.handleClickOpen('settingsOpen', true)} className={classes.profileSettings}><SettingsIcon style={{fontSize: '20'}}/></Button>
-                        </Tooltip>
-                        <Tooltip disableFocusListener disableTouchListener title="Help">
-                            <Button onClick={this.handleClickOpen('helperOpen', true)}><HelpIcon style={{fontSize: '20'}}/></Button>
-                        </Tooltip>
-                        <Tooltip disableFocusListener disableTouchListener title="Logout">
-                            <Button onClick={this.handleRedirect('/logout')} ><LogoutIcon /> </Button>
+                            <FormControlLabel color="primary" control={<Switch checked={this.state.listening} color="primary" onClick={this.handleListen} />} label="Toggle Listening" />
                         </Tooltip>
                     </div>
-                </section>
+                </Paper>
 
-                <a href={this.state.profileLink} id="accountHolder" className={classes.accountHolder}>
-                    <CircularProgress className={classes.progress} style={{display: this.state.profilePicLoading, width: '75px', height: '75px'}} />
-                    <img id="profilePic" className={classes.profilePic} style={{display: this.state.profilePicActive}} src={this.state.profilePic}/>
-                    <section id="profileArea" className={classes.profileArea}>
-                        <Typography id="profileUserName" className={classes.profileUserName}>{this.state.profileName}</Typography>
-                        <Typography id="profileName" className={classes.profileName}>{this.state.profileUsername}</Typography>
+                <AppBar className={classes.header} color="secondary">
+                    <section className={classes.titleContainer} >
+                        <Typography variant='display4' color="secondary" className={classes.title} style={{fontSize: '4.5em'}}>MusicDEV</Typography>
+                        <Typography variant='display1' color="secondary" className={classes.titleChild} style={{fontSize: '1em'}}>Finding the right music</Typography>
                     </section>
-                </a>
-
-                <section className={classes.header} style={{zIndex: '1'}}>
-                    <section className={classes.titleContainer} style={{position: 'fixed', zIndex: '0', top: '110px'}}>
-                        <Typography variant='display4' className={classes.title} style={{color: 'rgba(0, 0, 0, 0.46)', fontSize: '4.5em'}}> MusicDEV </Typography>
-                        <Typography variant='display1' className={classes.titleChild} style={{color: 'rgba(0, 0, 0, 0.46)', fontSize: '1em'}}> Finding the right music </Typography>
-                    </section>
-
-                    <Typography id={"Error"}>{this.state.errorNotification}</Typography>
-
-                    <Settings
-                        open={this.state.settingsOpen}
-                        newUser={this.state.newUser}
-                        close={(params) => this.handleClose(params)}
-                        playlistNames={this.state.playlistNames}
-                        profilePlaylists={this.state.profilePlaylists}
-                        username={this.state.profileUsername}
-                        accessToken={this.state.profileAccessToken}
-                        privatePlaylist={this.state.privatePlaylist}
-                    />
-
-                    <Help
-                        open={this.state.helperOpen}
-                        close={(params) => this.handleClose(params)}
-                    />
-
-                    <h1> {this.state.learning} </h1>
-                </section>
+                </AppBar>
 
                 <FooterComponent
                     tableContent={this.state.tableRecommendation}
@@ -269,34 +213,28 @@ class Template extends React.Component {
                     currentPlayingImage={this.state.currentPlayingImage}
                     username={this.state.profileUsername}
                     updateTable={(params) => this.updateState(params)}
+
+                    profileName={this.state.profileName}
+                    profileUsername={this.state.profileUsername}
+                    profilePic={this.state.profilePic}
+                    profilePicLoading={this.state.profilePicLoading}
+                    profilePicActive={this.state.profilePicActive}
+                    profileLink={this.state.profileLink}
+
+                    newUser={this.state.newUser}
+                    playlistNames={this.state.playlistNames}
+                    profilePlaylists={this.state.profilePlaylists}
+                    accessToken={this.state.profileAccessToken}
+                    privatePlaylist={this.state.privatePlaylist}
+                    activePlaylists={this.state.activePlaylists}
+                    history={this.state.history}
                 />
 
-                <Snackbar
-                    anchorOrigin={{
-                        vertical: 'bottom',
-                        horizontal: 'left',
-                    }}
-                    open={this.state.warningSnack}
-                    variant="warning"
-                    action={[
-                        this.state.warningNotification === 'Warning: New update from server, please refresh...' ?
-                            <Button key="undo" color="secondary" size="small" onClick={this.handleRedirect('/')}>
-                                Refresh
-                            </Button> :
-                            this.state.errorNotification === 'Error: Session timeout, please logout and then back in...' ?
-                                <Button key="undo" color="secondary" size="small" onClick={this.refreshToken()}>
-                                    ReLog
-                                </Button> : null
-                    ]}
-                    message={
-                        <section>
-                            <span className={classes.warningSnackbar}>
-                                <WarningIcon style={{fontSize: '20'}}/>
-                                {this.state.warningNotification ? this.state.warningNotification : null}
-                                {this.state.errorNotification ? this.state.errorNotification : null}
-                            </span>
-                        </section>
-                    }
+                <WarningComponent
+                    buttonOptions={this.state.buttonOptions}
+                    warningOpen={this.state.warningOpen}
+                    warningError={this.state.warningError}
+                    warningMessage={this.state.warningMessage}
                 />
             </section>
         );

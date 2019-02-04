@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import slugify from 'slugify';
 
 import Button from '@material-ui/core/Button';
+import IconButton from '@material-ui/core/IconButton';
 import { withStyles } from '@material-ui/core/styles';
 import styles from './style';
 import GridListTile from "@material-ui/core/GridListTile/GridListTile";
@@ -17,6 +18,7 @@ import InputLabel from '@material-ui/core/InputLabel';
 import Checkbox from '@material-ui/core/Checkbox';
 import Paper from '@material-ui/core/Paper';
 import Divider from '@material-ui/core/Divider';
+import MenuItem from '@material-ui/core/MenuItem';
 
 import WorkoutIcon from 'mdi-react/WeightsIcon';
 import ChillIcon from 'mdi-react/CouchIcon';
@@ -86,7 +88,6 @@ const Randomised = <Chip
     avatar={<RandomisedIcon style={{backgroundColor: '#ffffff00'}} />}
     label="Randomised"
     style={{margin: '.5em', padding: '1em'}}
-    color="primary"
 />;
 
 const defaultStates = {
@@ -108,9 +109,11 @@ class Template extends React.Component {
     }
 
     componentWillReceiveProps(props) {
-        this.setState({
-            open: props.open
-        });
+        if(props.open !== this.props.open){
+            this.setState({
+                open: props.open
+            });
+        }
     }
 
     componentWillUnmount(){
@@ -150,7 +153,6 @@ class Template extends React.Component {
                     avatar={tag.icon}
                     label={tag.title}
                     style={{margin: '.5em', padding: '1em'}}
-                    color="primary"
                 />
             );
         }
@@ -189,6 +191,7 @@ class Template extends React.Component {
     };
 
     handleClose = target => () => {
+        console.log("CLOSINGGGG")
         this.setState({ [target]: false });
     };
 
@@ -202,16 +205,15 @@ class Template extends React.Component {
         })
         .then(resp => {
            console.log(resp)
-
-            if(resp.data.successData.length){
-                this.setState({successSongs: resp.data.successData});
+            if(resp.data.resp.successSongs.length){
+                this.setState({successSongs: resp.data.resp.successSongs});
             }
-            if (!resp.data.success) {
-                console.log(resp.data)
+            if (!resp.data.resp.success) {
+                console.log(resp.data.resp)
                 console.log(">>>>>>>", this.state.recommendWarningOpen)
                 this.setState({
                     recommendWarningOpen: true,
-                    failedSongs: resp.data.failedSongs
+                    failedSongs: resp.data.resp.failedSongs
                 });
                 console.log(this.state.recommendWarningOpen)
             }
@@ -221,13 +223,21 @@ class Template extends React.Component {
         });
     };
 
+    toggleColour = (genre) => {
+        return this.state.buttonColors[slugify(genre, '_')] ? {backgroundColor: this.state.buttonColors[slugify(genre, '_')]} : {backgroundColor:'rgba(81,81,81,0)'}
+    };
+
+    clickCloseRecommend = () => {
+        this.setState({recommendWarningOpen: false});
+    };
+
     render(){
         const { classes } = this.props;
 
         const content = genres.map((genre, index) =>
-            <GridListTile key={index} style={{width: '4.5em', height: '3em', textAlign: 'center'}}>
+            <GridListTile key={index} style={{width: '3.5em', height: '3.5em', textAlign: 'center'}}>
                 <Tooltip disableFocusListener disableTouchListener title={genre.title}>
-                    <Button style={this.state.buttonColors[slugify(genre.title, '_')] ? {backgroundColor: this.state.buttonColors[slugify(genre.title, '_')]} : {backgroundColor:'rgba(81,81,81,0)'}} onClick={this.handleGenreClick(genre.title)}> {genre.Icon} </Button>
+                    <IconButton color="primary" style={this.toggleColour(genre.title)} onClick={this.handleGenreClick(genre.title)}>{genre.Icon}</IconButton>
                 </Tooltip>
             </GridListTile>
         );
@@ -241,16 +251,15 @@ class Template extends React.Component {
                         <FormControl className={classes.quantityControl}>
                             <InputLabel>Quantity of Songs</InputLabel>
                             <Select
-                                native
                                 value={this.state.musicQuantity}
                                 onChange={this.handleChange("musicQuantity")}
-                                color="secondary"
+                                color="primary"
                             >
-                                <option value={1}>1</option>
-                                <option value={2}>2</option>
-                                <option value={5}>5</option>
-                                <option value={10}>10</option>
-                                <option value={20}>20</option>
+                                <MenuItem value={1}>1</MenuItem>
+                                <MenuItem value={2}>2</MenuItem>
+                                <MenuItem value={5}>5</MenuItem>
+                                <MenuItem value={10}>10</MenuItem>
+                                <MenuItem value={20}>20</MenuItem>
                             </Select>
                         </FormControl>
                     </div>
@@ -266,7 +275,7 @@ class Template extends React.Component {
 
                     <div className={classes.optionSection}>
                         <div className={classes.selectionContainer}>
-                            <Typography>Expected</Typography>
+                            <Typography style={{paddingBottom: '10px'}}>Expected</Typography>
                             <section> {this.state.genreSelection} </section>
                         </div>
                     </div>
@@ -282,20 +291,22 @@ class Template extends React.Component {
                             color="primary"
                         />
                         <section className={classes.buttonHolder}>
-                            <Button variant="contained" style={{width: '15vw'}} onClick={this.recommendMusic}>Recommend</Button>
-                            <Button variant="contained" style={{width: '15vw'}} onClick={this.clear}>Clear</Button>
+                            <Button variant="contained" style={{width: '10vw'}} color="primary" onClick={this.recommendMusic}>Recommend</Button>
+                            <Button variant="contained" style={{width: '10vw'}} color="primary" onClick={this.clear}>Clear</Button>
                         </section>
                     </div>
 
                     <RecommendWarning
                         open={this.state.recommendWarningOpen}
                         close={(params) => this.handleClose(params)}
+                        clickClose={this.clickCloseRecommend}
                         failedSongs={this.state.failedSongs}
                     />
 
                 </Paper>
 
                 <TableComponent
+                    tableType='recommend'
                     tableContent={this.state.successSongs}
                 />
             </div>

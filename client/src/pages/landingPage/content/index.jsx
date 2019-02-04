@@ -29,8 +29,8 @@ class Template extends React.Component {
 
         return (
             <section className={classes.body}>
-                <section className={classes.header} style={{height: '100%'}}>
-                    <section className={classes.titleContainer}>
+                <section className={classes.header} style={{height: '100%', backgroundColor: '#252525'}}>
+                    <section className={classes.titleContainer} style={{marginTop: '1em', marginBottom: '1em'}}>
                         <Typography variant='display4' className={classes.title} style={{font: '150px'}}> MusicDEV </Typography>
                         <Typography variant='display1' className={classes.titleChild}> Finding the right music </Typography>
                     </section>

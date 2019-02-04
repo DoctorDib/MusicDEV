@@ -28,6 +28,9 @@ module.exports = (func, collection, data, callback) => {
             case 'update':
                 db.collection(collection).update(data.identifier, {$set: data.data});
                 break;
+            case 'updatePush':
+                db.collection(collection).update(data.identifier, {$push: data.data});
+                break;
             default:
                 callback({success: false, error: `Command "${func}" not found.`});
                 break;
