@@ -2,25 +2,27 @@ import theme from './theme';
 
 const styles = {
     header: {
-        height: theme.spacing.unit * 49,
+        height: theme.spacing.unit * 39,
         [theme.breakpoints.down('sm')]: {
             height: '100vh',
         },
-        backgroundColor: '#292929',
         color: '#eeeeee',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-around',
         flexDirection: 'column',
-        boxShadow: '0px 4px 3px 0px #b9b9b9',
         userSelect: 'none',
-        backgroundImage: 'url("https://www.transparenttextures.com/patterns/binding-dark.png")'
-
+        backgroundImage: 'url("https://www.transparenttextures.com/patterns/binding-dark.png")',
+        zIndex: '4',
+        position: 'relative'
     },
     titleContainer:{
         display: 'flex',
         flexDirection: 'column',
-        userSelect: 'none'
+        userSelect: 'none',
+        marginTop: 'auto',
+        height: theme.spacing.unit * 13,
+        marginBottom: 'auto'
     },
     title: {
         color: '#eeeeee',

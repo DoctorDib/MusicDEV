@@ -9,6 +9,7 @@ import Stepper from '@material-ui/core/Stepper';
 import Step from '@material-ui/core/Step';
 import StepButton from '@material-ui/core/StepButton';
 import Button from '@material-ui/core/Button';
+import AppBar from '@material-ui/core/AppBar';
 
 import Waypoint from 'react-waypoint';
 
@@ -164,9 +165,11 @@ class Template extends React.Component {
     };
 
     componentWillReceiveProps(props) {
-        this.setState({
-            open: props.open,
-        });
+        if(props.open !== this.props.open){
+            this.setState({
+                open: props.open,
+            });
+        }
     }
 
     render(){
@@ -183,10 +186,10 @@ class Template extends React.Component {
             <div className={classes.helperHelp} id={index}>
                 <Waypoint onEnter={this.handleScroll(index)} />
 
-                <Card className={classes.helperHeader}>
-                    <Typography variant='display1'   className={classes.helperTitle}> {post.title} </Typography>
-                    <Typography variant='caption' className={classes.helperSubtitle}> {post.subtitle} </Typography>
-                </Card>
+                <AppBar color="primary" className={classes.helperHeader}>
+                    <Typography color="secondary" variant='display1' className={classes.helperTitle}> {post.title} </Typography>
+                    <Typography color="secondary" variant='caption' className={classes.helperSubtitle}> {post.subtitle} </Typography>
+                </AppBar>
                 <Card className={classes.helperCard}>
                     <section className={classes.helperContent}>
                         {post.contentImg ? (<img className={classes.helperImg} src={post.contentImg}/>) : (<img className={classes.disabled}/>)}
@@ -211,13 +214,13 @@ class Template extends React.Component {
                 fullWidth={'lg'}
                 maxWidth={'lg'}
             >
-                <section style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between', backgroundColor: '#c5c5c5'}}>
+                <AppBar className={classes.menuHeader} color="primary">
                     <DialogTitle className={classes.settingsTitle}>Helper</DialogTitle>
                     <Button onClick={this.props.close('helperOpen')}> X </Button>
-                </section>
+                </AppBar>
 
                 <section className={classes.helperBody}>
-                    <Stepper nonLinear activeStep={this.state.activeStep} orientation="vertical" style={{backgroundColor: '#c4c5c4', width: '10%'}}>
+                    <Stepper nonLinear activeStep={this.state.activeStep} orientation="vertical" style={{width: '10%'}}>
                         {stepper}
                     </Stepper>
                     <Card className={classes.helperContent} id={"helperContent"} style={{padding: '1em'}} >

@@ -1,4 +1,4 @@
-import styles from '../../../styles/mainStyle';
+import styles from 'styles/mainStyle';
 
 export default theme => ({
     ...styles,
@@ -26,8 +26,8 @@ export default theme => ({
         flexGrow: '2',
         flexDirection: 'row',
         height: '4vh',
-        position: 'fixed',
-        width: '100%'
+        width: '100%',
+        zIndex: '7'
     },
     topButtonOptions: {
         display: 'flex',

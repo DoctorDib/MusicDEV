@@ -2,6 +2,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import RecommendationComponent  from './RecommendationComponent';
+import SettingsComponent  from './SettingsComponent';
+import HelpComponent  from './HelpComponent';
+import TableComponent  from './TableComponent';
 
 import { withStyles } from '@material-ui/core/styles';
 
@@ -19,12 +22,18 @@ import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import IconButton from '@material-ui/core/IconButton';
 import CircularProgress from '@material-ui/core/CircularProgress';
+import Typography from '@material-ui/core/Typography';
+
+import timeAgo from 'timeago-simple';
 
 import RecentIcon from 'mdi-react/RecentIcon';
 import BrainIcon from 'mdi-react/BrainIcon';
 import ManagerIcon from 'mdi-react/ContentSaveEditIcon';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import MenuIcon from '@material-ui/icons/Menu';
+import SettingsIcon from '@material-ui/icons/Settings';
+import LogoutIcon from '@material-ui/icons/ExitToApp';
+import HelpIcon from '@material-ui/icons/Help';
 
 const buttonContent = [
     {
@@ -56,7 +65,6 @@ class Template extends React.Component {
             currentPlayingAuthor: '',
             currentPlayingImage: 'https://visualpharm.com/assets/129/Question%20Mark-595b40b85ba036ed117dc3b0.svg',
 
-            open: false,
             menuKey: 0,
             value: 0,
 
@@ -70,34 +78,46 @@ class Template extends React.Component {
             profilePicLoading: 'block',
             profilePicActive: 'none',
             profileLink: 'https://www.spotify.com/uk/',
+
+            hideButton: 'none',
+
+            profileAccessToken: '',
+            profilePlaylists: [],
+            activePlaylists: [],
+            playlistNames: {},
+            newUser: false,
+            privatePlaylist: false,
+            history: [{time: 3, song: []}],
+
+            helperOpen: false,
+            menuTitle: 'Recommendation'
         }
     }
 
     handleDrawerOpen = () => {
-        this.setState({ open: true });
+        this.setState({
+            open: true,
+            hideButton: 'block'
+        });
     };
 
     handleDrawerClose = () => {
-        this.setState({ open: false });
+        this.setState({
+            open: false,
+            hideButton: 'none'
+        });
     };
 
-    handleListItemClick = (event, index) => {
-        this.setState({ selectedIndex: index, open: false});
+    handleListItemClick = (event, index, name) => {
+        this.setState({
+            selectedIndex: index,
+            open: false,
+            menuTitle: name
+        });
     };
 
-    listCreator = (list)  => {
-        return list.map(val =>
-            <Tooltip disableHoverListener={this.state.open} disableFocusListener disableTouchListener title={val.name} placement="right">
-                <ListItem
-                    button
-                    selected={this.state.selectedIndex === val.id}
-                    onClick={event => this.handleListItemClick(event, val.id)}
-                >
-                    <ListItemIcon>{val.icon}</ListItemIcon>
-                    <ListItemText primary={val.name} />
-                </ListItem>
-            </Tooltip>
-        );
+    handleClose = target => () => {
+        this.setState({ [target]: false });
     };
 
     visitProfile = () => {
@@ -105,11 +125,14 @@ class Template extends React.Component {
         this.setState({open: false});
     };
 
+    openHelper = () => {
+        this.setState({helperOpen: !this.state.helperOpen})
+    };
+
     componentDidMount(props) {
         this.setState({
             tableRecommendation: this.props.tableContent,
             currentPlayingSong: this.props.currentPlayingSong,
-            username: this.props.username,
             updateTable: this.props.updateTable,
             currentPlayingAuthor: this.props.currentPlayingAuthor,
             currentPlayingImage: this.props.currentPlayingImage,
@@ -120,107 +143,256 @@ class Template extends React.Component {
             profilePicLoading: this.props.profilePicLoading,
             profilePicActive: this.props.profilePicActive,
             profileLink: this.props.profileLink,
+
+            open: this.props.open,
+            newUser: this.props.newUser,
+            close: this.props.close,
+            playlistNames: this.props.playlistNames,
+            profilePlaylists: this.props.profilePlaylists,
+            username: this.props.username,
+            accessToken: this.props.accessToken,
+            privatePlaylist: this.props.privatePlaylist,
+            activePlaylists: this.props.activePlaylists,
+            history: this.props.history,
         });
     };
 
-    componentWillReceiveProps(nextProps){
-        this.setState({
-            tableRecommendation: nextProps.tableContent,
-            currentPlayingSong: nextProps.currentPlayingSong,
-            username: nextProps.username,
-            updateTable: nextProps.updateTable,
-            currentPlayingAuthor: nextProps.currentPlayingAuthor,
-            currentPlayingImage: nextProps.currentPlayingImage,
+    manageNewProps = (props) => {
+        let newProps = {};
 
-            profileName: nextProps.profileName,
-            profileUsername: nextProps.profileUsername,
-            profilePic: nextProps.profilePic,
-            profilePicLoading: nextProps.profilePicLoading,
-            profilePicActive: nextProps.profilePicActive,
-            profileLink: nextProps.profileLink,
-        });
+        for (let prop in props) {
+            if(props.hasOwnProperty(prop)) {
+                if (props[prop] !== this.props[prop]) {
+                    newProps[prop] = props[prop];
+                }
+            }
+        }
+
+        return newProps;
+    };
+
+    logout = () => {
+        window.location.href='/logout'
+    };
+
+    getAllHistorySongs = () => {
+        let collectedSongs = [];
+
+        for (let historyIndex in this.state.history) {
+            console.log("History:", this.state.history)
+            if (this.state.history.hasOwnProperty(historyIndex)) {
+
+                for (let song in this.state.history[historyIndex].songs) {
+                    if (this.state.history[historyIndex].songs.hasOwnProperty(song)) {
+                        console.log("BEFORE, ", song)
+                        let tmpSong = this.state.history[historyIndex].songs[song];
+                        console.log(">>>", tmpSong)
+                        tmpSong.time = this.state.history[historyIndex].time;
+                        collectedSongs.push(tmpSong);
+                    }
+                }
+            }
+        }
+
+        console.log("final", collectedSongs);
+
+        return collectedSongs;
+    };
+
+    componentWillReceiveProps(newProps){
+        let props = this.manageNewProps(newProps);
+
+        if (Object.keys(props).length) {
+            this.setState(props);
+        }
     }
+
+    listCreator = (list)  => {
+        return list.map(val =>
+            <Tooltip disableHoverListener={this.state.open} disableFocusListener disableTouchListener title={val.name} placement="right">
+                <ListItem
+                    button
+                    selected={this.state.selectedIndex === val.id}
+                    onClick={event => this.handleListItemClick(event, val.id, val.name)}
+                >
+                    <ListItemIcon>{val.icon}</ListItemIcon>
+                    <Typography style={{color: '#cacaca', marginLeft: '10px', fontSize: '0.95rem'}} > {val.name} </Typography>
+                </ListItem>
+            </Tooltip>
+        );
+    };
+
+    formatDate = (miliseconds) => {
+        return timeAgo.simple(new Date(miliseconds));
+    };
 
     render(){
         const { classes } = this.props;
+
+        {console.log(this.state.history)}
+
+        let historyGenerator = this.state.history.length ? this.state.history.map((val, index) =>
+            <Tooltip disableHoverListener={this.state.open} disableFocusListener disableTouchListener title={this.formatDate(val.time)} placement="right">
+                <ListItem
+                    button
+                    selected={this.state.selectedIndex === index+100}
+                    onClick={event => this.handleListItemClick(event, index+100, new Date(val.time).toUTCString())}
+                >
+                    <ListItemIcon><RecentIcon /></ListItemIcon>
+                    <Typography style={{color: '#cacaca', marginLeft: '10px', fontSize: '0.95rem'}}>{this.formatDate(val.time)}</Typography>
+                </ListItem>
+            </Tooltip>
+        ) : null;
+
+        let historyGeneratorContent = this.state.history.length ? this.state.history.map((val, index) =>
+            this.state.selectedIndex === index+100 ? <TableComponent
+                tableType='recommend'
+                tableContent={val.songs}
+            /> : null
+        ) : null;
 
         return (
             <section className={classes.main}>
                 <div className={classes.root}>
                     <CssBaseline />
-                    <AppBar
-                        position="absolute"
-                        className={classNames(classes.appBar, {
-                            [classes.appBarShift]: this.state.open,
-                        })}
-                    >
-                        <Toolbar disableGutters={!this.state.open}>
-                            <IconButton
-                                color="inherit"
-                                aria-label="Open drawer"
-                                onClick={this.handleDrawerOpen}
-                                className={classNames(classes.menuButton, {
-                                    [classes.hide]: this.state.open,
-                                })}
-                            >
-                                <MenuIcon />
-                            </IconButton>
-                        </Toolbar>
-                    </AppBar>
-                    <Drawer
-                        variant="permanent"
-                        style={{position: 'relative'}}
-                        className={classNames(classes.drawer, {
-                            [classes.drawerOpen]: this.state.open,
-                            [classes.drawerClose]: !this.state.open,
-                        })}
-                        classes={{
-                            paper: classNames({
+
+                    <div style={{display: 'flex', flexDirection: 'row'}}>
+                        <IconButton
+                            onClick={this.handleDrawerClose}
+                            className={classNames(classes.closeButton, {
+                                [classes.hide]: !this.state.open,
+                            })}>
+                            <ChevronLeftIcon />
+                        </IconButton>
+
+                        <AppBar
+                            color="primary"
+                            position="relative"
+                            className={classNames(classes.appBar, {
+                                [classes.appBarShift]: this.state.open,
+                            })}
+                        >
+                            <div style={{display: 'flex'}}>
+                                <Toolbar disableGutters={!this.state.open}>
+                                    <IconButton
+                                        color="inherit"
+                                        aria-label="Open drawer"
+                                        onClick={this.handleDrawerOpen}
+                                        className={classNames(classes.menuButton, {
+                                            [classes.hide]: this.state.open,
+                                        })}
+                                    >
+                                        <MenuIcon />
+                                    </IconButton>
+                                </Toolbar>
+                                <Typography variant="h6" gutterBottom className={classes.title}>{this.state.menuTitle}</Typography>
+                            </div>
+                        </AppBar>
+                    </div>
+
+                    <div style={{display: 'flex', flexDirection: 'row'}}>
+                        <Drawer
+                            variant="permanent"
+                            style={{position: 'relative'}}
+                            className={classNames(classes.drawer, {
                                 [classes.drawerOpen]: this.state.open,
                                 [classes.drawerClose]: !this.state.open,
-                            }),
-                        }}
-                        open={this.state.open}
-                    >
-                        <div className={classes.toolbar} >
-                            <IconButton onClick={this.handleDrawerClose}>
-                                <ChevronLeftIcon />
-                            </IconButton>
-                        </div>
-                        <Divider />
+                            })}
+                            classes={{
+                                paper: classNames({
+                                    [classes.drawerOpen]: this.state.open,
+                                    [classes.drawerClose]: !this.state.open,
+                                }),
+                            }}
+                            open={this.state.open}
+                        >
 
-                        <List component="nav">
-                            <Tooltip disableHoverListener={this.state.open} disableFocusListener disableTouchListener title="Visit profile" placement="right">
-                                <ListItem
-                                    button
-                                    onClick={this.visitProfile}
-                                    style={{paddingLeft: '10px'}}
-                                >
-                                    <ListItemIcon>
-                                        <CircularProgress color="secondary" style={{display: this.state.profilePicLoading, width: '35px', height: '35px'}} />
-                                        <img src={this.state.profilePic} className={classes.profilePic} style={{display: this.state.profilePicActive}}/>
-                                    </ListItemIcon>
-                                    <ListItemText primary={this.state.profileUsername} />
-                                </ListItem>
-                            </Tooltip>
                             <Divider />
-                            {this.listCreator(this.state.buttonList)}
-                        </List>
-                    </Drawer>
 
-                    {/* CONTENT */}
-                    <main className={classes.content}>
-                        <div className={classes.toolbar} />
+                            <List component="nav" className={classes.menuButtons}>
+                                <div>
+                                    <Tooltip disableHoverListener={this.state.open} disableFocusListener disableTouchListener title="Visit profile" placement="right">
+                                        <ListItem
+                                            button
+                                            onClick={this.visitProfile}
+                                            style={{paddingLeft: '10px'}}
+                                        >
+                                            <ListItemIcon>
+                                                <CircularProgress color="secondary" style={{display: this.state.profilePicLoading, width: '35px', height: '35px'}} />
+                                                <img src={this.state.profilePic} className={classes.profilePic} style={{display: this.state.profilePicActive}}/>
+                                            </ListItemIcon>
+                                            <Typography style={{color: '#cacaca', marginLeft: '10px', fontSize: '0.95rem'}}>{this.state.profileUsername}</Typography>
+                                        </ListItem>
+                                    </Tooltip>
+                                    <Divider />
+                                    {this.listCreator(this.state.buttonList)}
+                                    <Divider />
+                                    {historyGenerator}
+                                </div>
 
-                        {this.state.selectedIndex === 1 && <RecommendationComponent
-                            updateTable={this.state.updateTable}
-                            username={this.state.username}
-                        />}
+                                <div style={{display: 'flex', flexDirection: 'column'}}>
+                                    <Tooltip disableHoverListener={this.state.open} disableFocusListener disableTouchListener title="Help" placement="right">
+                                        <ListItem
+                                            button
+                                            onClick={this.openHelper}
+                                        >
+                                            <ListItemIcon><HelpIcon /></ListItemIcon>
+                                            <Typography style={{color: '#cacaca', marginLeft: '10px', fontSize: '0.95rem'}}>Help</Typography>
+                                        </ListItem>
+                                    </Tooltip>
+                                    <Tooltip disableHoverListener={this.state.open} disableFocusListener disableTouchListener title="Settings" placement="right">
+                                        <ListItem
+                                            button
+                                            selected={this.state.selectedIndex === 4}
+                                            onClick={event => this.handleListItemClick(event, 4, "Settings")}
+                                        >
+                                            <ListItemIcon><SettingsIcon /></ListItemIcon>
+                                            <Typography style={{color: '#cacaca', marginLeft: '10px', fontSize: '0.95rem'}}>Settings</Typography>
+                                        </ListItem>
+                                    </Tooltip>
+                                    <Tooltip disableHoverListener={this.state.open} disableFocusListener disableTouchListener title="Logout" placement="right">
+                                        <ListItem
+                                            button
+                                            onClick={this.logout}
+                                        >
+                                            <ListItemIcon><LogoutIcon /></ListItemIcon>
+                                            <Typography style={{color: '#cacaca', marginLeft: '10px', fontSize: '0.95rem'}}>Logout</Typography>
+                                        </ListItem>
+                                    </Tooltip>
+                                </div>
+                            </List>
+                        </Drawer>
 
-                        {this.state.selectedIndex === 2 && <div>Item Two</div>}
-                        {this.state.selectedIndex === 3 && <div>Item Three</div>}
-                    </main>
+                        {/* CONTENT */}
+                        <main className={classes.content} style={{overflowY: 'auto'}}>
+                            <div className={classes.toolbar} />
+
+                            <div style={{height: '76vh', overflow:'auto'}}>
+                                {this.state.selectedIndex === 1 && <RecommendationComponent
+                                    updateTable={this.state.updateTable}
+                                    username={this.state.username}
+                                />}
+
+                                {this.state.selectedIndex === 2 && <div>Item Two</div>}
+                                {this.state.selectedIndex === 3 && <TableComponent tableType='history' tableContent={this.getAllHistorySongs()}/>}
+                                {this.state.selectedIndex === 4 && <SettingsComponent
+                                    playlistNames={this.state.playlistNames}
+                                    profilePlaylists={this.state.profilePlaylists}
+                                    activePlaylists={this.state.activePlaylists}
+                                    newUser={this.state.newUser}
+                                    username={this.state.username}
+                                />}
+
+                                {historyGeneratorContent}
+                            </div>
+                        </main>
+                    </div>
                 </div>
+
+                <HelpComponent
+                    open={this.state.helperOpen}
+                    close={(params) => this.handleClose(params)}
+                />
             </section>
         );
     }

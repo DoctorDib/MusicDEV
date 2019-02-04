@@ -50,12 +50,16 @@ class Template extends React.Component {
     }
 
     componentWillReceiveProps(props) {
-        this.setState({
-            open: props.open,
-            failedSongs: props.failedSongs
-        });
 
-        console.log("Warning dialog open: ", this.state.open)
+        if(props.open !== this.props.open || props.failedSongs !== this.props.failedSongs){
+            console.log("New update")
+            this.setState({
+                open: props.open,
+                failedSongs: props.failedSongs
+            });
+        } else {
+            console.log("No new recommended warning updates")
+        }
     }
 
     consentLearn = () => {
@@ -65,7 +69,7 @@ class Template extends React.Component {
             }
         });
 
-        this.props.close('recommendWarningOpen')
+        this.props.clickClose();
     };
 
     render(){
@@ -87,11 +91,11 @@ class Template extends React.Component {
                 <section style={{padding: '20px'}}>
                     <Typography>
                         Sorry, it seems like we don't have the follow song(s) on record. Please help us by clicking accept
-                        so MusicDEV can widen their songs. The average wait time is between 5-10 minutes per song.
+                        so MusicDEV can widen their songs. The average wait time is between 10-60 minutes per song.
                     </Typography>
                     <Typography>
-                        If you do not wish to add the following songs, then that's no problem at all! Just click
-                        'Skip' or try again. Sorry for any inconvenience.
+                        If you do not wish to add the following song(s), then that's no problem at all! Just click
+                        'Close' or try again. Sorry for any inconvenience.
                     </Typography>
                     <Divider />
                     {failedSongsContent}

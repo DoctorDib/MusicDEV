@@ -90,11 +90,11 @@ module.exports = function (spotifyApi, data, callback) {
                                     if (JSON.parse(data.savePlaylist) && finalReturn.length) {
                                         saveRecommendedMusic(data.username, finalReturn, function (resp) {
                                             console.log(3)
-                                            callback({success: !warningFlag, savePlaylist: data.savePlaylist, successData: finalReturn, failedSongs: errorReturn});
+                                            callback({success: !warningFlag, savePlaylist: data.savePlaylist, successSongs: finalReturn, failedSongs: errorReturn});
                                         });
                                     } else {
                                         console.log(4)
-                                        callback({success: !warningFlag, savePlaylist: data.savePlaylist, successData: finalReturn, failedSongs: errorReturn});
+                                        callback({success: !warningFlag, savePlaylist: data.savePlaylist, successSongs: finalReturn, failedSongs: errorReturn});
                                     }
                                 } else {
                                     console.log(5)
@@ -125,11 +125,11 @@ module.exports = function (spotifyApi, data, callback) {
                                                 if (JSON.parse(data.savePlaylist) && finalReturn.length) {
                                                     saveRecommendedMusic(data.username, finalReturn, function (resp) {
                                                         console.log("Callback")
-                                                        callback({success: !warningFlag, savePlaylist: data.savePlaylist, successData: finalReturn, failedSongs: errorReturn});
+                                                        callback({success: !warningFlag, savePlaylist: data.savePlaylist, successSongs: finalReturn, failedSongs: errorReturn});
                                                     });
                                                 } else {
                                                     console.log("failed?")
-                                                    callback({success: !warningFlag, savePlaylist: data.savePlaylist, successData: finalReturn, failedSongs: errorReturn});
+                                                    callback({success: !warningFlag, savePlaylist: data.savePlaylist, successSongs: finalReturn, failedSongs: errorReturn});
                                                 }
                                             } else {
                                                 console.log(1)
@@ -148,7 +148,7 @@ module.exports = function (spotifyApi, data, callback) {
                                     if (quantityKey+1 >= ewwArray.length){
                                         if (genreKey+1 >= data.genres.length ) {
                                             // Finished
-                                            callback({success: !warningFlag, successData: finalReturn, failedSongs: errorReturn})
+                                            callback({success: !warningFlag, successSongs: finalReturn, failedSongs: errorReturn})
                                         } else {
                                             genreCallback()
                                         }

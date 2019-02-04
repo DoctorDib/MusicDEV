@@ -6,7 +6,8 @@ const userSchema = mongoose.Schema({
     displayName: {type: String},
     photos: [],
     newUser: {type: Boolean, default: true},
-    activePlaylist: [],
+    activePlaylists: [],
+    history: [],
     playlistOptions: {
         id: {type: String, unique: true},
         name: {type: String},
