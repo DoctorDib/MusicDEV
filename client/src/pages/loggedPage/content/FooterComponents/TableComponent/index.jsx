@@ -1,7 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import Button from '@material-ui/core/Button';
-import Tooltip from '@material-ui/core/Tooltip';
+import timeAgo from 'timeago-simple';
+import Axios from "axios";
+
+import styles from './style';
 
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
@@ -9,12 +11,9 @@ import TableCell from '@material-ui/core/TableCell';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
-import Divider from '@material-ui/core/Divider';
 import Typography from '@material-ui/core/Typography';
-
-import { withStyles } from '@material-ui/core/styles';
-
-import styles from './style';
+import Button from '@material-ui/core/Button';
+import Tooltip from '@material-ui/core/Tooltip';
 
 import WorkoutIcon from 'mdi-react/WeightsIcon';
 import ChillIcon from 'mdi-react/CouchIcon';
@@ -30,8 +29,7 @@ import RandomisedIcon from 'mdi-react/Die5Icon';
 import PlayButtonIcon from 'mdi-react/PlayCircleFilledIcon';
 import TrashIcon from 'mdi-react/TrashIcon';
 
-import timeAgo from 'timeago-simple';
-import Axios from "axios";
+import { withStyles } from '@material-ui/core/styles';
 
 const headerMap = {
     recommend: ['Activity', 'Song name', 'Genre', 'Play'],

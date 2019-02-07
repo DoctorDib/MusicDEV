@@ -1,12 +1,12 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-
 import slugify from 'slugify';
+import Axios from "axios";
 
-import Button from '@material-ui/core/Button';
-import IconButton from '@material-ui/core/IconButton';
 import { withStyles } from '@material-ui/core/styles';
+
 import styles from './style';
+
 import GridListTile from "@material-ui/core/GridListTile/GridListTile";
 import GridList from "@material-ui/core/GridList/GridList";
 import Tooltip from "@material-ui/core/Tooltip/Tooltip";
@@ -19,6 +19,8 @@ import Checkbox from '@material-ui/core/Checkbox';
 import Paper from '@material-ui/core/Paper';
 import Divider from '@material-ui/core/Divider';
 import MenuItem from '@material-ui/core/MenuItem';
+import Button from '@material-ui/core/Button';
+import IconButton from '@material-ui/core/IconButton';
 
 import WorkoutIcon from 'mdi-react/WeightsIcon';
 import ChillIcon from 'mdi-react/CouchIcon';
@@ -35,8 +37,6 @@ import RandomisedIcon from 'mdi-react/Die5Icon';
 import TableComponent from '../TableComponent';
 import RecommendWarning from './RecommendWarningComponent';
 import WarningComponent from '../../../../warningComponent';
-
-import Axios from "axios";
 
 const iconList = {
     Workout: <WorkoutIcon style={{backgroundColor: '#ffffff00'}} />,

@@ -1,6 +1,6 @@
 const predict = require('./musicTool/helpers/predict');
 const config = require('../config/config');
-const spotify = require('./spotify_api');
+const spotify = require('./spotifyApi');
 
 const async = require('async');
 const brain = require('brain.js');

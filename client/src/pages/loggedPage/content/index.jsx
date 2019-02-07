@@ -2,22 +2,18 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Axios from 'axios';
 
+import styles from './style';
 import LogoIcon from 'img/icon.png';
 
 // Settings
 import FooterComponent from './FooterComponents';
 import WarningComponent from '../../warningComponent';
 
-import { withStyles } from '@material-ui/core/styles';
-
-import styles from './style';
-
 import Paper from "@material-ui/core/Paper/Paper";
 import Typography from '@material-ui/core/Typography';
-import Tooltip from '@material-ui/core/Tooltip';
-import Switch from '@material-ui/core/Switch';
 import AppBar from '@material-ui/core/AppBar';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
+
+import { withStyles } from '@material-ui/core/styles';
 
 class Template extends React.Component {
     constructor(props) {
@@ -94,10 +90,6 @@ class Template extends React.Component {
 
     componentDidMount() {
         this.initialLoad();
-    };
-
-    handleRedirect = url => () => {
-        window.location.href=url;
     };
 
     updateState = params => {

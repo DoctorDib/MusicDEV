@@ -9,7 +9,7 @@ const trainer = require('./helpers/train');
 const recommender = require('./helpers/recommend');
 //const trainer = require('./helpers/train-synaptic');
 
-const spotify = require('./helpers/spotifyApi');
+const spotify = require('../../spotify_api');
 const sample = require('./helpers/sample');
 const predict = require('./helpers/predict');
 const push = require('./helpers/pushbullet');
@@ -243,7 +243,7 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
                 type = dictionaryValue.category;
 
                 async.eachOfSeries(dictionaryValue.uriList, function (uriValue, uriKey, uriCallback) {
-                    spotify.grabPlaylists(spotifyApi, dictionaryValue.category, uriValue, (data) => {
+                    spotify('grabPlaylistsApp', {type: dictionaryValue.category, URI: uriValue}, (data) => {
 
                         let tracks = [];
                         async.eachOfSeries(data, function (track, trackKey, trackCallback) {
@@ -340,7 +340,7 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
             async.eachOfSeries(trackDictionary, function (dictionaryValue, mainKey, dictionaryCallback) {
                 async.eachOfSeries(dictionaryValue.uriList, function (uriValue, uriKey, uriCallback) {
 
-                    spotify.grabFeatures(spotifyApi, dictionaryValue.category, uriValue, function (data) {
+                    spotify('grabFeatures', {type: dictionaryValue.category, URI: uriValue}, function (data) {
 
                         if (!memory[dictionaryValue.category]) {
                             memory[dictionaryValue.category] = []
@@ -456,7 +456,7 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
                     let uri = process.argv[3].split(splitVal);
                     uri = uri[uri.length - 1];
 
-                    spotify.grabSingleFeature(spotifyApi, uri, function (data) {
+                    spotify('grabSingleFeature', {uri: uri}, function (data) {
                         console.log(data);
                         predict(net, data, (resp) => {
                             let finalResponse = `I think it is:\n  - ${resp}`;
@@ -569,7 +569,7 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
                                                         console.log("Then here")
                                                         async.eachOfSeries(uriArray, function (uriArrayValue, uriArrayKey, uriArrayCallback) {
                                                             setTimeout(function () {
-                                                                spotify.grabFeatures(spotifyApi, false, uriArrayValue, (data) => {
+                                                                spotify('grabFeatures', {type: false, URI: uriArrayValue}, (data) => {
                                                                     async.eachOfSeries(data, function (featuresValue, featuresKey, featuresCallback) {
                                                                         let ident = featuresValue.id;
                                                                         delete featuresValue.id; // Sorting out data

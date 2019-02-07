@@ -1,10 +1,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import slugify from 'slugify';
+import Axios from 'axios';
+
+import styles from './style';
 
 import Button from '@material-ui/core/Button';
-import Card from '@material-ui/core/Card';
-import Dialog from '@material-ui/core/Dialog';
-import DialogTitle from '@material-ui/core/DialogTitle';
 import FormLabel from '@material-ui/core/FormLabel';
 import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
@@ -14,17 +15,10 @@ import Divider from '@material-ui/core/Divider';
 import Checkbox from '@material-ui/core/Checkbox';
 import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
-import AppBar from '@material-ui/core/AppBar';
 import Paper from '@material-ui/core/Paper';
-
-import slugify from 'slugify';
-
-import Axios from 'axios';
+import InputLabel from "@material-ui/core/InputLabel/InputLabel";
 
 import { withStyles } from '@material-ui/core/styles';
-
-import styles from './style';
-import InputLabel from "@material-ui/core/InputLabel/InputLabel";
 
 class Template extends React.Component {
     constructor(props) {

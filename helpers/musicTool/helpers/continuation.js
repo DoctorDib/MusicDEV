@@ -1,5 +1,5 @@
 const config = require('../../../config/config');
-const spotify = require('../../spotify_api');
+const spotify = require('../../spotifyApi');
 const mongo = require('../../mongo');
 const predict = require('./predict');
 const recommend = require('./recommend');

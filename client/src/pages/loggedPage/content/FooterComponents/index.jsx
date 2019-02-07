@@ -1,5 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import timeAgo from 'timeago-simple';
+import classNames from 'classnames';
+
+import styles from './style';
 
 import RecommendationComponent  from './RecommendationComponent';
 import SettingsComponent  from './SettingsComponent';
@@ -8,11 +12,7 @@ import TableComponent  from './TableComponent';
 import MusicManagerComponent  from './MusicManagerComponent';
 import ListenComponent  from './ListenComponent';
 
-import { withStyles } from '@material-ui/core/styles';
-
-import styles from './style';
 import AppBar from '@material-ui/core/AppBar';
-import classNames from 'classnames';
 import Drawer from '@material-ui/core/Drawer';
 import Divider from '@material-ui/core/Divider';
 import Toolbar from '@material-ui/core/Toolbar';
@@ -21,12 +21,9 @@ import CssBaseline from '@material-ui/core/CssBaseline';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
-import ListItemText from '@material-ui/core/ListItemText';
 import IconButton from '@material-ui/core/IconButton';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
-
-import timeAgo from 'timeago-simple';
 
 import RecentIcon from 'mdi-react/RecentIcon';
 import BrainIcon from 'mdi-react/BrainIcon';
@@ -37,6 +34,8 @@ import MenuIcon from '@material-ui/icons/Menu';
 import SettingsIcon from '@material-ui/icons/Settings';
 import LogoutIcon from '@material-ui/icons/ExitToApp';
 import HelpIcon from '@material-ui/icons/Help';
+
+import { withStyles } from '@material-ui/core/styles';
 
 const buttonContent = [
     {

@@ -1,12 +1,11 @@
 const MongoClient = require('mongodb').MongoClient;
-const spotify = require('./spotifyApi');
 const genreMapping = require('../../../config/config');
 const mongo = require('../../mongo');
 const neo = require('./neo4j');
 
 const async = require('async');
 
-const spotifyHelper = require('../../spotify_api');
+const spotifyHelper = require('../../spotifyApi');
 
 function addSongs (username, playlistOptions, music, callback) {
     spotifyHelper('saveToPlaylist', {username: username, playlistOptions: playlistOptions, music: music}, (resp) => {

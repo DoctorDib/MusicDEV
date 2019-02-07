@@ -2,15 +2,15 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Axios from 'axios';
 
+import styles from './style';
+
 import TableComponent  from '../TableComponent';
 import WarningComponent  from '../../../../warningComponent';
 
-import Paper from '@material-ui/core/Paper';
-
 import { withStyles } from '@material-ui/core/styles';
 
-import styles from './style';
 import Tooltip from "@material-ui/core/Tooltip/Tooltip";
+import Paper from '@material-ui/core/Paper';
 import FormControlLabel from "@material-ui/core/FormControlLabel/FormControlLabel";
 import Switch from "@material-ui/core/Switch/Switch";
 import AppBar from "@material-ui/core/AppBar";

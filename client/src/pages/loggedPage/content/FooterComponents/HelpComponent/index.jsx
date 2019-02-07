@@ -11,7 +11,7 @@ import StepButton from '@material-ui/core/StepButton';
 import Button from '@material-ui/core/Button';
 import AppBar from '@material-ui/core/AppBar';
 
-import Waypoint from 'react-waypoint';
+import WayPoint from 'react-waypoint';
 
 import { withStyles } from '@material-ui/core/styles';
 import styles from './style';
@@ -184,7 +184,7 @@ class Template extends React.Component {
 
         const content = posts.map((post, index) =>
             <div className={classes.helperHelp} id={index}>
-                <Waypoint onEnter={this.handleScroll(index)} />
+                <WayPoint onEnter={this.handleScroll(index)} />
 
                 <AppBar color="primary" className={classes.helperHeader}>
                     <Typography color="secondary" variant='display1' className={classes.helperTitle}> {post.title} </Typography>

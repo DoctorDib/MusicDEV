@@ -234,7 +234,6 @@ module.exports = function (func, data, callback) {
             });
             break;
         case 'recommend':
-
             let properties = `{
                 danceability: ${data.song.features.danceability},
                 energy: ${data.song.features.energy},

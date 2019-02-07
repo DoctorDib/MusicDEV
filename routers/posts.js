@@ -1,4 +1,4 @@
-const spotify = require('../helpers/spotify_api.js');
+const spotify = require('../helpers/spotifyApi.js');
 const mongo = require('../helpers/mongo');
 
 const trainer = require('../helpers/frontTraining');
