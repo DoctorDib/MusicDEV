@@ -57,8 +57,8 @@ module.exports = {
     neo4j: {
         username: secretKeys.neo4j.username,
         password: secretKeys.neo4j.password,
-        ip: "hiddenbanks.ddns.net",
-        port: "7474"
+        ip: secretKeys.neo4j.ip,
+        port: secretKeys.neo4j.port
     },
     table_settings: {
         max_limit: 10
