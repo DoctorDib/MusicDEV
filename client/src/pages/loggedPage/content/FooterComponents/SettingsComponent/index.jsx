@@ -64,6 +64,7 @@ class Template extends React.Component {
                 if(!tmpPlaylistNames.hasOwnProperty(tmpActivePlaylist[index])){
                     tmpPlaylistNames[tmpActivePlaylist[index]] = {}
                 }
+
                 tmpPlaylistNames[tmpActivePlaylist[index]].id = tmpActivePlaylist[index];
                 tmpPlaylistNames[tmpActivePlaylist[index]].active = true;
             }
@@ -92,7 +93,9 @@ class Template extends React.Component {
         let activeList = {};
         for (let uri in activePlaylists) {
             if (activePlaylists.hasOwnProperty(uri)) {
-                activeList[activePlaylists[uri]] = true;
+                activeList[activePlaylists[uri]] = activeList[activePlaylists[uri]] || {};
+                activeList[activePlaylists[uri]].id = activePlaylists[uri];
+                activeList[activePlaylists[uri]].active = true;
             }
         }
         return activeList;
@@ -100,7 +103,6 @@ class Template extends React.Component {
 
     componentDidMount(props) {
         this.setState({
-            playlistNames: this.props.playlistNames,
             profilePlaylists: this.props.profilePlaylists,
             newUser: this.props.newUser,
             username: this.props.username,
@@ -108,41 +110,40 @@ class Template extends React.Component {
         });
 
         if (this.props.activePlaylists) {
-            console.log(">>>>", this.props.activePlaylists)
             this.setState({playlistNames: this.tickIt(this.props.activePlaylists)});
         }
-
-        console.log("BOOP: ", this.props.playlistNames)
     };
 
     componentWillReceiveProps(props){
-        this.setState(this.manageProps(props));
-
         if (props.activePlaylists !== this.props.activePlaylists) {
             console.log("Scanning: ", props.activePlaylists)
             this.setState({playlistNames: this.tickIt(props.activePlaylists)});
         }
 
-        if (props.newUser !== this.props.newUser) {
-            if (!props.newUser) {
-                Axios.get('grabActivePlaylist', {
-                    params: {
-                        username: props.username,
+        console.log("New user? ", props.newUser)
+
+        if (!props.newUser) {
+            Axios.get('grabActivePlaylist', {
+                params: {
+                    username: props.username,
+                }
+            })
+                .then((resp) => {
+                    console.log("RESP: ", resp)
+                    console.log("hi")
+                    if(resp.data.hasOwnProperty('playlists')){
+                        this.setState({
+                            activePlaylist: resp.data.playlists
+                        });
+                        this.sortActiveButtons();
                     }
                 })
-                    .then((resp) => {
-                        if(resp.data.hasOwnProperty('playlists')){
-                            this.setState({
-                                activePlaylist: resp.data.playlists
-                            });
-                            this.sortActiveButtons();
-                        }
-                    })
-                    .catch((err) => {
-                        console.log("Issue:", err)
-                    });
-            }
+                .catch((err) => {
+                    console.log("Issue:", err)
+                });
         }
+
+        this.setState(this.manageProps(props));
     }
 
     learn = () => {
@@ -191,7 +192,6 @@ class Template extends React.Component {
                                 warningSnack: false,
                                 loading: 'none'
                             });
-                            this.props.close('settingsOpen')
                         } else {
                             console.log("Please try again");
                         }
@@ -232,7 +232,11 @@ class Template extends React.Component {
     handleChange = playlist => () => {
         let tmp = this.state.playlistNames;
 
+        console.log("Playlist selection: ", playlist)
+        console.log(tmp)
+
         if(!tmp.hasOwnProperty(playlist.id)){
+            console.log("iniitalised")
             // Initialising it
             tmp[playlist.id] = {
                 name: playlist.name,
@@ -266,6 +270,17 @@ class Template extends React.Component {
         });
     };
 
+    clearHistory = () => {
+        Axios.get('clearHistory')
+            .then(resp => {
+                if (resp.data.success) {
+                    this.props.updateHistory([]);
+                }
+            }).catch(function(err) {
+                console.error("Manage playlist: ", err)
+            });
+    };
+
     managePlaylist = task => () => {
 
         Axios.get('managePlaylist', {
@@ -291,7 +306,7 @@ class Template extends React.Component {
                 <FormControlLabel
                     control={
                         <Switch
-                            checked={this.state.playlistNames.hasOwnProperty(tile.id) ? this.state.playlistNames[tile.id] : false}
+                            checked={this.state.playlistNames.hasOwnProperty(tile.id) ? this.state.playlistNames[tile.id].active : false}
                             onChange={this.handleChange(tile)}
                             value={slugify(tile.name, '_')}
                             color="primary"
@@ -303,51 +318,50 @@ class Template extends React.Component {
         ));
 
         return (
-            <Paper square>
-                <Card className={classes.settingsBody}>
-                    <section>
-                        <FormGroup>
-                            <FormLabel component="legend">Select your favourite playlists: (50 max)</FormLabel>
+            <Paper square className={classes.main}>
+                <section>
+                    <FormGroup>
+                        <FormLabel component="legend">Select your favourite playlists: (50 max)</FormLabel>
 
-                            {console.log(playlistSelection)}
-                            {playlistSelection ? playlistSelection : <Typography> No playlists detected </Typography>}
+                        {console.log(playlistSelection)}
+                        {playlistSelection ? playlistSelection : <Typography> No playlists detected </Typography>}
 
-                            {this.state.newUser ? null :
-                            <div>
-                                <Divider />
-                                <FormLabel component="legend">Saved playlist</FormLabel>
-                                <TextField
-                                    color="primary"
-                                    label="New playlist name"
-                                    placeholder="Playlist name"
-                                    margin="normal"
-                                    value={this.state.playlistName}
-                                    onChange={this.handleTextChange('playlistName')}
-                                />
+                        {this.state.newUser ? null :
+                        <div>
+                            <Divider />
+                            <FormLabel component="legend">Saved playlist</FormLabel>
+                            <TextField
+                                color="primary"
+                                label="New playlist name"
+                                placeholder="Playlist name"
+                                margin="normal"
+                                value={this.state.playlistName}
+                                onChange={this.handleTextChange('playlistName')}
+                            />
 
-                                <InputLabel>Make playlist private</InputLabel>
-                                <Checkbox
-                                    checked={this.state.privatePlaylist}
-                                    onChange={this.handleBooleanChange('privatePlaylist')}
-                                    value="privatePlaylist"
-                                    color="primary"
-                                />
+                            <InputLabel>Make playlist private</InputLabel>
+                            <Checkbox
+                                checked={this.state.privatePlaylist}
+                                onChange={this.handleBooleanChange('privatePlaylist')}
+                                value="privatePlaylist"
+                                color="primary"
+                            />
 
-                                <Divider />
+                            <Divider />
 
-                                <Button color="primary" onClick={this.managePlaylist('clear')}>Clear Playlist</Button>
-                                <Button color="primary" onClick={this.managePlaylist('delete')}>Delete Playlist</Button>
+                            <Button color="primary" onClick={this.managePlaylist('clear')}>Clear Playlist</Button>
+                            <Button color="primary" onClick={this.managePlaylist('delete')}>Delete Playlist</Button>
+                            <Button color="primary" onClick={this.clearHistory}>Clear History</Button>
 
-                                <Divider />
+                            <Divider />
 
-                                <Button color="primary" disabled={true} onClick={this.managePlaylist('delete')}>Delete Account</Button>
-                            </div>}
-                        </FormGroup>
+                            <Button color="primary" disabled={true} onClick={this.managePlaylist('delete')}>Delete Account</Button>
+                        </div>}
+                    </FormGroup>
 
-                        <Button color="primary" onClick={this.learn} disabled={this.state.loading === 'block' || !(this.state.playlistChanges || this.state.playlistNameChanges || this.state.playlistPrivateChanges)}>{this.state.newUser ? 'Learn' : 'Save'}</Button>
-                        <LinearProgress style={{display: this.state.loading}} />
-                    </section>
-                </Card>
+                    <Button color="primary" onClick={this.learn} disabled={this.state.loading === 'block' || !(this.state.playlistChanges || this.state.playlistNameChanges || this.state.playlistPrivateChanges)}>{this.state.newUser ? 'Learn' : 'Save'}</Button>
+                    <LinearProgress style={{display: this.state.loading}} />
+                </section>
             </Paper >
         );
     }

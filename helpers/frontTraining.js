@@ -1,9 +1,7 @@
 const predict = require('./musicTool/helpers/predict');
-const config = require('./musicTool/config/config');
-
+const config = require('../config/config');
 const spotify = require('./spotify_api');
 
-const SpotifyWebApi = require('spotify-web-api-node');
 const async = require('async');
 const brain = require('brain.js');
 const MongoClient = require('mongodb').MongoClient;
@@ -33,7 +31,7 @@ module.exports = (func, username, accessToken, playlists, callback) => {
                 let final=[];
                 async.eachOfSeries(inputData, function (memoryValue, memoryKey, memoryCallback) {
                     count++;
-                    let net = new brain.NeuralNetwork(config.predict);
+                    let net = new brain.NeuralNetwork(config.classification_config.predict);
                     net.fromJSON(respMemory);
                     predict(net, memoryValue.features, (resp) => {
                         memoryValue.genre = resp;
@@ -128,8 +126,8 @@ module.exports = (func, username, accessToken, playlists, callback) => {
                 });
             },
             grabGenreUserPlaylist: function (username, playlists, callback) {
-                useCollection = db.collection("musicMemory");
-                saveCollection = db.collection("users");
+                let useCollection = db.collection("musicMemory");
+                let saveCollection = db.collection("users");
 
                 useCollection.findOne({"id": 'memory'}, function (err, resp) {
                     if (!resp || resp === null) {

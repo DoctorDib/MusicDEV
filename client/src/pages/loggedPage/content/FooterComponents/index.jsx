@@ -5,6 +5,8 @@ import RecommendationComponent  from './RecommendationComponent';
 import SettingsComponent  from './SettingsComponent';
 import HelpComponent  from './HelpComponent';
 import TableComponent  from './TableComponent';
+import MusicManagerComponent  from './MusicManagerComponent';
+import ListenComponent  from './ListenComponent';
 
 import { withStyles } from '@material-ui/core/styles';
 
@@ -28,6 +30,7 @@ import timeAgo from 'timeago-simple';
 
 import RecentIcon from 'mdi-react/RecentIcon';
 import BrainIcon from 'mdi-react/BrainIcon';
+import ListenIcon from 'mdi-react/EarHearingIcon';
 import ManagerIcon from 'mdi-react/ContentSaveEditIcon';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import MenuIcon from '@material-ui/icons/Menu';
@@ -36,6 +39,11 @@ import LogoutIcon from '@material-ui/icons/ExitToApp';
 import HelpIcon from '@material-ui/icons/Help';
 
 const buttonContent = [
+    {
+        id: 0,
+        name: 'Music Continuation',
+        icon: <ListenIcon />
+    },
     {
         id: 1,
         name: 'Recommendation',
@@ -68,7 +76,7 @@ class Template extends React.Component {
             menuKey: 0,
             value: 0,
 
-            selectedIndex: 1,
+            selectedIndex: 0,
 
             buttonList: buttonContent,
 
@@ -87,10 +95,10 @@ class Template extends React.Component {
             playlistNames: {},
             newUser: false,
             privatePlaylist: false,
-            history: [{time: 3, song: []}],
+            history: [],
 
             helperOpen: false,
-            menuTitle: 'Recommendation'
+            menuTitle: 'Music Continuation'
         }
     }
 
@@ -130,6 +138,7 @@ class Template extends React.Component {
     };
 
     componentDidMount(props) {
+
         this.setState({
             tableRecommendation: this.props.tableContent,
             currentPlayingSong: this.props.currentPlayingSong,
@@ -147,7 +156,6 @@ class Template extends React.Component {
             open: this.props.open,
             newUser: this.props.newUser,
             close: this.props.close,
-            playlistNames: this.props.playlistNames,
             profilePlaylists: this.props.profilePlaylists,
             username: this.props.username,
             accessToken: this.props.accessToken,
@@ -173,6 +181,10 @@ class Template extends React.Component {
 
     logout = () => {
         window.location.href='/logout'
+    };
+
+    updateHistory = newHistory => {
+        this.setState({history: newHistory})
     };
 
     getAllHistorySongs = () => {
@@ -368,12 +380,15 @@ class Template extends React.Component {
                             <div className={classes.toolbar} />
 
                             <div style={{height: '76vh', overflow:'auto'}}>
+                                {this.state.selectedIndex === 0 && <ListenComponent/>}
+
                                 {this.state.selectedIndex === 1 && <RecommendationComponent
                                     updateTable={this.state.updateTable}
                                     username={this.state.username}
+                                    updateHistory={params => this.updateHistory(params)}
                                 />}
 
-                                {this.state.selectedIndex === 2 && <div>Item Two</div>}
+                                {this.state.selectedIndex === 2 && <MusicManagerComponent />}
                                 {this.state.selectedIndex === 3 && <TableComponent tableType='history' tableContent={this.getAllHistorySongs()}/>}
                                 {this.state.selectedIndex === 4 && <SettingsComponent
                                     playlistNames={this.state.playlistNames}
@@ -381,6 +396,7 @@ class Template extends React.Component {
                                     activePlaylists={this.state.activePlaylists}
                                     newUser={this.state.newUser}
                                     username={this.state.username}
+                                    updateHistory={params => this.updateHistory(params)}
                                 />}
 
                                 {historyGeneratorContent}

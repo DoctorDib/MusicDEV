@@ -2,7 +2,7 @@
 const dictionary =  require('../Data/genreDictionary'); // For genre
 //const dictionary =  require('./Data/playlistSmall');
 const trackDictionary =  require('../Data/trackDictionary');
-const config = require('./config/config');
+const config = require('../../config/config');
 
 // ==== Training models ==== \\
 const trainer = require('./helpers/train');
@@ -14,12 +14,11 @@ const sample = require('./helpers/sample');
 const predict = require('./helpers/predict');
 const push = require('./helpers/pushbullet');
 const neo4j = require('./helpers/neo4j');
-const recommendConfig = require('./config/recommendConfig');
+const recommendConfig = require('../../config/config');
 
-const secretKeys = require('../secretKeys.json');
-const client_id = secretKeys.spotify.client_id;
-const client_secret = secretKeys.spotify.client_secret;
-const redirect_uri = secretKeys.spotify.spotify_callback;
+const client_id = config.spotify.client_id;
+const client_secret = config.spotify.client_secret;
+const redirect_uri = config.spotify.spotify_callback;
 
 const async = require('async');
 const brain = require('brain.js');
@@ -36,31 +35,6 @@ const spotifyApi = new SpotifyWebApi({
     clientSecret : client_secret,
     redirectUri : redirect_uri
 });
-
-const genreAndActivity = {
-    activity: ['Workout', 'Chill', 'ElectronicAndDance', 'Party', 'Focus', 'Sleep', 'Romance', 'Gaming', 'Dinner', 'Travel']
-};
-
-function round(input, dec) {
-    console.log(input)
-    console.log(Number(Math.round(input + 'e' + dec) + 'e-' + dec))
-    return Number(Math.round(input + 'e' + dec) + 'e-' + dec);
-}
-
-function check(outcome) {
-    let high = 0, highLabel;
-
-    for (index in outcome) {
-        let tmpOut = round(outcome[index], 2);
-
-        if (tmpOut > high) {
-            high = tmpOut;
-            highLabel = index;
-        }
-    }
-
-    return highLabel;
-}
 
 function setUpAccount(callback) {
     Spotify.getAccessToken({
@@ -126,7 +100,6 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
     const db = database.db("musicDEV");
 
     let memory = {};
-    let accountSetup = false;
     let useCollection, saveCollection;
 
     const mongoAction = {
@@ -135,11 +108,6 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
                 collection.insert({id: id, [id]: value});
                 callback();
             });
-        },
-        insertArr: (collection, id, value) => {
-            // Saving a new record
-            console.log("Saving as new record")
-            collection.update({"id":id}, {  $push: value} , { upsert: true });
         },
         checkDelete: (collection, id, mongoCallback) => {
             collection.findOne({"id": id}, function (err, respData) {
@@ -160,7 +128,7 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
 
     const run = {
         grabGenre: function (respMemory, inputData, genreCallback) {
-            let net = new brain.NeuralNetwork(config.predict);
+            let net = new brain.NeuralNetwork(config.classification_config.predict);
             net.fromJSON(respMemory);
 
             predict(net, inputData, (resp) => {
@@ -477,7 +445,7 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
                     console.log("Found")
 
 //                    console.log("Settings: ", trainResp.memory);
-                    let net = new brain.NeuralNetwork(config.predict);
+                    let net = new brain.NeuralNetwork(config.classification_config.predict);
                     net.fromJSON(resp.memory);
 
                     let splitVal = ':';
@@ -520,9 +488,9 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
             });
         },
         relate: function () {
-            async.eachOfSeries(recommendConfig.genres, function (genre, genreKey, genreCallback) {
+            async.eachOfSeries(recommendConfig.recommendation_config.genres, function (genre, genreKey, genreCallback) {
                 neo4j('masterLearn', {genre: genre}, function () {
-                    if(genreKey+1 >= recommendConfig.genres.length) {
+                    if(genreKey+1 >= recommendConfig.recommendation_config.genres.length) {
                         console.log("Done")
                     } else {
                         genreCallback();
@@ -534,7 +502,7 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
             neo4j('masterDelete', {}, function () { // Resetting
                 console.log("Done")
 
-                neo4j('initialise', {id: "Spotify", genres: recommendConfig.genres}, function () { // Initialising database
+                neo4j('initialise', {id: "Spotify", genres: recommendConfig.recommendation_config.genres}, function () { // Initialising database
 
                     const arr = _.range(parseInt(process.argv[3]));
                     console.log(arr)
@@ -568,9 +536,9 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
                                                     if (jsonKey + 1 >= Object.keys(json).length) {
                                                         if (keyFiles + 1 >= arr.length) {
 
-                                                            async.eachOfSeries(recommendConfig.genres, function (genre, genreKey, genreCallback) {
+                                                            async.eachOfSeries(recommendConfig.recommendation_config.genres, function (genre, genreKey, genreCallback) {
                                                                 neo4j('masterLearn', {genre: genre}, function () {
-                                                                    if (genreKey + 1 >= recommendConfig.genres.length) {
+                                                                    if (genreKey + 1 >= recommendConfig.recommendation_config.genres.length) {
                                                                         let body = `Database build has been completed with ${finalArray.length} entries.`;
                                                                         push.send({
                                                                             title: "Database build complete",
@@ -631,9 +599,9 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
                                                                                         if (jsonKey + 1 >= Object.keys(json).length) {
                                                                                             if (keyFiles + 1 >= arr.length) {
 
-                                                                                                async.eachOfSeries(recommendConfig.genres, function (genre, genreKey, genreCallback) {
+                                                                                                async.eachOfSeries(recommendConfig.recommendation_config.genres, function (genre, genreKey, genreCallback) {
                                                                                                     neo4j('masterLearn', {genre: genre}, function () {
-                                                                                                        if (genreKey + 1 >= recommendConfig.genres.length) {
+                                                                                                        if (genreKey + 1 >= recommendConfig.recommendation_config.genres.length) {
                                                                                                             let body = `Database build has been completed with ${finalArray.length} entries.`;
                                                                                                             push.send({
                                                                                                                 title: "Database build complete",

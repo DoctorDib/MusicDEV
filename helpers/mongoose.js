@@ -1,7 +1,5 @@
 const User = require('../models/user');
 
-// mongoose('get', {username: <USERNAME>})
-
 module.exports = (func, ident, set, object, callback) => {
     switch(func) {
         case 'update':

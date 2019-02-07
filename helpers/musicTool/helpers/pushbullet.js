@@ -1,7 +1,7 @@
-const secret = require('../../secretKeys.json');
+const config = require('../../../config/config');
 
 let PushBullet = require('pushbullet');
-let pusher = new PushBullet(secret.pushBullet.api_token);
+let pusher = new PushBullet(config.pushBullet.api_token);
 
 module.exports = {
     send: (data) => {
@@ -16,4 +16,4 @@ module.exports = {
             });
         });
     }
-}
+};

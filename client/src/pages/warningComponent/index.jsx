@@ -63,7 +63,7 @@ class Template extends React.Component {
 
     componentWillReceiveProps(props) {
         let newProps = this.manageProps(props);
-        if(Object.keys(newProps)){
+        if(Object.keys(newProps).length){
             this.setState(newProps);
         }
     }
@@ -94,6 +94,7 @@ class Template extends React.Component {
                         </span>
                     </section>
                 }
+                style={{zIndex: 1000}}
             />
         );
     }

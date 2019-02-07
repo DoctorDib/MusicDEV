@@ -1,12 +1,9 @@
 const brain = require('brain.js');
 const async = require('async');
-const config = require('../config/config');
+const config = require('../../../config/config');
+const predict = require('./predict');
 
-const predict = require('./predict')
-
-const spotify = require('./spotifyApi');
-
-let overallCount = 0, catNum = 0, mainNum = 0;
+let catNum = 0;
 
 let initial = {
     errors: {
@@ -65,7 +62,7 @@ function round(input, dec){
 }
 
 module.exports = function(spotifyApi, netOptions, data) {
-    let net = new brain.NeuralNetwork(config.predict);
+    let net = new brain.NeuralNetwork(config.classification_config.predict);
 
     net.fromJSON(netOptions.memory);
 

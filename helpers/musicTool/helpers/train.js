@@ -1,5 +1,5 @@
 const brain = require('brain.js');
-const config = require('../config/config');
+const config = require('../../../config/config');
 const push = require('./pushbullet');
 
 let error = 0, iteration = 'default';
@@ -39,11 +39,11 @@ module.exports = function(SpotifyApi, dictionary, callback) {
         iterations: 200000 // 20000 - default
     };
 
-    let netConfig = Object.assign(config.config, mainNetConfig);
+    let netConfig = Object.assign(config.classification_config.config, mainNetConfig);
     console.log(netConfig);
     let netsObject = new brain.NeuralNetwork(netConfig);
 
-    let trainConfig = Object.assign(config.train, mainTrainConfig);
+    let trainConfig = Object.assign(config.classification_config.train, mainTrainConfig);
 
     console.log("Training started:");
     netsObject.trainAsync(dictionary, trainConfig )

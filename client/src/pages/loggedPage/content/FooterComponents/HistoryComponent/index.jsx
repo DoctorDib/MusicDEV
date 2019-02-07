@@ -24,9 +24,6 @@ class Template extends React.Component {
         };
     }
 
-    componentDidMount(props) {
-    };
-
     handleChange = (event, value) => {
         this.setState({ value });
     };

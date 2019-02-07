@@ -1,7 +1,7 @@
 const SpotifyStrategy = require('passport-spotify').Strategy;
 const passportRefreshToken = require('passport-oauth2-refresh');
 const User = require('../models/user');
-const secret = require('../helpers/secretKeys');
+const config = require('./config');
 
 module.exports = (passport) => {
     passport.serializeUser(function(user, done) {
@@ -14,9 +14,9 @@ module.exports = (passport) => {
 
     let strategy = new SpotifyStrategy(
         {
-            clientID: secret.spotify.client_id,
-            clientSecret: secret.spotify.client_secret,
-            callbackURL: secret.spotify.spotify_callback
+            clientID: config.spotify.client_id,
+            clientSecret: config.spotify.client_secret,
+            callbackURL: config.spotify.spotify_callback
         },
         function(accessToken, refreshToken, expires_in, profile, done) {
             User.findOne({username: profile.id}, (err, user) => {

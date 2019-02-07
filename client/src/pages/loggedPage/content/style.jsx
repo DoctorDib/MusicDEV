@@ -29,11 +29,6 @@ export default theme => ({
         width: '100%',
         zIndex: '7'
     },
-    topButtonOptions: {
-        display: 'flex',
-        justifyContent: 'flex-end',
-        marginLeft: 'auto'
-    },
     profilePic: {
         width: '75px',
         height: '75px',
@@ -79,17 +74,5 @@ export default theme => ({
         width: '100%',
         padding: '0.1em',
         paddingRight: '0.5em',
-    },
-
-    listenDetails: {
-        display: 'flex',
-        flexDirection: 'row',
-        paddingRight: theme.spacing.unit * 4,
-        height: '100%',
-    },
-    listenText: {
-        marginLeft: theme.spacing.unit * 4,
-        display: 'flex',
-        flexDirection: 'column'
     },
 });

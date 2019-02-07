@@ -1,12 +1,10 @@
 const neo4j = require('neo4j');
-const secret = require('../../secretKeys');
+const secret = require('../../../config/config');
 
 let graphDatabase = 'http://'+secret.neo4j.username+':'+secret.neo4j.password+'@'+secret.neo4j.ip+':'+secret.neo4j.port;
 const db = new neo4j.GraphDatabase(graphDatabase);
 
 const async = require('async');
-
-// data.name => data.params
 
 module.exports = function (func, data, callback) {
 
@@ -117,7 +115,7 @@ module.exports = function (func, data, callback) {
             let initialQuery = `CREATE (a:${data.id} {id: ${JSON.stringify(data.id)}, name: ${JSON.stringify(data.id)}}) RETURN a`;
             db.cypher({
                 query: initialQuery,
-            }, function (err, returnedData) {
+            }, function (err) {
                 if (err) {
                     console.log(err)
                     //callback({success: false, error: err});
@@ -133,7 +131,7 @@ module.exports = function (func, data, callback) {
 
                         db.cypher({
                             query: initialQueryStep2,
-                        }, function (err, returnedData) {
+                        }, function (err) {
                             if (err) {
                                 console.log(err)
                             } else {
@@ -183,7 +181,7 @@ module.exports = function (func, data, callback) {
 
             db.cypher({
                 query: createQuery,
-            }, function (err, returnedDATA) {
+            }, function (err) {
                 if (err) return console.log("Creating node error: " + err);
                 console.log("Created node successfully")
 
@@ -220,7 +218,7 @@ module.exports = function (func, data, callback) {
                 console.log("Relearning...")
                 db.cypher({
                     query: query,
-                }, function (err, data) {
+                }, function (err) {
                     if (err) callback({success: false, error: err});
                     console.log("Done")
                     db.cypher({

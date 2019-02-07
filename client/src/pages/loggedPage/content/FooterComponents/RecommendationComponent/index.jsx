@@ -33,7 +33,8 @@ import EAndDIcon from 'mdi-react/GuitarElectricIcon';
 import RandomisedIcon from 'mdi-react/Die5Icon';
 
 import TableComponent from '../TableComponent';
-import RecommendWarning from './RecommendWarningComponent/index';
+import RecommendWarning from './RecommendWarningComponent';
+import WarningComponent from '../../../../warningComponent';
 
 import Axios from "axios";
 
@@ -100,6 +101,14 @@ const defaultStates = {
     recommendWarningOpen: false,
     failedSongs: [],
     successSongs: [],
+
+    buttonOptions: {
+        active: false,
+        title: ''
+    },
+    warningOpen: false,
+    warningError: false,
+    warningMessage: '',
 };
 
 class Template extends React.Component {
@@ -108,11 +117,31 @@ class Template extends React.Component {
         this.state = defaultStates;
     }
 
-    componentWillReceiveProps(props) {
-        if(props.open !== this.props.open){
-            this.setState({
-                open: props.open
-            });
+    manageNewProps = (props) => {
+        let newProps = {};
+
+        for (let prop in props) {
+            if(props.hasOwnProperty(prop)) {
+                if (props[prop] !== this.props[prop]) {
+                    newProps[prop] = props[prop];
+                }
+            }
+        }
+
+        return newProps;
+    };
+
+    componentDidMount(props) {
+        this.setState({
+            updateHistory: this.props.updateHistory
+        });
+    };
+
+    componentWillReceiveProps(newProps){
+        let props = this.manageNewProps(newProps);
+
+        if (Object.keys(props).length) {
+            this.setState(props);
         }
     }
 
@@ -204,13 +233,33 @@ class Template extends React.Component {
             }
         })
         .then(resp => {
-           console.log(resp)
+           console.log("<<<<><><><><", resp)
+
             if(resp.data.resp.successSongs.length){
                 this.setState({successSongs: resp.data.resp.successSongs});
             }
+            if (resp.data.resp.error) {
+                console.log("opening new error")
+                this.setState({
+                    buttonOptions: {
+                        active: false,
+                        title: ''
+                    },
+                    warningOpen: true,
+                    warningError: false,
+                    warningMessage: resp.data.resp.error,
+                });
+            }
+
+            if (resp.data.history.length) {
+                console.log("Changing: ", resp.data.history)
+                this.props.updateHistory(resp.data.history);
+            }
+
             if (!resp.data.resp.success) {
                 console.log(resp.data.resp)
                 console.log(">>>>>>>", this.state.recommendWarningOpen)
+
                 this.setState({
                     recommendWarningOpen: true,
                     failedSongs: resp.data.resp.failedSongs
@@ -301,6 +350,13 @@ class Template extends React.Component {
                         close={(params) => this.handleClose(params)}
                         clickClose={this.clickCloseRecommend}
                         failedSongs={this.state.failedSongs}
+                    />
+
+                    <WarningComponent
+                        buttonOptions={this.state.buttonOptions}
+                        warningMessage={this.state.warningMessage}
+                        warningError= {this.state.warningError} // false (warning)
+                        warningOpen={this.state.warningOpen}
                     />
 
                 </Paper>

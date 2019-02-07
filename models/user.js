@@ -13,6 +13,7 @@ const userSchema = mongoose.Schema({
         name: {type: String},
         is_private: {type: Boolean},
         is_active: {type: Boolean},
+        savedTracks: [],
     },
     spotify: {
         access_token: {type: String},

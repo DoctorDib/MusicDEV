@@ -4,6 +4,7 @@ export default theme => ({
     ...styles,
     main: {
         overflowY: 'auto',
-        width: '100%'
+        width: '100%',
+        height: '100%',
     }
 });

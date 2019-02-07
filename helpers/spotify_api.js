@@ -1,26 +1,17 @@
-const keys = require('./secretKeys.json');
+const keys = require('../config/config');
 const client_id = keys.spotify.client_id;
 const client_secret = keys.spotify.client_secret;
 const redirect_uri = keys.spotify.spotify_callback;
-const scope = 'user-read-private user-read-email user-library-read user-top-read user-read-playback-state';
 
-const request = require('request');
 const SpotifyWebApi = require('spotify-web-api-node');
-const otherSpotify = require('./musicTool/helpers/spotifyApi')
+const otherSpotify = require('./musicTool/helpers/spotifyApi');
 
 let spotifyApi = {};
-
-const querystring = require('querystring');
-const mongoose = require('../helpers/mongoose');
-const stateKey = 'spotify_auth_state';
-
-let authOptions = {};
-
 
 module.exports = function(command, data, callback) {
     switch(command){
         case 'analyseTrack':
-            spotifyApi[data.username].getAudioFeatures(data.trackURI)
+            otherSpotify.grabFeatures(data.trackURI)
                 .then(function(data) {
                     // Output items
                     callback(data.body.item);
@@ -60,75 +51,6 @@ module.exports = function(command, data, callback) {
 
             callback("success");
             break;
-
-        case 'refresh':
-            // requesting access token from refresh token
-            authOptions = {
-                url: 'https://accounts.spotify.com/api/token',
-                headers: { 'Authorization': 'Basic ' + (new Buffer(client_id + ':' + client_secret).toString('base64')) },
-                form: {
-                    grant_type: 'refresh_token',
-                    refresh_token: data.token
-                }, json: true
-            };
-
-            request.post(authOptions, function(error, response, body) {
-                if (!error && response.statusCode === 200) {
-                    spotifyApi[data.username].setAccessToken(body.access_token);
-                    callback({access_token: body.access_token});
-                }
-            });
-            break;
-
-        case 'login':
-            // your application requests authorization
-            var url = 'https://accounts.spotify.com/authorize?' +
-                querystring.stringify({
-                    response_type: 'code',
-                    client_id: client_id,
-                    scope: scope,
-                    redirect_uri: redirect_uri,
-                    state: data.state
-                });
-
-            console.log(url)
-            return url;
-
-        case 'callback':
-            console.log("CHECKED");
-
-            var code = data.code;
-            var state = data.state;
-            var storedState = data.storedState;
-
-            if (state === null || state !== storedState) {
-                return {
-                    response: 'failed',
-                    command: '/#' + querystring.stringify({error: 'state_mismatch'})
-                }
-            } else {
-                return {response: 'clear', command: stateKey};
-            }
-
-        case 'callbackV2':
-            var code = data.code;
-            var state = data.state;
-            var storedState = data.storedState;
-
-            authOptions = {
-                url: 'https://accounts.spotify.com/api/token',
-                form: {
-                    code: code,
-                    redirect_uri: redirect_uri,
-                    grant_type: 'authorization_code'
-                },
-                headers: {
-                    'Authorization': 'Basic ' + (new Buffer(client_id + ':' + client_secret).toString('base64'))
-                },
-                json: true
-            };
-
-            return authOptions;
 
         case 'grabTracksFromPlaylist':
             spotifyApi[data.username].setAccessToken(data.access_token);
@@ -176,33 +98,6 @@ module.exports = function(command, data, callback) {
                     callback({success: false});
                 });
             break;
-
-        case 'set_get':
-            spotifyApi[data.username] = new SpotifyWebApi({
-                clientId : client_id,
-                clientSecret : client_secret,
-                redirectUri : redirect_uri
-            });
-
-            spotifyApi[data.username].setAccessToken(data.access_token);
-
-            let response={};
-
-            spotifyApi[data.username].getMe()
-                .then(function(data_root){
-
-                    var build = data.data || {};
-                    build.user_id = data_root.body.id;
-
-                    return build;
-                }).then(function(resp){
-                callback(resp);
-            })
-                .catch(function(err){
-                    console.error(err);
-                });
-            break;
-
         case 'getMe':
             let tmp = new SpotifyWebApi({
                 clientId : client_id,
@@ -226,32 +121,7 @@ module.exports = function(command, data, callback) {
                 });
             break;
 
-        case 'check_account':
-            mongoose('get', {username: data.username}, null, null, function(respData){
-                if(respData.spotify.access_token){
-                    callback({response: 'success', data: respData });
-                } else {
-                    callback({response: 'failed'});
-                }
-            });
-            break;
-
-        case 'grabToken':
-            callback(spotifyApi[data.username]);
-            break;
-
-
         // PLAYLIST CONTROLS
-        /*case 'checkRecommendPlaylistExists':
-            spotifyApi[data.username].getAudioFeatures(data.trackURI)
-                .then(function(data) {
-                    // Output items
-                    callback(data.body.item);
-                    console.log("Now Playing: ",data.body.item.name);
-                }, function(err) {
-                    console.log('Something went wrong!', err);
-                });
-            break;*/
         case 'createPlaylist':
             spotifyApi[data.username].createPlaylist(data.username, data.playlistOptions.name, {public: !JSON.parse(data.playlistOptions.is_private)})
                 .then(function(data) {
@@ -348,17 +218,33 @@ module.exports = function(command, data, callback) {
             });
             break;
         case 'deletePlaylist': // TODO - Adding a deleting recommended playlist on user profile.
-                console.log(data)
-                spotifyApi[data.username].unfollowPlaylist(data.playlistOptions.id)
-                    .then(function() {
-                        callback({success: true})
-                    }, function(err) {
-                        console.log("Error while deleting playlist: ", err)
-                        callback({success: false, function: "Deleting playlist", error: err})
-                    });
+            console.log(data)
+            spotifyApi[data.username].unfollowPlaylist(data.playlistOptions.id)
+                .then(function() {
+                    callback({success: true})
+                }, function(err) {
+                    console.log("Error while deleting playlist: ", err)
+                    callback({success: false, function: "Deleting playlist", error: err})
+                });
             break;
+        case 'deletePlaylistTrack':
+            console.log(data)
+            let tracks = [{ uri : "spotify:track:"+data.uri }];
+            let options = { };
+            console.log(tracks)
+            spotifyApi[data.username].removeTracksFromPlaylist(data.playlistOptions.id, tracks, options)
+                .then(function(data) {
+                    callback({success: true})
+                }, function(err) {
+                    console.log('Something went wrong!', err);
+                });
+            break;
+
         case 'setAccessToken':
             spotifyApi[data.username].setAccessToken(data.access_token);
+            break;
+        case 'grabToken':
+            callback(spotifyApi[data.username]);
             break;
     }
 };

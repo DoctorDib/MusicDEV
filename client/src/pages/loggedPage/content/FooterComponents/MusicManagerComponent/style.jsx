@@ -7,9 +7,4 @@ export default theme => ({
         zIndex: '1',
         overflowY: 'auto',
     },
-    tabParent: {
-        display: 'flex',
-        flexDirection: 'column',
-        width: '100%'
-    }
 });

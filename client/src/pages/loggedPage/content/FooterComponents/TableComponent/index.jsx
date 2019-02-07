@@ -28,12 +28,15 @@ import TravelIcon from 'mdi-react/DirectionsCarIcon';
 import EAndDIcon from 'mdi-react/GuitarElectricIcon';
 import RandomisedIcon from 'mdi-react/Die5Icon';
 import PlayButtonIcon from 'mdi-react/PlayCircleFilledIcon';
+import TrashIcon from 'mdi-react/TrashIcon';
 
 import timeAgo from 'timeago-simple';
+import Axios from "axios";
 
 const headerMap = {
     recommend: ['Activity', 'Song name', 'Genre', 'Play'],
     history: ['Activity', 'Song name', 'Genre', 'Play', 'Time'],
+    manager: ['Activity', 'Song name', 'Genre', 'Play', 'Tools'],
 };
 
 const iconList = {
@@ -59,6 +62,20 @@ class Template extends React.Component {
         };
     }
 
+    manageNewProps = (props) => {
+        let newProps = {};
+
+        for (let prop in props) {
+            if(props.hasOwnProperty(prop)) {
+                if (props[prop] !== this.props[prop]) {
+                    newProps[prop] = props[prop];
+                }
+            }
+        }
+
+        return newProps;
+    };
+
     componentDidMount(props) {
         this.setState({
             tableContent: this.props.tableContent,
@@ -66,36 +83,47 @@ class Template extends React.Component {
         });
     };
 
-    componentWillReceiveProps(nextProps){
-        if(nextProps.tableContent !== this.props.tableContent) {
-            this.setState({
-                tableContent: nextProps.tableContent,
-            });
-        }
+    componentWillReceiveProps(newProps){
+        let props = this.manageNewProps(newProps);
 
-        if(nextProps.tableType !== this.props.tableType) {
-            this.setState({
-                tableType: nextProps.tableType,
-            })
+        if (Object.keys(props).length) {
+            this.setState(props);
         }
+    }
+
+    deleteTrack = uri => () => {
+        console.log(`Delete ${uri}`)
+
+        Axios.get('managePlaylist', {
+            params: {
+                task: 'deleteSingle',
+                uri: uri
+            }
+        }).then((resp) => {
+            console.log(resp)
+            if (resp.data.success) {
+                this.setState({tableContent: resp.data.savedTracks})
+            }
+        }).catch(function(err) {
+            console.error("Manage playlist: ", err)
+        });
     };
 
-    formatTime = (miliseconds) => {
-        return timeAgo.simple(new Date(miliseconds));
+    formatTime = (milliseconds) => {
+        return timeAgo.simple(new Date(milliseconds));
     };
-
 
     render(){
         const { classes } = this.props;
 
         let headers = headerMap[this.state.tableType].map(header =>
-            <TableCell style={{textAlign: header==='Play' ? 'center' : 'none'}}>{header}</TableCell>
+            <TableCell style={{textAlign: header==='Play' || header==="Tools" ? 'center' : 'none'}}>{header}</TableCell>
         );
 
         let newTable = this.state.tableContent.map(recommended =>
             <TableRow>
                 <Tooltip disableFocusListener disableTouchListener title={recommended.activity}>
-                    <TableCell align="center" style={{width: "2%"}}> {iconList[recommended.activity]} </TableCell>
+                    <TableCell align="center" > {iconList[recommended.activity]} </TableCell>
                 </Tooltip>
                 <TableCell>{recommended.name}</TableCell>
                 <TableCell>{recommended.genre}</TableCell>
@@ -105,6 +133,16 @@ class Template extends React.Component {
                 {this.state.tableType === 'history' ?
                     <TableCell asign="center">
                         <Typography variant="caption">{this.formatTime(recommended.time)}</Typography>
+                    </TableCell>
+                    : null}
+
+                {this.state.tableType === 'manager' ?
+                    <TableCell asign="center">
+                        <Typography variant="caption">
+                            <Tooltip disableFocusListener disableTouchListener title="Remove track">
+                                <Button onClick={this.deleteTrack(recommended.id)}><TrashIcon/></Button>
+                            </Tooltip>
+                        </Typography>
                     </TableCell>
                     : null}
             </TableRow>
