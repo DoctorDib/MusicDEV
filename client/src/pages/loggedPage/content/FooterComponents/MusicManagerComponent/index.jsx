@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Axios from 'axios';
 
-import TableComponent  from '../TableComponent';
+import TableComponent  from '../../../../../Components/TableComponent';
 
 import LinearProgress from '@material-ui/core/LinearProgress';
 import Paper from '@material-ui/core/Paper';

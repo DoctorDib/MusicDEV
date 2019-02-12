@@ -8,36 +8,21 @@ export default theme => ({
     },
     helperBody: {
         display: 'flex',
-        flexDirection: 'row'
-    },
-    helperContent: {
-        overflowY: 'auto',
-        width: '100%'
-    },
-    helperHelp: {
-        marginTop: '10px',
-        marginBottom: '10px'
+        flexDirection: 'column',
+        height: '50vh'
     },
 
-    helperHeader: {
-        padding: '1em',
-        borderRadius: '10px 10px 0px 0px',
-        position: 'relative'
+    expansionBody: {
+        margin: theme.spacing.unit *2,
     },
-    helperCard: {
-        padding: '1.5em',
-        borderRadius: '0px 0px 10px 10px'
+    heading: {
+        fontSize: theme.typography.pxToRem(15),
+        flexBasis: '33.33%',
+        flexShrink: 0,
     },
-    helperImg: {
-        width: '50%',
-        margin: '1em'
-    },
-    helperTitle: {
-        fontSize: '1.5em',
-        marginBottom: '.1em'
-    },
-    helperSubtitle: {
-        fontSize: '1em'
+    secondaryHeading: {
+        fontSize: theme.typography.pxToRem(15),
+        color: theme.palette.text.secondary,
     },
 
     menuHeader: {

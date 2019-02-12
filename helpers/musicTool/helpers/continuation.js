@@ -35,9 +35,9 @@ module.exports = function (username, currentSong, callback) {
                                 // Failed songs
                                 let song = recommended.failedSongs[0];
 
-                                let newSonger = song;
-                                newSonger.features.features = newSonger.features.features || {};
-                                newSonger.features.features = newSonger.features;
+                                let newSong = song;
+                                newSong.features.features = newSong.features.features || {};
+                                newSong.features.features = newSong.features;
 
                                 neo('create', {
                                     params: song,
@@ -71,7 +71,7 @@ module.exports = function (username, currentSong, callback) {
                                     energy: recommended.songUsed.features.energy,
                                 };
 
-                                spotify('saveToPlaylist', {username: username, playlistOptions: user.records.playlistOptions, music: [songLayout]}, (resp) => {
+                                spotify('saveToPlaylist', {username: username, playlistOptions: user.records.playlistOptions, music: [songLayout]}, () => {
                                     callback({success: true, message: 'New song learnt', song: [songLayout]});
                                 });
                             }

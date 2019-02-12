@@ -8,7 +8,7 @@ import styles from './style';
 import RecommendationComponent  from './RecommendationComponent';
 import SettingsComponent  from './SettingsComponent';
 import HelpComponent  from './HelpComponent';
-import TableComponent  from './TableComponent';
+import TableComponent  from '../../../../Components/TableComponent';
 import MusicManagerComponent  from './MusicManagerComponent';
 import ListenComponent  from './ListenComponent';
 
@@ -250,7 +250,7 @@ class Template extends React.Component {
                     onClick={event => this.handleListItemClick(event, index+100, new Date(val.time).toUTCString())}
                 >
                     <ListItemIcon><RecentIcon /></ListItemIcon>
-                    <Typography style={{color: '#cacaca', marginLeft: '10px', fontSize: '0.95rem'}}>{this.formatDate(val.time)}</Typography>
+                    <Typography style={{color: '#cacaca', marginLeft: '25px', fontSize: '0.95rem'}}>{this.formatDate(val.time)}</Typography>
                 </ListItem>
             </Tooltip>
         ) : null;

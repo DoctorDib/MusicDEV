@@ -9,7 +9,7 @@ const trainer = require('./helpers/train');
 const recommender = require('./helpers/recommend');
 //const trainer = require('./helpers/train-synaptic');
 
-const spotify = require('../../spotify_api');
+const spotify = require('./helpers/spotifyApi');
 const sample = require('./helpers/sample');
 const predict = require('./helpers/predict');
 const push = require('./helpers/pushbullet');
@@ -243,7 +243,7 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
                 type = dictionaryValue.category;
 
                 async.eachOfSeries(dictionaryValue.uriList, function (uriValue, uriKey, uriCallback) {
-                    spotify('grabPlaylistsApp', {type: dictionaryValue.category, URI: uriValue}, (data) => {
+                    spotify.grabPlaylists(spotifyApi, dictionaryValue.category, uriValue, (data) => {
 
                         let tracks = [];
                         async.eachOfSeries(data, function (track, trackKey, trackCallback) {
@@ -340,7 +340,7 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
             async.eachOfSeries(trackDictionary, function (dictionaryValue, mainKey, dictionaryCallback) {
                 async.eachOfSeries(dictionaryValue.uriList, function (uriValue, uriKey, uriCallback) {
 
-                    spotify('grabFeatures', {type: dictionaryValue.category, URI: uriValue}, function (data) {
+                    spotify.grabFeatures(spotifyApi, dictionaryValue.category, uriValue, function (data) {
 
                         if (!memory[dictionaryValue.category]) {
                             memory[dictionaryValue.category] = []
@@ -456,7 +456,7 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
                     let uri = process.argv[3].split(splitVal);
                     uri = uri[uri.length - 1];
 
-                    spotify('grabSingleFeature', {uri: uri}, function (data) {
+                    spotify.grabSingleFeature(spotifyApi, uri, function (data) {
                         console.log(data);
                         predict(net, data, (resp) => {
                             let finalResponse = `I think it is:\n  - ${resp}`;
@@ -523,7 +523,9 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
                             } else {
                                 console.log("Found")
                                 async.eachOfSeries(arr, function (value, keyFiles, callbackFiles) {
-                                    readTextFile("../Data/trackData/" + value + ".json", function (json) {
+                                    //mpd.slice.1000-1999.json
+                                    //"../Data/trackData/mpd.slice." + value + ".json"
+                                    readTextFile(`../Data/trackData/mpd.slice.${value+1}000-${value+1}999.json`, function (json) {
                                         async.eachOfSeries(json, function (jsonValue, jsonKey, jsonCallback) {
                                             let uriArray = [];
                                             async.eachOfSeries(jsonValue.tracks, function (trackValue, trackKey, trackCallback) {
@@ -551,8 +553,13 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
                                                             });
                                                         } else {
                                                             console.log('========================')
-                                                            console.log(`${value}.json complete`)
                                                             console.log("Next file")
+                                                            let body = `${value+1}/${arr.length} complete`;
+                                                            push.send({
+                                                                title: "Partial",
+                                                                body: body
+                                                            });
+
                                                             callbackFiles();
                                                         }
                                                     } else {
@@ -569,7 +576,7 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
                                                         console.log("Then here")
                                                         async.eachOfSeries(uriArray, function (uriArrayValue, uriArrayKey, uriArrayCallback) {
                                                             setTimeout(function () {
-                                                                spotify('grabFeatures', {type: false, URI: uriArrayValue}, (data) => {
+                                                                spotify.grabFeatures(spotifyApi, false, uriArrayValue, (data) => {
                                                                     async.eachOfSeries(data, function (featuresValue, featuresKey, featuresCallback) {
                                                                         let ident = featuresValue.id;
                                                                         delete featuresValue.id; // Sorting out data
@@ -613,9 +620,12 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
                                                                                                     });
                                                                                                 });
                                                                                             } else {
-                                                                                                console.log('========================')
-                                                                                                console.log(`${value}.json complete`)
-                                                                                                console.log("Next file")
+
+                                                                                                let body = `${value+1}/${arr.length} complete`;
+                                                                                                push.send({
+                                                                                                    title: "Partial",
+                                                                                                    body: body
+                                                                                                });
                                                                                                 callbackFiles();
                                                                                             }
                                                                                         } else {

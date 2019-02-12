@@ -32,7 +32,7 @@ const run = function(command, data, callback) {
                         } else {
                             timer += coolDown;
                             setTimeout(() => {
-                                run('grabFeatures', {type: data.type, uri: trackURIList}, function(resp){
+                                run('grabFeatures', {username: data.username, type: data.type, trackURIList: trackURIList}, function(resp){
                                     memory = [...memory, ...resp];
 
                                     if((chunkKey+1) !== data.body.tracks.items.length){
@@ -172,7 +172,7 @@ const run = function(command, data, callback) {
 
         case 'grabFeaturesFromTracks':
             spotifyApi[data.username].setAccessToken(data.access_token);
-            run('grabFeatures', {type: false, uri: data.trackURIs}, (list) => {
+            run('grabFeatures', {username: data.username, type: false, trackURIList: data.trackURIs}, (list) => {
                 console.log(list)
                 callback(list)
             });

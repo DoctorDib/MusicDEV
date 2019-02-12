@@ -46,7 +46,8 @@ export default theme => ({
         flexDirection:'column',
         justifyContent: 'space-between',
         height: '100%',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        padding: 0,
     },
     title: {
         textAlign: 'center',

@@ -5,18 +5,17 @@ import Axios from 'axios';
 
 import styles from './style';
 
+import Dialog from '@material-ui/core/Dialog';
 import Button from '@material-ui/core/Button';
 import FormLabel from '@material-ui/core/FormLabel';
 import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
 import LinearProgress from '@material-ui/core/LinearProgress';
-import Divider from '@material-ui/core/Divider';
-import Checkbox from '@material-ui/core/Checkbox';
-import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
 import Paper from '@material-ui/core/Paper';
-import InputLabel from "@material-ui/core/InputLabel/InputLabel";
+import Divider from '@material-ui/core/Divider';
+import AppBar from '@material-ui/core/AppBar';
 
 import { withStyles } from '@material-ui/core/styles';
 
@@ -27,24 +26,22 @@ class Template extends React.Component {
         this.state = {
             playlist: {},
             open: this.props.open || false,
+            close: '',
             activePlaylist: [],
             playlistNames: {},
             activePlaylists: [],
 
             profilePlaylists: [],
-            profileUsername: '',
+            username: '',
 
+            newUserOpen: false,
+            newUser: false,
             learnDisabled: false,
             loading: 'none',
 
             playlistName: '',
-            playlist_privacy: true,
 
             playlistChanges: false,
-            playlistNameChanges: false,
-            playlistPrivateChanges: false,
-
-            settingChanges: [],
         };
     }
 
@@ -97,9 +94,11 @@ class Template extends React.Component {
     componentDidMount(props) {
         this.setState({
             profilePlaylists: this.props.profilePlaylists,
+            open: this.props.newUserOpen,
             newUser: this.props.newUser,
             username: this.props.username,
             activePlaylists: this.props.activePlaylists,
+            close: this.props.close,
         });
 
         if (this.props.activePlaylists) {
@@ -174,17 +173,17 @@ class Template extends React.Component {
 
                 Axios.get('grabPlaylistGenre', {
                     params: {
-                        username: this.state.profileUsername,
                         playlists: tmpArr
                     }})
                     .then(resp => {
                         if(resp.data.success){
-                            console.log("Closing window")
                             this.setState({
                                 learnDisabled: false,
                                 warningSnack: false,
                                 loading: 'none'
                             });
+
+                            this.props.close('newUserOpen');
                         } else {
                             console.log("Please try again");
                         }
@@ -203,22 +202,6 @@ class Template extends React.Component {
                     warningSnack: true,
                 });
             }
-        }
-
-        if (this.state.playlistNameChanges || this.state.playlistPrivateChanges) {
-            Axios.get('managePlaylist', {
-                params: {
-                    task: 'change_option',
-                    data: {new_name: this.state.playlistName || 'default', privatePlaylist: this.state.privatePlaylist}
-                }
-            }).then(function (resp) {
-                if (resp.success) {
-                    // Notify user
-                    console.log("Manage playlist complete")
-                }
-            }).catch(function(err) {
-                console.error("Manage playlist: ", err)
-            });
         }
     };
 
@@ -249,48 +232,6 @@ class Template extends React.Component {
         });
     };
 
-    handleTextChange = name => event => {
-        this.setState({
-            playlistNameChanges: true,
-            [name]: event.target.value,
-        });
-    };
-
-    handleBooleanChange = name => () => {
-        this.setState({
-            playlistPrivateChanges: true,
-            [name]: !this.state[name]
-        });
-    };
-
-    clearHistory = () => {
-        Axios.get('clearHistory')
-            .then(resp => {
-                if (resp.data.success) {
-                    this.props.updateHistory([]);
-                }
-            }).catch(function(err) {
-                console.error("Manage playlist: ", err)
-            });
-    };
-
-    managePlaylist = task => () => {
-
-        Axios.get('managePlaylist', {
-            params: {
-                task: task,
-                data: {new_name: this.state.playlistName || 'default', privatePlaylist: this.state.privatePlaylist}
-            }
-        }).then(function (resp) {
-            if (resp.data.success) {
-                // Notify user
-                console.log("Delete or clear COMPLETE")
-            }
-        }).catch(function(err) {
-            console.error("Manage playlist: ", err)
-        });
-    };
-
     render(){
         const { classes } = this.props;
 
@@ -311,50 +252,34 @@ class Template extends React.Component {
         ));
 
         return (
-            <Paper square className={classes.main}>
-                <section>
-                    <FormGroup>
-                        <FormLabel component="legend">Select your favourite playlists: (50 max)</FormLabel>
+            <Dialog open={this.state.open}>
+                <AppBar className={classes.header} color="primary">
+                    <Typography component="h2" variant="headline" gutterBottom>Welcome, {this.state.username}!</Typography>
+                    <Typography variant="subheading" gutterBottom align="center">Please select your favourite playlists to continue</Typography>
+                </AppBar>
+                <LinearProgress style={{display: this.state.loading}} />
+                <Paper className={classes.main} square>
+                    <section>
+                        <FormGroup className={classes.formContainer}>
+                            <FormLabel component="legend">Select your favourite playlists: (50 max)</FormLabel>
+                            {playlistSelection ? playlistSelection : <Typography> No playlists detected </Typography>}
+                        </FormGroup>
 
-                        {console.log(playlistSelection)}
-                        {playlistSelection ? playlistSelection : <Typography> No playlists detected </Typography>}
+                        <Divider />
 
-                        <div>
-                            <Divider />
-                            <FormLabel component="legend">Saved playlist</FormLabel>
-                            <TextField
+                        <div className={classes.buttonContainer}>
+                            <Button
+                                className={classes.learnButton}
                                 color="primary"
-                                label="New playlist name"
-                                placeholder="Playlist name"
-                                margin="normal"
-                                value={this.state.playlistName}
-                                onChange={this.handleTextChange('playlistName')}
-                            />
-
-                            <InputLabel>Make playlist private</InputLabel>
-                            <Checkbox
-                                checked={this.state.privatePlaylist}
-                                onChange={this.handleBooleanChange('privatePlaylist')}
-                                value="privatePlaylist"
-                                color="primary"
-                            />
-
-                            <Divider />
-
-                            <Button color="primary" onClick={this.managePlaylist('clear')}>Clear Playlist</Button>
-                            <Button color="primary" onClick={this.managePlaylist('delete')}>Delete Playlist</Button>
-                            <Button color="primary" onClick={this.clearHistory}>Clear History</Button>
-
-                            <Divider />
-
-                            <Button color="primary" disabled={true} onClick={this.managePlaylist('delete')}>Delete Account</Button>
+                                onClick={this.learn}
+                                disabled={this.state.loading === 'block' || !this.state.playlistChanges}
+                            >
+                                Learn
+                            </Button>
                         </div>
-                    </FormGroup>
-
-                    <Button color="primary" onClick={this.learn} disabled={this.state.loading === 'block' || !(this.state.playlistChanges || this.state.playlistNameChanges || this.state.playlistPrivateChanges)}>Save</Button>
-                    <LinearProgress style={{display: this.state.loading}} />
-                </section>
-            </Paper >
+                    </section>
+                </Paper>
+            </Dialog >
         );
     }
 }

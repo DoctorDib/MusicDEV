@@ -49,20 +49,27 @@ module.exports = function () {
         },
         grabSavedPlaylists: function(req, res) {
             mongo('grabOne', 'users', { identifier: {id: req.user.id } }, user => {
-                res.json({success: true, playlistOptions: user.records.playlistOptions})
+                res.json({success: true, playlistOptions: user.records.playlistOptions});
             });
         },
         recommendingMusic: function(req, res) {
             let tmpGenres=[];
             let states = JSON.parse(req.query.genreStates);
 
-            // Grabs a list of active genres selected by the user.
-            for (let index in states) {
-                if (states.hasOwnProperty(index)){
-                    if (states[index]) {
-                        tmpGenres.push(index);
+
+            if (Object.keys(states).length) {
+                // Grabs a list of active genres selected by the user.
+                for (let index in states) {
+                    if (states.hasOwnProperty(index)){
+                        if (states[index]) {
+                            tmpGenres.push(index);
+                        }
                     }
                 }
+            } else {
+                // Randomiser
+                let randomGenre = Math.round(Math.random() * config.recommendation_config.activities.length);
+                tmpGenres.push(config.recommendation_config.activities[randomGenre]);
             }
 
             const url = "http://"+config.neo4j.ip + ':' + config.neo4j.port;
@@ -70,23 +77,24 @@ module.exports = function () {
                 .then(() => {
                     spotify('grabToken', {username: req.user.id}, token => {
                         recommender(token, {user: req.user, genres: tmpGenres, username: req.user.id, musicQuantity: req.query.musicQuantity, savePlaylist: req.query.savePlaylist}, resp => {
-                            if (resp.successSongs.length) {
-                                let newHistory = {
-                                    time: new Date().getTime(),
-                                    songs: resp.successSongs
-                                };
+                            mongo('grabOne', 'users', { identifier: {id: req.user.id } }, user => {
+                                let tmp = user.records.history;
 
-                                mongo('grabOne', 'users', { identifier: {id: req.user.id } }, resper => {
-                                    console.log()
-                                    let tmp = [newHistory, ...resper.records.history];
+                                if (resp.successSongs.length) {
+                                    let newHistory = {
+                                        time: new Date().getTime(),
+                                        songs: resp.successSongs
+                                    };
+
+                                    tmp = [newHistory, ...tmp];
                                     tmp = tmp.splice(0, config.table_settings.max_limit);
                                     mongo('update', 'users', { identifier: { id: req.user.id }, data: { history: tmp } } );
                                     res.json({success: true, resp: resp, history: tmp});
-                                });
-                            } else {
-                                console.log("Response: ", resp);
-                                res.json({success: false, resp: resp});
-                            }
+                                } else {
+                                    console.log("Response: ", resp);
+                                    res.json({success: false, resp: resp, history: tmp});
+                                }
+                            });
                         });
                     });
                 })
@@ -217,8 +225,6 @@ module.exports = function () {
             let failedSongs = req.query.songs;
             console.log(failedSongs)
             async.eachOfSeries(failedSongs, function (song, songKey, songCallback) {
-                console.log(">>", song)
-
                 song = JSON.parse(song);
 
                 neo('create', {
@@ -229,9 +235,9 @@ module.exports = function () {
                     console.log("Created")
 
                     console.log(song.genre)
-                    neo('masterLearn', {genre: song.genre}, function (resper) {
+                    neo('masterLearn', {genre: song.genre}, masterLearnResponse => {
                         console.log("Learnt")
-                        console.log(resper)
+                        console.log(masterLearnResponse)
 
                         if (songKey+1 >= failedSongs.length) {
                             res.json({success: true});
@@ -240,7 +246,7 @@ module.exports = function () {
                         }
                     });
                 });
-            })
+            });
         },
         managePlaylist: function (req, res) {
             console.log("Managing playlist")

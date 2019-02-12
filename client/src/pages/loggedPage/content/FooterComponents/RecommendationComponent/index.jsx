@@ -34,9 +34,9 @@ import TravelIcon from 'mdi-react/DirectionsCarIcon';
 import EAndDIcon from 'mdi-react/GuitarElectricIcon';
 import RandomisedIcon from 'mdi-react/Die5Icon';
 
-import TableComponent from '../TableComponent';
+import TableComponent from '../../../../../Components/TableComponent';
 import RecommendWarning from './RecommendWarningComponent';
-import WarningComponent from '../../../../warningComponent';
+import WarningComponent from '../../../../../Components/warningComponent';
 
 const iconList = {
     Workout: <WorkoutIcon style={{backgroundColor: '#ffffff00'}} />,

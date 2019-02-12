@@ -4,8 +4,8 @@ import Axios from 'axios';
 
 import styles from './style';
 
-import TableComponent  from '../TableComponent';
-import WarningComponent  from '../../../../warningComponent';
+import TableComponent  from '../../../../../Components/TableComponent';
+import WarningComponent  from '../../../../../Components/warningComponent';
 
 import { withStyles } from '@material-ui/core/styles';
 

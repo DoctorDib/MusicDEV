@@ -30,8 +30,8 @@ module.exports = {
         }
     },
     recommendation_config: {
-        activities: {
-            Workout: ["Rock",	"RnB", "ElectronicAndDance"],
+        activitiesMap: {
+            Workout: ["Rock", "RnB", "ElectronicAndDance"],
             Party: ["Pop", "HipHop", "Rock", "ElectronicAndDance"],
             Focus: ["Jazz", "Classical", "Blues"],
             Sleep: ["Classical", "Blues"],
@@ -42,6 +42,7 @@ module.exports = {
             Relax: ["Chill", "Jazz", "Classical"]
         },
         genres: ["Rock", "RnB", "ElectronicAndDance", "Pop", "HipHop", "Jazz", "Classical", "Blues", "Chill"],
+        activities: ["Workout", "Party", "Focus", "Sleep", "Romance", "Gaming", "Dinner", "Travel", "Relax"],
         maxLimitSelection: 45000,
         maxGenreSelection: 10000
     },

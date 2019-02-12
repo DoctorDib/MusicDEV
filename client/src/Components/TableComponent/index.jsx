@@ -4,6 +4,7 @@ import timeAgo from 'timeago-simple';
 import Axios from "axios";
 
 import styles from './style';
+import iconManager from 'config/iconManager';
 
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
@@ -15,17 +16,6 @@ import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 import Tooltip from '@material-ui/core/Tooltip';
 
-import WorkoutIcon from 'mdi-react/WeightsIcon';
-import ChillIcon from 'mdi-react/CouchIcon';
-import FocusIcon from 'mdi-react/DeskLampIcon';
-import PartyIcon from 'mdi-react/BalloonIcon';
-import SleepIcon from 'mdi-react/BedIcon';
-import RomanceIcon from 'mdi-react/UserHeartIcon';
-import GamingIcon from 'mdi-react/ControllerClassicIcon';
-import DinnerIcon from 'mdi-react/RestaurantIcon';
-import TravelIcon from 'mdi-react/DirectionsCarIcon';
-import EAndDIcon from 'mdi-react/GuitarElectricIcon';
-import RandomisedIcon from 'mdi-react/Die5Icon';
 import PlayButtonIcon from 'mdi-react/PlayCircleFilledIcon';
 import TrashIcon from 'mdi-react/TrashIcon';
 
@@ -35,20 +25,6 @@ const headerMap = {
     recommend: ['Activity', 'Song name', 'Genre', 'Play'],
     history: ['Activity', 'Song name', 'Genre', 'Play', 'Time'],
     manager: ['Activity', 'Song name', 'Genre', 'Play', 'Tools'],
-};
-
-const iconList = {
-    Workout: <WorkoutIcon />,
-    Relax:  <ChillIcon />,
-    Focus:  <FocusIcon />,
-    Party:  <PartyIcon />,
-    Sleep: <SleepIcon />,
-    Romance: <RomanceIcon />,
-    Gaming: <GamingIcon />,
-    Dinner: <DinnerIcon />,
-    Travel: <TravelIcon />,
-    Electronic_and_Dance: <EAndDIcon />,
-    Randomised: <RandomisedIcon />
 };
 
 class Template extends React.Component {
@@ -107,8 +83,16 @@ class Template extends React.Component {
         });
     };
 
-    formatTime = (milliseconds) => {
+    formatTime = milliseconds => {
         return timeAgo.simple(new Date(milliseconds));
+    };
+
+    formatIcons = (iconList, style) => {
+        return iconList.map(icon =>
+            <Tooltip className={style.icon} disableFocusListener disableTouchListener title={icon.name} placement="bottom">
+                {icon.icon}
+            </Tooltip>
+        );
     };
 
     render(){
@@ -120,9 +104,9 @@ class Template extends React.Component {
 
         let newTable = this.state.tableContent.map(recommended =>
             <TableRow>
-                <Tooltip disableFocusListener disableTouchListener title={recommended.activity}>
-                    <TableCell align="center" > {iconList[recommended.activity]} </TableCell>
-                </Tooltip>
+                <TableCell>
+                    {this.formatIcons(iconManager(recommended.genre), classes)}
+                </TableCell>
                 <TableCell>{recommended.name}</TableCell>
                 <TableCell>{recommended.genre}</TableCell>
                 <TableCell style={{width: '2%'}}>

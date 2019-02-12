@@ -10,6 +10,11 @@ import Step from '@material-ui/core/Step';
 import StepButton from '@material-ui/core/StepButton';
 import Button from '@material-ui/core/Button';
 import AppBar from '@material-ui/core/AppBar';
+import ExpansionPanel from '@material-ui/core/ExpansionPanel';
+import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
+import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
+
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 
 import WayPoint from 'react-waypoint';
 
@@ -174,23 +179,16 @@ class Template extends React.Component {
 
     render(){
         const { classes } = this.props;
-        const stepper = posts.map((help, index) =>
-            <Step key={help.title}>
-                <StepButton onClick={this.handleStep(index)}>
-                    {help.title}
-                </StepButton>
-            </Step>
-        );
 
-        const content = posts.map((post, index) =>
-            <div className={classes.helperHelp} id={index}>
-                <WayPoint onEnter={this.handleScroll(index)} />
+        const content = posts.map((post) =>
+            <ExpansionPanel color="primary" className={classes.expansionBody}>
 
-                <AppBar color="primary" className={classes.helperHeader}>
-                    <Typography color="secondary" variant='display1' className={classes.helperTitle}> {post.title} </Typography>
-                    <Typography color="secondary" variant='caption' className={classes.helperSubtitle}> {post.subtitle} </Typography>
-                </AppBar>
-                <Card className={classes.helperCard}>
+                <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography variant='display1' className={classes.heading}> {post.title} </Typography>
+                    <Typography variant='caption' className={classes.secondaryHeading}> {post.subtitle} </Typography>
+                </ExpansionPanelSummary>
+
+                <ExpansionPanelDetails>
                     <section className={classes.helperContent}>
                         {post.contentImg ? (<img className={classes.helperImg} src={post.contentImg}/>) : (<img className={classes.disabled}/>)}
                         {post.content.map(paragraph => (
@@ -201,8 +199,8 @@ class Template extends React.Component {
                                 : <Typography gutterBottom> {paragraph.content} </Typography>
                         ))}
                     </section>
-                </Card>
-            </div>
+                </ExpansionPanelDetails>
+            </ExpansionPanel>
         );
 
         return (
@@ -220,12 +218,7 @@ class Template extends React.Component {
                 </AppBar>
 
                 <section className={classes.helperBody}>
-                    <Stepper nonLinear activeStep={this.state.activeStep} orientation="vertical" style={{width: '10%'}}>
-                        {stepper}
-                    </Stepper>
-                    <Card className={classes.helperContent} id={"helperContent"} style={{padding: '1em'}} >
-                        {content}
-                    </Card>
+                    {content}
                 </section>
             </Dialog>
         );

@@ -1,13 +1,13 @@
 const neo4j = require('neo4j');
 const secret = require('../../../config/config');
+const push = require('./pushbullet');
 
 let graphDatabase = 'http://'+secret.neo4j.username+':'+secret.neo4j.password+'@'+secret.neo4j.ip+':'+secret.neo4j.port;
 const db = new neo4j.GraphDatabase(graphDatabase);
 
 const async = require('async');
 
-module.exports = function (func, data, callback) {
-
+const run = (func, data, callback) => {
     switch (func) {
         case 'create':
             console.log(data)
@@ -18,32 +18,64 @@ module.exports = function (func, data, callback) {
             console.log(song.genre)
             console.log("================================")
 
-            let propertyCreate = ` {
-                name: ${JSON.stringify(song.name)},
-                id: \"${song.id}\",
-                genre: \"${song.genre}\",
-                danceability: ${song.features.features.danceability},
-                energy: ${song.features.features.energy},
-                key: ${song.features.features.key},
-                loudness: ${song.features.features.loudness},
-                speechiness: ${song.features.features.speechiness},
-                acousticness: ${song.features.features.acousticness},
-                instrumentalness: ${song.features.features.instrumentalness},
-                liveness: ${song.features.features.liveness},
-                valence: ${song.features.features.valence},
-                tempo: ${song.features.features.tempo}
-            }`;
+            let propertyCreate;
 
-            db.cypher({
-                query: `MATCH(a:${song.genre}_Genre {id: "Genre"}) CREATE (a2:${song.genre} ${propertyCreate})-[:GENRE_IS]->(a)`,
-            }, function (err, returnedData) {
-                if (err) {
-                    console.log(err)
+            if (song.features.hasOwnProperty('features')) {
+                propertyCreate = ` {
+                    name: ${JSON.stringify(song.name)},
+                    id: ${JSON.stringify(song.id)},
+                    genre: ${JSON.stringify(song.genre)},
+                    danceability: ${song.features.features.danceability},
+                    energy: ${song.features.features.energy},
+                    key: ${song.features.features.key},
+                    loudness: ${song.features.features.loudness},
+                    speechiness: ${song.features.features.speechiness},
+                    acousticness: ${song.features.features.acousticness},
+                    instrumentalness: ${song.features.features.instrumentalness},
+                    liveness: ${song.features.features.liveness},
+                    valence: ${song.features.features.valence},
+                    tempo: ${song.features.features.tempo}
+                }`;
+            } else {
+                propertyCreate = ` {
+                    name: ${JSON.stringify(song.name)},
+                    id: ${JSON.stringify(song.id)},
+                    genre: ${JSON.stringify(song.genre)},
+                    danceability: ${song.features.danceability},
+                    energy: ${song.features.energy},
+                    key: ${song.features.key},
+                    loudness: ${song.features.loudness},
+                    speechiness: ${song.features.speechiness},
+                    acousticness: ${song.features.acousticness},
+                    instrumentalness: ${song.features.instrumentalness},
+                    liveness: ${song.features.liveness},
+                    valence: ${song.features.valence},
+                    tempo: ${song.features.tempo}
+                }`;
+            }
+
+            run('exists', {id: song.id, genre: song.genre}, resp => {
+                if (resp.success) {
+                    if (!resp.exist) {
+                        db.cypher({
+                            query: `MATCH(a:${song.genre}_Genre {id: "Genre"}) CREATE (a2:${song.genre} ${propertyCreate})-[:GENRE_IS]->(a)`,
+                        }, function (err, returnedData) {
+                            console.log("Finished new training")
+                            if (err) {
+                                console.log(err)
+                            } else {
+                                console.log("h")
+                                callback({success: true, data: returnedData, oldData: data});
+                            }
+                        });
+                    } else {
+                        callback({success: false, error: "Node already exists!", function: "Checking if the data exists... prt2"})
+                    }
                 } else {
-                    console.log("h")
-                    callback({success: true, data: returnedData, oldData: data});
+                    callback({success: false, error: resp.error, function: "Checking if the data exists..."})
                 }
             });
+
             break;
         case 'masterLearn':
             console.log('-------------------------------------------')
@@ -52,21 +84,21 @@ module.exports = function (func, data, callback) {
             try {
                 let query = `MATCH (a:${data.genre})
                         WITH id(a) as id, [
-                            a["danceability"], 
-                            a["energy"], 
-                            a["key"], 
-                            a["loudness"], 
-                            a["speechiness"], 
-                            a["acousticness"], 
-                            a["instrumentalness"], 
-                            a["liveness"], 
-                            a["valence"], 
-                            a["tempo"]
+                            toInt(a["danceability"]), 
+                            toInt(a["energy"]), 
+                            toInt(a["key"]), 
+                            toInt(a["loudness"]), 
+                            toInt(a["speechiness"]), 
+                            toInt(a["acousticness"]), 
+                            toInt(a["instrumentalness"]), 
+                            toInt(a["liveness"]), 
+                            toInt(a["valence"]), 
+                            toInt(a["tempo"])
                         ] as weights
                         
                         WITH {item: id, weights: weights} as userData
                         WITH collect(userData) as data
-                        CALL algo.similarity.cosine.stream(data,{similarityCutoff:0.9,topK:2})
+                        CALL algo.similarity.cosine.stream(data,{similarityCutoff:0.9,topK:3})
                         YIELD item1, item2, count1, count2, similarity
                        
                         MATCH (a:${data.genre} {id: algo.getNodeById(item1).id})
@@ -83,6 +115,11 @@ module.exports = function (func, data, callback) {
                 }, function (err, data) {
                     if (err) {
                         console.log(err)
+                        let body = `Learnt ${data.genre} relation`;
+                        push.send({
+                            title: "Database build complete",
+                            body: body
+                        });
                         //callback({success: false, error: err});
                     } else {
                         console.log('FINISHED')
@@ -99,6 +136,7 @@ module.exports = function (func, data, callback) {
                 OPTIONAL MATCH (n)-[r]-()
                 DELETE n,r
                 RETURN true`;
+            console.log("Deletion stated...")
 
             db.cypher({
                 query: deleteQuery,
@@ -152,10 +190,11 @@ module.exports = function (func, data, callback) {
             db.cypher({
                 query: findQuery,
             }, function (err, data) {
-                if (!data.length) {
-                    callback({success: false, error: err})
+                if (err) {
+                    console.log("NEO Exist function error: ", err)
+                    callback({success: false, error: err});
                 } else {
-                    callback({success: true});
+                    callback({success: true, exist: Boolean(data.length)})
                 }
             });
             break;
@@ -256,7 +295,7 @@ module.exports = function (func, data, callback) {
             }, function (err, data) {
                 console.log("response?")
                 console.log(data)
-                if (err) {
+                if (err || !data.length) {
                     console.log(err)
                     callback({success: false, error: err});
                 } else {
@@ -266,6 +305,14 @@ module.exports = function (func, data, callback) {
             break;
     }
 };
+
+module.exports = (func, data, callback) => {
+    run (func, data, (data)=> {
+        callback(data);
+    });
+};
+
+
 
 /*
     cypher('match (user:hi) return user')

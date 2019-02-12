@@ -7,7 +7,8 @@ import LogoIcon from 'img/icon.png';
 
 // Settings
 import FooterComponent from './FooterComponents';
-import WarningComponent from '../../warningComponent';
+import WarningComponent from '../../../Components/warningComponent';
+import NewUserComponent from './NewUserComponent';
 
 import Paper from "@material-ui/core/Paper/Paper";
 import Typography from '@material-ui/core/Typography';
@@ -52,6 +53,8 @@ class Template extends React.Component {
             warningOpen: false,
             warningError: false,
             warningMessage: '',
+
+            newUserOpen: false,
         };
     }
 
@@ -73,6 +76,7 @@ class Template extends React.Component {
                         playlistName: resp.data.playlistName, // TODO - MAY NOT BE NEEDED
                         activePlaylists: resp.data.activePlaylists,
                         history: resp.data.history,
+                        newUserOpen: resp.data.new_user
                     });
                 } else {
                     this.setState({
@@ -86,6 +90,10 @@ class Template extends React.Component {
             .catch((err) => {
                 console.log("Initial load error: ", err);
             });
+    };
+
+    handleClose = (params) => {
+        this.setState({[params]: false})
     };
 
     componentDidMount() {
@@ -135,6 +143,15 @@ class Template extends React.Component {
                     privatePlaylist={this.state.privatePlaylist}
                     activePlaylists={this.state.activePlaylists}
                     history={this.state.history}
+                />
+
+                <NewUserComponent
+                    open={this.state.newUserOpen}
+                    close={params => this.handleClose(params)}
+                    profilePlaylists={this.state.profilePlaylists}
+                    newUser={this.state.newUser}
+                    username={this.state.profileUsername}
+                    activePlaylists={this.state.activePlaylists}
                 />
 
                 <WarningComponent

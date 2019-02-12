@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import {withStyles} from "@material-ui/core";
-import styles from "../loggedPage/content/style";
+import styles from "../../pages/loggedPage/content/style";
 
 import Button from "@material-ui/core/Button/Button";
 import Typography from "@material-ui/core/Typography";

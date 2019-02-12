@@ -91,7 +91,7 @@ module.exports = function (spotifyApi, data, callback) {
         console.log("Start")
 
         async.eachOfSeries(data.genres, function (genre, genreKey, genreCallback) {
-            let genreCollection = data.listenFunction ? data.genres : genreMapping.recommendation_config.activities[genre] ;
+            let genreCollection = data.listenFunction ? data.genres : genreMapping.recommendation_config.activitiesMap[genre] ;
             let indexSelections = {};
 
             userCollection.aggregate(
@@ -166,49 +166,63 @@ module.exports = function (spotifyApi, data, callback) {
 
                         console.log(selectedSong);
 
-                        neo('exists', {genre: userPlaylist[random].genre, id: selectedSong.id}, (resp) => {
-                            if (resp.success) {
-                                neo('recommend', {genre: userPlaylist[random].genre, song: selectedSong}, (resp) => {
-                                    console.log(resp)
-                                    finalReturn.push(resp.data[0].returnedNode.properties);
+                        neo('exists', {genre: userPlaylist[random].genre, id: selectedSong.id}, existsResp => { // TODO - FIND OUT IF THIS IS CORRECT
+                            console.log(1)
+                            if (existsResp.success) {
+                                if (existsResp.exist) {
+                                    console.log(2)
+                                    neo('recommend', {genre: userPlaylist[random].genre, song: selectedSong}, resp => {
+                                        console.log(3)
+                                        console.log(resp)
+                                        let randomSelection = Math.floor(Math.random() * resp.data.length);
+                                        console.log("===========")
+                                        console.log(resp.data[randomSelection])
+                                        console.log(randomSelection)
+                                        finalReturn.push(resp.data[randomSelection].returnedNode.properties);
+                                        if (quantityKey+1 >= ewwArray.length){
+                                            console.log(4)
+                                            if (genreKey+1 >= data.genres.length ) {
+                                                console.log(5)
+                                                // Finished
+                                                if (JSON.parse(data.savePlaylist) && finalReturn.length) {
+                                                    saveRecommendedMusic(data.username, finalReturn, () => {
+                                                        console.log("Callback")
+                                                        callback({success: !warningFlag, savePlaylist: data.savePlaylist, successSongs: finalReturn, failedSongs: errorReturn, songUsed: userPlaylist[random]});
+                                                    });
+                                                } else {
+                                                    console.log("failed?")
+                                                    callback({success: !warningFlag, savePlaylist: data.savePlaylist, successSongs: finalReturn, failedSongs: errorReturn, songUsed: userPlaylist[random]});
+                                                }
+                                            } else {
+                                                console.log(1)
+                                                genreCallback();
+                                            }
+                                        } else {
+                                            console.log(2)
+                                            console.log(">",ewwArray.length)
+                                            console.log("<",quantityKey+1)
+                                            quantityCallback();
+                                        }
+                                    });
+                                } else {
+                                    console.log(6)
+                                    warningFlag = true; // There is at least one error existing
+                                    console.log("HERE")
+                                    selectedSong.success = false;
+                                    errorReturn.push(selectedSong);
                                     if (quantityKey+1 >= ewwArray.length){
                                         if (genreKey+1 >= data.genres.length ) {
                                             // Finished
-                                            if (JSON.parse(data.savePlaylist) && finalReturn.length) {
-                                                saveRecommendedMusic(data.username, finalReturn, function (resp) {
-                                                    console.log("Callback")
-                                                    callback({success: !warningFlag, savePlaylist: data.savePlaylist, successSongs: finalReturn, failedSongs: errorReturn, songUsed: userPlaylist[random]});
-                                                });
-                                            } else {
-                                                console.log("failed?")
-                                                callback({success: !warningFlag, savePlaylist: data.savePlaylist, successSongs: finalReturn, failedSongs: errorReturn, songUsed: userPlaylist[random]});
-                                            }
+                                            callback({success: !warningFlag, successSongs: finalReturn, failedSongs: errorReturn, songUsed: userPlaylist[random]})
                                         } else {
-                                            console.log(1)
-                                            genreCallback();
+                                            genreCallback()
                                         }
                                     } else {
-                                        console.log(2)
-                                        console.log(">",ewwArray.length)
-                                        console.log("<",quantityKey+1)
                                         quantityCallback();
                                     }
-                                });
-                            } else {
-                                warningFlag = true; // There is at least one error existing
-                                console.log("HERE")
-                                selectedSong.success = false;
-                                errorReturn.push(selectedSong);
-                                if (quantityKey+1 >= ewwArray.length){
-                                    if (genreKey+1 >= data.genres.length ) {
-                                        // Finished
-                                        callback({success: !warningFlag, successSongs: finalReturn, failedSongs: errorReturn, songUsed: userPlaylist[random]})
-                                    } else {
-                                        genreCallback()
-                                    }
-                                } else {
-                                    quantityCallback();
                                 }
+                            } else {
+                                callback({success: false, error: respResp.error})
                             }
                         });
                     }
