@@ -23,8 +23,8 @@ const run = (func, data, callback) => {
             if (song.features.hasOwnProperty('features')) {
                 propertyCreate = ` {
                     name: ${JSON.stringify(song.name)},
-                    id: ${JSON.stringify(song.id)},
-                    genre: ${JSON.stringify(song.genre)},
+                    id: \"${song.id}\",
+                    genre: \"${song.genre}\",
                     danceability: ${song.features.features.danceability},
                     energy: ${song.features.features.energy},
                     key: ${song.features.features.key},
@@ -39,8 +39,8 @@ const run = (func, data, callback) => {
             } else {
                 propertyCreate = ` {
                     name: ${JSON.stringify(song.name)},
-                    id: ${JSON.stringify(song.id)},
-                    genre: ${JSON.stringify(song.genre)},
+                    id: \"${song.id}\",
+                    genre: \"${song.genre}\",
                     danceability: ${song.features.danceability},
                     energy: ${song.features.energy},
                     key: ${song.features.key},
@@ -78,27 +78,27 @@ const run = (func, data, callback) => {
 
             break;
         case 'masterLearn':
+
             console.log('-------------------------------------------')
             console.log(`Relation learning stated for: ${data.genre}`)
 
-            try {
-                let query = `MATCH (a:${data.genre})
+            let query = `MATCH (a:${data.genre})
                         WITH id(a) as id, [
-                            toInt(a["danceability"]), 
-                            toInt(a["energy"]), 
-                            toInt(a["key"]), 
-                            toInt(a["loudness"]), 
-                            toInt(a["speechiness"]), 
-                            toInt(a["acousticness"]), 
-                            toInt(a["instrumentalness"]), 
-                            toInt(a["liveness"]), 
-                            toInt(a["valence"]), 
-                            toInt(a["tempo"])
+                            a["danceability"], 
+                            a["energy"], 
+                            a["key"], 
+                            a["loudness"], 
+                            a["speechiness"], 
+                            a["acousticness"], 
+                            a["instrumentalness"], 
+                            a["liveness"], 
+                            a["valence"], 
+                            a["tempo"]
                         ] as weights
                         
                         WITH {item: id, weights: weights} as userData
                         WITH collect(userData) as data
-                        CALL algo.similarity.cosine.stream(data,{similarityCutoff:0.9,topK:3})
+                        CALL algo.similarity.cosine.stream(data,{similarityCutoff:0.9,topK:2})
                         YIELD item1, item2, count1, count2, similarity
                        
                         MATCH (a:${data.genre} {id: algo.getNodeById(item1).id})
@@ -110,26 +110,17 @@ const run = (func, data, callback) => {
                         
                         RETURN true`;
 
-                db.cypher({
-                    query: query,
-                }, function (err, data) {
-                    if (err) {
-                        console.log(err)
-                        let body = `Learnt ${data.genre} relation`;
-                        push.send({
-                            title: "Database build complete",
-                            body: body
-                        });
-                        //callback({success: false, error: err});
-                    } else {
-                        console.log('FINISHED')
-                        callback({success: true, data: data});
-                    }
-                });
-                break;
-            } catch(e) {
-                console.log(e)
-            }
+            db.cypher({
+                query: query,
+            }, function (err, data) {
+                if (err) {
+                    console.log(err)
+                    //callback({success: false, error: err});
+                } else {
+                    console.log('FINISHED')
+                    callback({success: true, data: data});
+                }
+            });
             break;
         case 'masterDelete':
             let deleteQuery = `MATCH (n)
