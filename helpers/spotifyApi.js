@@ -3,7 +3,7 @@ const client_id = keys.spotify.client_id;
 const client_secret = keys.spotify.client_secret;
 const redirect_uri = keys.spotify.spotify_callback;
 
-const boundary = require('./musicTool/helpers/boundary');
+const featureManager = require('./musicTool/helpers/trackFeatureManager');
 const async = require('async');
 
 const SpotifyWebApi = require('spotify-web-api-node');
@@ -66,18 +66,7 @@ const run = function(command, data, callback) {
                                 trackLoopCallback();
                             }
                         } else {
-                            let features = {
-                                danceability: value.danceability,
-                                energy: value.energy,
-                                key: boundary("key", value.key, null),
-                                loudness: boundary("loudness", value.loudness, null),
-                                speechiness: value.speechiness,
-                                acousticness: value.acousticness,
-                                instrumentalness: value.instrumentalness,
-                                liveness: value.liveness,
-                                valence: value.valence,
-                                tempo: boundary("tempo", value.tempo, null),
-                            };
+                            let features = featureManager(value, true);
 
                             if (data.type) {
                                 // Formatting for the Nerual networking process
@@ -90,7 +79,6 @@ const run = function(command, data, callback) {
                             } else {
                                 features.id = value.id;
                             }
-
                             tmpMemory.push({id: value.id, features: features});
 
                             if(key+1 >= data.body.audio_features.length){
@@ -109,19 +97,7 @@ const run = function(command, data, callback) {
             spotifyApi[data.username].getAudioFeaturesForTrack(data.uri)
                 .then(function(resp) {
                     let value = resp.body;
-                    let features = {
-                        danceability: value.danceability,
-                        energy: value.energy,
-                        key: boundary("key", value.key, null),
-                        loudness: boundary("loudness", value.loudness, null),
-                        speechiness: value.speechiness,
-                        acousticness: value.acousticness,
-                        instrumentalness: value.instrumentalness,
-                        liveness: value.liveness,
-                        valence: value.valence,
-                        tempo: boundary("tempo", value.tempo, null),
-                    };
-                    callback(features);
+                    callback(featureManager(value, true));
                 }).catch(function(err){
                 console.log("SINGLE TRACKS ERROR: " + err);
             });

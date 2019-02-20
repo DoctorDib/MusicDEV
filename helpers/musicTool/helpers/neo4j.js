@@ -1,13 +1,42 @@
 const neo4j = require('neo4j');
+const featureManager = require('./trackFeatureManager');
 const secret = require('../../../config/config');
-const push = require('./pushbullet');
+
+const config = require('../../../config/config');
 
 let graphDatabase = 'http://'+secret.neo4j.username+':'+secret.neo4j.password+'@'+secret.neo4j.ip+':'+secret.neo4j.port;
 const db = new neo4j.GraphDatabase(graphDatabase);
 
 const async = require('async');
 
+function featuresString() {
+    /*[
+        a["danceability"],
+        a["energy"],
+        a["key"],
+        a["loudness"],
+        a["speechiness"],
+        a["acousticness"],
+        a["instrumentalness"],
+        a["liveness"],
+        a["valence"],
+        a["tempo"]
+    ]*/ // EXPECTED FORMAT
+
+    let finalString = '';
+    for (let feature in config.track_features) {
+        if (config.track_features.hasOwnProperty(feature)) {
+            if (config.track_features[feature]) {
+                finalString = finalString + ` a["${feature}"],`;  // TODO POSSIBLE ISSUE WITH THE COMMA
+            }
+        }
+    }
+
+    return `[${finalString}]`;
+}
+
 const run = (func, data, callback) => {
+    let query, properties;
     switch (func) {
         case 'create':
             console.log(data)
@@ -18,47 +47,16 @@ const run = (func, data, callback) => {
             console.log(song.genre)
             console.log("================================")
 
-            let propertyCreate;
-
-            if (song.features.hasOwnProperty('features')) {
-                propertyCreate = ` {
-                    name: ${JSON.stringify(song.name)},
-                    id: \"${song.id}\",
-                    genre: \"${song.genre}\",
-                    danceability: ${song.features.features.danceability},
-                    energy: ${song.features.features.energy},
-                    key: ${song.features.features.key},
-                    loudness: ${song.features.features.loudness},
-                    speechiness: ${song.features.features.speechiness},
-                    acousticness: ${song.features.features.acousticness},
-                    instrumentalness: ${song.features.features.instrumentalness},
-                    liveness: ${song.features.features.liveness},
-                    valence: ${song.features.features.valence},
-                    tempo: ${song.features.features.tempo}
-                }`;
-            } else {
-                propertyCreate = ` {
-                    name: ${JSON.stringify(song.name)},
-                    id: \"${song.id}\",
-                    genre: \"${song.genre}\",
-                    danceability: ${song.features.danceability},
-                    energy: ${song.features.energy},
-                    key: ${song.features.key},
-                    loudness: ${song.features.loudness},
-                    speechiness: ${song.features.speechiness},
-                    acousticness: ${song.features.acousticness},
-                    instrumentalness: ${song.features.instrumentalness},
-                    liveness: ${song.features.liveness},
-                    valence: ${song.features.valence},
-                    tempo: ${song.features.tempo}
-                }`;
-            }
+            properties = featureManager(song.features.hasOwnProperty('features') ? song.features.features: song.features, false);
+            properties.name =  JSON.stringify(song.name);
+            properties.id =  song.id;
+            properties.genre =  song.genre;
 
             run('exists', {id: song.id, genre: song.genre}, resp => {
                 if (resp.success) {
                     if (!resp.exist) {
                         db.cypher({
-                            query: `MATCH(a:${song.genre}_Genre {id: "Genre"}) CREATE (a2:${song.genre} ${propertyCreate})-[:GENRE_IS]->(a)`,
+                            query: `MATCH(a:${song.genre}_Genre {id: "Genre"}) CREATE (a2:${song.genre} ${JSON.stringify(properties)})-[:GENRE_IS]->(a)`,
                         }, function (err, returnedData) {
                             console.log("Finished new training")
                             if (err) {
@@ -82,19 +80,8 @@ const run = (func, data, callback) => {
             console.log('-------------------------------------------')
             console.log(`Relation learning stated for: ${data.genre}`)
 
-            let query = `MATCH (a:${data.genre})
-                        WITH id(a) as id, [
-                            a["danceability"], 
-                            a["energy"], 
-                            a["key"], 
-                            a["loudness"], 
-                            a["speechiness"], 
-                            a["acousticness"], 
-                            a["instrumentalness"], 
-                            a["liveness"], 
-                            a["valence"], 
-                            a["tempo"]
-                        ] as weights
+            query = `MATCH (a:${data.genre})
+                        WITH id(a) as id, ${featuresString()} as weights
                         
                         WITH {item: id, weights: weights} as userData
                         WITH collect(userData) as data
@@ -123,14 +110,14 @@ const run = (func, data, callback) => {
             });
             break;
         case 'masterDelete':
-            let deleteQuery = `MATCH (n)
+            query = `MATCH (n)
                 OPTIONAL MATCH (n)-[r]-()
                 DELETE n,r
                 RETURN true`;
             console.log("Deletion stated...")
 
             db.cypher({
-                query: deleteQuery,
+                query: query,
             }, function (err, data) {
                 if (err) {
                     callback({success: false, error: err});
@@ -141,9 +128,9 @@ const run = (func, data, callback) => {
             });
             break;
         case 'initialise':
-            let initialQuery = `CREATE (a:${data.id} {id: ${JSON.stringify(data.id)}, name: ${JSON.stringify(data.id)}}) RETURN a`;
+            query = `CREATE (a:${data.id} {id: ${JSON.stringify(data.id)}, name: ${JSON.stringify(data.id)}}) RETURN a`;
             db.cypher({
-                query: initialQuery,
+                query: query,
             }, function (err) {
                 if (err) {
                     console.log(err)
@@ -156,10 +143,10 @@ const run = (func, data, callback) => {
                         WHERE a.name = 'A' AND b.name = 'B'
                         CREATE (a)-[r:RELTYPE]->(b)
                         RETURN type(r)*/
-                        let initialQueryStep2 = `MATCH (a:Spotify) CREATE (a2:${genre}_Genre {id: 'Genre', name: ${JSON.stringify(genre)}})-[:FROM]->(a)`;
+                        query = `MATCH (a:Spotify) CREATE (a2:${genre}_Genre {id: 'Genre', name: ${JSON.stringify(genre)}})-[:FROM]->(a)`;
 
                         db.cypher({
-                            query: initialQueryStep2,
+                            query: query,
                         }, function (err) {
                             if (err) {
                                 console.log(err)
@@ -176,10 +163,10 @@ const run = (func, data, callback) => {
             });
             break;
         case 'exists':
-            let findQuery = `MATCH (a:${data.genre} {id: ${JSON.stringify(data.id)}}) RETURN a`;
+            query = `MATCH (a:${data.genre} {id: ${JSON.stringify(data.id)}}) RETURN a`;
 
             db.cypher({
-                query: findQuery,
+                query: query,
             }, function (err, data) {
                 if (err) {
                     console.log("NEO Exist function error: ", err)
@@ -190,46 +177,25 @@ const run = (func, data, callback) => {
             });
             break;
         case 'learn':
-            let propertie = `{
-                    danceability: ${data.song.features.danceability},
-                    energy: ${data.song.features.energy},
-                    key: ${data.song.features.key},
-                    loudness: ${data.song.features.loudness},
-                    speechiness: ${data.song.features.speechiness},
-                    acousticness: ${data.song.features.acousticness},
-                    instrumentalness: ${data.song.features.instrumentalness},
-                    liveness: ${data.song.features.liveness},
-                    valence: ${data.song.features.valence},
-                    tempo: ${data.song.features.tempo}
-                }`;
-            console.log("No data found, creating new node")
-            let newProperties = propertie.replace('}', `, name: "${data.song.name}", id: "${data.song.id}", genre: "${data.song.genre}" }`);
+            properties = featureManager(data.song.features, false);
+            properties.id = data.song.id;
+            properties.name = data.song.name;
+            properties.genre = data.song.genre;
 
             // CREATE NEW NODE
-            let createQuery = `CREATE (a:${data.song.genre} ${newProperties} ) RETURN a`;
-            console.log(`Create query = ` + createQuery)
+            query = `CREATE (a:${data.song.genre} ${JSON.stringify(properties)} ) RETURN a`;
+            console.log(`Create query = ` + query)
 
             db.cypher({
-                query: createQuery,
+                query: query,
             }, function (err) {
                 if (err) return console.log("Creating node error: " + err);
                 console.log("Created node successfully")
 
                 console.log("Learning")
-                let query = `
+                query = `
                     MATCH (a:${data.genre})
-                    WITH id(a) as id, [
-                    a["danceability"], 
-                    a["energy"], 
-                    a["key"], 
-                    a["loudness"], 
-                    a["speechiness"], 
-                    a["acousticness"], 
-                    a["instrumentalness"], 
-                    a["liveness"], 
-                    a["valence"], 
-                    a["tempo"]
-                    ] as weights
+                    WITH id(a) as id, ${featuresString()} as weights
                     
                     WITH {item: id, weights: weights} as userData
                     WITH collect(userData) as data
@@ -264,25 +230,14 @@ const run = (func, data, callback) => {
             });
             break;
         case 'recommend':
-            let properties = `{
-                danceability: ${data.song.features.danceability},
-                energy: ${data.song.features.energy},
-                key: ${data.song.features.key},
-                loudness: ${data.song.features.loudness},
-                speechiness: ${data.song.features.speechiness},
-                acousticness: ${data.song.features.acousticness},
-                instrumentalness: ${data.song.features.instrumentalness},
-                liveness: ${data.song.features.liveness},
-                valence: ${data.song.features.valence},
-                tempo: ${data.song.features.tempo}
-            }`;
-            let recommendQuery = `MATCH (a:${data.genre} ${properties})-[:SIMILAR]-(returnedNode) RETURN returnedNode`;
+            properties = featureManager(data.song.features, false);
+            query = `MATCH (a:${data.genre} ${JSON.stringify(properties)})-[:SIMILAR]-(returnedNode) RETURN returnedNode`;
 
             console.log("=================================")
-            console.log(recommendQuery)
+            console.log(query)
 
             db.cypher({
-                query: recommendQuery,
+                query: query,
             }, function (err, data) {
                 console.log("response?")
                 console.log(data)

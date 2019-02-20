@@ -81,8 +81,8 @@ function saveRecommendedMusic (username, music, callback) {
 }
 
 module.exports = function (spotifyApi, data, callback) {
-    MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, database) {
-        const db = database.db("musicDEV");
+    MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.mongo_settings.name}`, function (err, database) {
+        const db = database.db(config.mongo_settings.name);
         if (err) return callback({success: false, error: err});
 
         let userCollection = db.collection("users");

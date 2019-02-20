@@ -1,5 +1,6 @@
 const brain = require('brain.js');
 const async = require('async');
+const fs = require('fs');
 const config = require('../../../config/config');
 const predict = require('./predict');
 
@@ -53,7 +54,7 @@ function workout(expected, actual, callback){
         initial.percent.overall = 100 - ((initial.errors.overall / initial.count.overall) * 100);
     }
 
-    callback();
+    callback(expected !== actual);
 }
 
 function round(input, dec){
@@ -62,19 +63,25 @@ function round(input, dec){
 }
 
 module.exports = function(spotifyApi, netOptions, data) {
+    let exportJSON = [];
     let net = new brain.NeuralNetwork(config.classification_config.predict);
 
     net.fromJSON(netOptions.memory);
 
     catNum ++;
     async.eachOfSeries(data, function (trackValue, trackKey, trackCallback) {
+
         let catKey = Object.keys(trackValue.output)[0]; // Grabbing the expected Genre
 
         predict(net, trackValue.input, (resp) => {
             initial.count[catKey] ++;
             initial.count.overall ++;
 
-            workout(catKey, resp, function(){
+            workout(catKey, resp, incorrect => {
+
+                if (incorrect) {
+                     exportJSON.push({correct: catKey, predicted:resp, features: trackValue})
+                }
                 console.log(catKey + ": " + round(initial.percent[catKey], 2) + "%");
                 console.log("OVERALL: " + round(initial.percent.overall, 2) + "%");
                 console.log("===============================================")
@@ -94,6 +101,15 @@ module.exports = function(spotifyApi, netOptions, data) {
                     console.log("Overall: " + initial.errors.overall + "/" + initial.count.overall)
                     console.log(round(initial.percent.overall, 2) + "%");
                     console.log("================================================")
+
+
+                    fs.writeFile("./tests/incorrectSamples.json", JSON.stringify(exportJSON), (err) => {
+                        if (err) {
+                            console.error(err);
+                            return;
+                        }
+                        console.log("File has been created");
+                    });
                 } else {
                     trackCallback()
                 }

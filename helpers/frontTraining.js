@@ -1,6 +1,7 @@
 const predict = require('./musicTool/helpers/predict');
 const config = require('../config/config');
 const spotify = require('./spotifyApi');
+const featureManager = require('./musicTool/helpers/trackFeatureManager');
 
 const async = require('async');
 const brain = require('brain.js');
@@ -21,9 +22,9 @@ function chunk(array, size) {
 
 module.exports = (func, username, accessToken, playlists, callback) => {
 
-    MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, database) {
+    MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.mongo_settings.name}`, function (err, database) {
         if (err) return console.error(err);
-        const db = database.db("musicDEV");
+        const db = database.db(config.mongo_settings.name);
         let count = 0;
 
         const run = {
@@ -51,18 +52,7 @@ module.exports = (func, username, accessToken, playlists, callback) => {
                     resp[memoryValue.id] = {
                         id: memoryValue.id,
                         name: trackInfo[memoryValue.id],
-                        features: {
-                            danceability: memoryValue.features.danceability,
-                            energy: memoryValue.features.energy,
-                            key: memoryValue.features.key,
-                            loudness: memoryValue.features.loudness,
-                            speechiness: memoryValue.features.speechiness,
-                            acousticness: memoryValue.features.acousticness,
-                            instrumentalness: memoryValue.features.instrumentalness,
-                            liveness: memoryValue.features.liveness,
-                            valence: memoryValue.features.valence,
-                            tempo: memoryValue.features.tempo,
-                        }
+                        features: featureManager(memoryValue.features, false)
                     };
 
                     if (memoryKey+1 >= memory.length) {

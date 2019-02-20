@@ -1,4 +1,4 @@
-const boundary = require('./boundary');
+const featureManager= require('./trackFeatureManager');
 const async = require('async');
 
 let timer = 100, coolDown = 0;
@@ -8,19 +8,7 @@ let self = {
         spotifyApi.getAudioFeaturesForTrack(uri)
             .then(function(resp) {
                 let value = resp.body;
-                let features = {
-                    danceability: value.danceability,
-                    energy: value.energy,
-                    key: boundary("key", value.key, null),
-                    loudness: boundary("loudness", value.loudness, null),
-                    speechiness: value.speechiness,
-                    acousticness: value.acousticness,
-                    instrumentalness: value.instrumentalness,
-                    liveness: value.liveness,
-                    valence: value.valence,
-                    tempo: boundary("tempo", value.tempo, null),
-                };
-                callback(features);
+                callback(featureManager(value, true));
             }).catch(function(err){
             console.log("SINGLE TRACKS ERROR: " + err);
         });
@@ -37,18 +25,7 @@ let self = {
                             trackLoopCallback();
                         }
                     } else {
-                        let features = {
-                            danceability: value.danceability,
-                            energy: value.energy,
-                            key: boundary("key", value.key, null),
-                            loudness: boundary("loudness", value.loudness, null),
-                            speechiness: value.speechiness,
-                            acousticness: value.acousticness,
-                            instrumentalness: value.instrumentalness,
-                            liveness: value.liveness,
-                            valence: value.valence,
-                            tempo: boundary("tempo", value.tempo, null),
-                        };
+                        let features = featureManager(value, true);
 
                         if (type) {
                             // Formatting for the Nerual networking process

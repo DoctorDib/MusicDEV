@@ -14,6 +14,7 @@ const sample = require('./helpers/sample');
 const predict = require('./helpers/predict');
 const push = require('./helpers/pushbullet');
 const neo4j = require('./helpers/neo4j');
+const clean = require('./helpers/clean');
 const recommendConfig = require('../../config/config');
 
 const client_id = config.spotify.client_id;
@@ -25,6 +26,8 @@ const brain = require('brain.js');
 const _ = require('underscore');
 const SpotifyWebApi = require('spotify-web-api-node');
 const MongoClient = require('mongodb').MongoClient;
+
+const fs = require('fs');
 
 const timeoutIntervals = 125;
 let timeoutCount = 0;
@@ -73,7 +76,6 @@ function defaultError() {
 }
 
 function readTextFile(fileText, callback) {
-    fs = require('fs')
     fs.readFile(fileText, 'utf8', function (err, data) {
         if (err) {
             return console.log(err);
@@ -85,9 +87,9 @@ function readTextFile(fileText, callback) {
 
 Object.defineProperty(Array.prototype, 'chunk', {
     value: function(chunkSize){
-        var temporal = [];
+        let temporal = [];
 
-        for (var i = 0; i < this.length; i+= chunkSize){
+        for (let i = 0; i < this.length; i+= chunkSize){
             temporal.push(this.slice(i,i+chunkSize));
         }
 
@@ -95,9 +97,9 @@ Object.defineProperty(Array.prototype, 'chunk', {
     }
 });
 
-MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, database) {
+MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.mongo_settings.name}`, function (err, database) {
     if (err) return console.error(err);
-    const db = database.db("musicDEV");
+    const db = database.db(config.mongo_settings.name);
 
     let memory = {};
     let useCollection, saveCollection;
@@ -135,7 +137,7 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
                 genreCallback(resp);
             });
         },
-        grabGenreUserPlaylist: function (username, playlists, callback) {
+        grabGenreUserPlaylist: function (username, playlist, callback) {
             useCollection = db.collection("musicMemory");
             saveCollection = db.collection(username);
 
@@ -157,7 +159,7 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
             let trainingSet = [], testingSet = [],
                 catCount = 0, limit=0;
 
-            useCollection = db.collection("masterMusicCats");
+            useCollection = db.collection("cleanMasterData");
             saveCollection = db.collection("samples");
 
             useCollection.findOne({}).then(function (data) {
@@ -220,6 +222,39 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
                 });
             });
         },
+        clean: function () {
+            useCollection = db.collection("masterMusicCats");
+            saveCollection = db.collection("cleanMasterData");
+
+            useCollection.findOne({}).then(function (data) {
+                if (!data || Object.keys(data.musicCats).length !== 9) {
+                    console.warn("No music categories found... please teach me by running the following command");
+                    console.log("                   - node app.js learn initial"); // TODO - Temp.
+                    process.exit(1);
+                }
+
+                console.log("Started")
+                clean(data, newData => {
+                    console.log(newData)
+                    saveCollection.findOne({"id": 'cleanData'}, (err, respData) => {
+                        if (respData === null) {
+                            // Insert new record
+                            console.log("Inserting new record to Database")
+                            saveCollection.insert({id: "cleanData", "musicCats": newData});
+                        } else {
+                            // Replace with existing one.
+                            console.log("Existing record found...")
+                            saveCollection.drop((err) => {
+                                if (err) return console.log("ERRRRROR")
+                                console.log("Replacing existing record")
+                                saveCollection.insert({id: "cleanData", "musicCats": newData});
+                            });
+                        }
+                    });
+                });
+
+            });
+        },
         learn: function () {
             let limit, type;
 
@@ -235,26 +270,70 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
                 limit = Number(process.argv[3]);
             }
 
-            function finished(){
-                console.log(savedUriTracks);
+            function finished(memory, savedTracks, callback){
+
+                try {
+                    let dupes = {};
+                    for (let uri in savedTracks) {
+                        if (savedTracks.hasOwnProperty(uri)) {
+                            if (Object.keys(savedTracks[uri]).length > 1) {
+
+                                let high = 0;
+                                let selectedType = '';
+
+                                for (let type in savedTracks[uri]) {
+                                    if(savedTracks[uri].hasOwnProperty(type) && type !== "track"){
+                                        if(savedTracks[uri][type] > high) {
+                                            high = savedTracks[uri][type];
+                                            selectedType = type;
+                                        }
+                                    }
+                                }
+
+                                savedTracks[uri].track.features.output = { [selectedType] : 1 };
+                                memory[selectedType].push( savedTracks[uri].track.features);
+                                dupes[uri] = savedTracks[uri];
+                            }
+                        }
+                    }
+                    console.log("Writing to file")
+                    fs.writeFile("../../dupes.json", JSON.stringify(dupes), (err) => {
+                        if (err) {
+                            console.error(err);
+                            return;
+                        };
+                        console.log("File has been created");
+
+                        callback(memory);
+                    });
+                } catch (e) {
+                    console.log("Error while writing: ", e)
+                }
             }
 
-            async.eachOfSeries(dictionary, function (dictionaryValue, mainKey, dictionaryCallback) {
+             async.eachOfSeries(dictionary, (dictionaryValue, mainKey, dictionaryCallback) => {
                 type = dictionaryValue.category;
 
-                async.eachOfSeries(dictionaryValue.uriList, function (uriValue, uriKey, uriCallback) {
-                    spotify.grabPlaylists(spotifyApi, dictionaryValue.category, uriValue, (data) => {
+                async.eachOfSeries(dictionaryValue.uriList, (uriValue, uriKey, uriCallback) => {
+                    spotify.grabPlaylists(spotifyApi, type, uriValue, (data) => {
 
                         let tracks = [];
-                        async.eachOfSeries(data, function (track, trackKey, trackCallback) {
+                        async.eachOfSeries(data, (track, trackKey, trackCallback) => {
                             if (savedUriTracks.hasOwnProperty(track.id)) {
                                 console.log("Already existing track")
-
                                 // Wanting to save both so I can compare the genres that the data has
-                                if(!savedTracks.hasOwnProperty(track.id)){
-                                    savedTracks[track.id] = [savedUriTracks[track.id]]; // Pushing the original
+                                if(!savedTracks.hasOwnProperty(track.id)) {
+                                    savedTracks[track.id] = {
+                                        track: track
+                                    };
                                 }
-                                savedTracks[track.id].push(track); // Saving duplicated one
+
+                                if (!savedTracks[track.id].hasOwnProperty(type)) {
+                                    savedTracks[track.id][type] = 0;
+                                }
+
+                                savedTracks[track.id][type] = savedTracks[track.id][type] += 1; // Recording how many times it has popped up
+                                console.log(savedTracks[track.id][type])
                             } else {
                                 savedUriTracks[track.id] = track;
                                 tracks.push(track.features);
@@ -275,21 +354,22 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
                                     if ((mainKey + 1) !== dictionary.length) {
                                         dictionaryCallback();
                                     } else {
-                                        finished();
-                                        saveCollection.findOne({"id": 'musicCats'}, function (err, respData) {
-                                            if (respData === null) {
-                                                // Insert new record
-                                                console.log("Inserting new record to Database")
-                                                saveCollection.insert({id: "musicCats", "musicCats": memory});
-                                            } else {
-                                                // Replace with existing one.
-                                                console.log("Existing record found...")
-                                                saveCollection.drop(function (err) {
-                                                    if (err) return console.log("ERRRRROR")
-                                                    console.log("Replacing existing record")
-                                                    saveCollection.insert({id: "musicCats", "musicCats": memory});
-                                                });
-                                            }
+                                        finished(memory, savedTracks, (newMemory) => {
+                                            saveCollection.findOne({"id": 'musicCats'}, (err, respData) => {
+                                                if (respData === null) {
+                                                    // Insert new record
+                                                    console.log("Inserting new record to Database")
+                                                    saveCollection.insert({id: "musicCats", "musicCats": newMemory});
+                                                } else {
+                                                    // Replace with existing one.
+                                                    console.log("Existing record found...")
+                                                    saveCollection.drop((err) => {
+                                                        if (err) return console.log("ERRRRROR")
+                                                        console.log("Replacing existing record")
+                                                        saveCollection.insert({id: "musicCats", "musicCats": newMemory});
+                                                    });
+                                                }
+                                            });
                                         });
                                     }
                                 } else {
@@ -300,7 +380,7 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
                                     if (limit && memory[type].length >= limit) {
                                         if (mainKey + 1 === dictionary.length) {
                                             finished();
-                                            saveCollection.findOne({"id": 'musicCats'}, function (err, respData) {
+                                            saveCollection.findOne({"id": 'musicCats'}, (err, respData) => {
                                                 if (respData === null) {
                                                     // Insert new record
                                                     console.log("Inserting new record to Database")
@@ -308,7 +388,7 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
                                                 } else {
                                                     // Replace with existing one.
                                                     console.log("Existing record found...")
-                                                    saveCollection.drop(function (err, delOK) {
+                                                    saveCollection.drop((err, delOK) => {
                                                         if (err) return console.log("ERRRRROR")
                                                         console.log("Replacing existing record")
                                                         saveCollection.insert({
@@ -389,14 +469,14 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
                 .then(function (data) {
                     if (err) return console.log(err);
                     //console.log(data)
-                    console.log(`Attempt ${timeoutCount++}`)
+                    console.log(`Attempt ${timeoutCount++}`);
                     trainer(spotifyApi, data.trainingSet, (trainResp) => {
                         if (trainResp.error) {
                             if (timeoutCount <= timeoutIntervals) {
                                 run[process.argv[2]]();
                             } else {
-                                console.log("ERROR: Unable to run application.")
-                                process.exit(1)
+                                console.log("ERROR: Unable to run application.");
+                                process.exit(1);
                             }
                         } else {
                             console.log("Returned")
@@ -420,19 +500,6 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
                 }).catch(function(err){
                     console.log(err);
             });
-
-
-                /*console.log(err)
-                console.log(`Attempt ${timeoutCount++}`)
-                if (data !== null) {
-
-                } else {
-                    console.log("Database not found, please run:");
-                    console.log("    - node app.js learn");
-                    process.exit(1);
-                }
-            })*/
-
         },
         predict: function () {
             useCollection = db.collection("musicMemory");
@@ -547,7 +614,7 @@ MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, databas
                                                                             body: body
                                                                         });
                                                                     } else {
-                                                                        genreCallback();
+                                                                         genreCallback();
                                                                     }
                                                                 });
                                                             });

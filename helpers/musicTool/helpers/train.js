@@ -15,7 +15,6 @@ function timer(startTimer){
 }
 
 function logIt(data) {
-    console.log("received")
     data = JSON.stringify(data);
     iteration = data.split("iterations:").pop().split(',')[0];
     error = data.split("error:").pop().replace('"', '');
@@ -30,13 +29,13 @@ module.exports = function(SpotifyApi, dictionary, callback) {
     timer(true);
 
     let mainNetConfig = {
-        hiddenLayers: [45, 45],
+
     };
 
     let mainTrainConfig = {
         log: logIt,
-        errorThresh: 0.01, // 0.01 - default
-        iterations: 200000 // 20000 - default
+        //errorThresh: 0.01, // 0.01 - default
+        //iterations: 200000 // 20000 - default
     };
 
     let netConfig = Object.assign(config.classification_config.config, mainNetConfig);
@@ -44,12 +43,13 @@ module.exports = function(SpotifyApi, dictionary, callback) {
     let netsObject = new brain.NeuralNetwork(netConfig);
 
     let trainConfig = Object.assign(config.classification_config.train, mainTrainConfig);
+    console.log(trainConfig)
 
     console.log("Training started:");
     netsObject.trainAsync(dictionary, trainConfig )
         .then(() => {
             if(parseFloat(timer(false).match(/\d+.\d+/g)[0]) < 1 /*second*/){
-                callback({error: true})
+               callback({error: true})
             } else {
                 let bodyData = `Finished: \nError: ${error}\nIteration: ${iteration}\nTimer: ${timer(false)}`;
                 push.send({title: "Finished task", body: bodyData})

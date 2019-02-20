@@ -1,9 +1,9 @@
 const MongoClient = require('mongodb').MongoClient;
 
 module.exports = (func, collection, data, callback) => {
-    MongoClient.connect("mongodb://localhost:27017/musicDEV", function (err, database) {
+    MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.mongo_settings.name}`, function (err, database) {
         if (err) return console.error(err);
-        const db = database.db("musicDEV");
+        const db = database.db(config.mongo_settings.name);
 
         switch (func) {
             case 'grabOne':

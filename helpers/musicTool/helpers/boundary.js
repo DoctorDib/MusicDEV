@@ -21,6 +21,6 @@ module.exports = function(field, val) {
     } else if(field === "loudness") {
         return clampNegative(field, val);
     } else {
-        return "error";
+        return val;
     }
 };

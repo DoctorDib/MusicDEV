@@ -5,6 +5,8 @@ const predict = require('./predict');
 const recommend = require('./recommend');
 const neo = require('./neo4j');
 
+const featureManager = require('./trackFeatureManager');
+
 const slugify = require('slugify');
 const brain = require('brain.js');
 
@@ -56,20 +58,12 @@ module.exports = function (username, currentSong, callback) {
                                 console.log(recommended.songUsed)
 
                                 let songLayout = { // Converting to readable state
-                                    loudness: recommended.songUsed.features.loudness,
-                                    liveness: recommended.songUsed.features.liveness,
-                                    tempo: recommended.songUsed.features.tempo,
-                                    valence: recommended.songUsed.features.valence,
-                                    instrumentalness: recommended.songUsed.features.instrumentalness,
-                                    danceability: recommended.songUsed.features.danceability,
-                                    speechiness: recommended.songUsed.features.speechiness,
-                                    acousticness: recommended.songUsed.features.acousticness,
-                                    genre: recommended.songUsed.genre,
-                                    name: recommended.songUsed.name,
                                     id: recommended.songUsed.id,
-                                    key: recommended.songUsed.features.key,
-                                    energy: recommended.songUsed.features.energy,
+                                    name: recommended.songUsed.name,
+                                    genre: recommended.songUsed.genre,
                                 };
+
+                                songLayout.features = featureManager(recommended.songUsed.features, false);
 
                                 spotify('saveToPlaylist', {username: username, playlistOptions: user.records.playlistOptions, music: [songLayout]}, () => {
                                     callback({success: true, message: 'New song learnt', song: [songLayout]});

@@ -11,6 +11,7 @@ const dependencies = require('./dependencies');
 const passport = require('passport');
 const favicon = require('serve-favicon');
 const path = require('path');
+const config = require('./config/config');
 
 function configureExpress(app){
     app.use(express.static('client/public'));
@@ -21,7 +22,7 @@ function configureExpress(app){
     app.use(bodyParser.urlencoded({extended: true}));
     app.use(validator());
     app.use(session({
-        secret: 'SUPER SECRET',
+        secret: config.mongo_settings.secret,
         resave: true,
         saveInitializes: true,
         saveUninitialized: true,
@@ -40,8 +41,8 @@ dependencies.resolve(function(routing, posts){
         const app = express();
         const server = http.createServer(app);
 
-        server.listen(8081, function(){
-            console.log('Listening on port 8081');
+        server.listen(config.port, function(){
+            console.log("Server active");
         });
 
         configureExpress(app);
@@ -53,5 +54,5 @@ dependencies.resolve(function(routing, posts){
     SetupExpress();
 
     mongoose.Promise = global.Promise;
-    mongoose.connect('mongodb://localhost:27017/musicDEV');
+    mongoose.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.mongo_settings.name}`);
 });
