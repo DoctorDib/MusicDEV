@@ -70,7 +70,7 @@ const run = (func, data, callback) => {
                         callback({success: false, error: "Node already exists!", function: "Checking if the data exists... prt2"})
                     }
                 } else {
-                    callback({success: false, error: resp.error, function: "Checking if the data exists..."})
+                    callback({ success: false, error: resp.error, function: "Checking if the data exists..." })
                 }
             });
 

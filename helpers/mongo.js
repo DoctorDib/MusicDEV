@@ -1,4 +1,5 @@
 const MongoClient = require('mongodb').MongoClient;
+const config = require('../config/config');
 
 module.exports = (func, collection, data, callback) => {
     MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.mongo_settings.name}`, function (err, database) {

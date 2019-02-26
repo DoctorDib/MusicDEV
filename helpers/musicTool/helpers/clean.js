@@ -1,123 +1,98 @@
 const async = require('async');
 const config = require('../../../config/config');
 
-let gap = 0.5;
+const featureManager = require('./trackFeatureManager');
+
+let activeGenres = {};
 
 function getHighLow (value) {
-    return {high: value + gap, low: value - gap};
+    return {
+        high: (value * config.classification_config.general.gapAllowance),
+        low: (value / config.classification_config.general.gapAllowance)
+    };
 }
 
 function grabHighLow (data, callback) {
-    let avgObject = {}, index = 0;
+    let avgObject = {}, genreFeatureCount = {};
 
-    async.eachOfSeries(data.musicCats, (genreValue, genreKey, genreCallback) => {
-        index ++;
+    async.eachOfSeries(data, (track, trackKey, trackCallback) => {
+        let currentGenre = Object.keys(track.output)[0];
 
-        let danceability = 0;
-        let energy = 0;
-        let key = 0;
-        let loudness = 0;
-        let mode = 0;
-        let speechiness = 0;
-        let instrumentalness = 0;
-        let valence = 0;
-        let tempo = 0;
+        if (!genreFeatureCount.hasOwnProperty(currentGenre)) genreFeatureCount[currentGenre] = {};
+        if (!genreFeatureCount[currentGenre].hasOwnProperty("count")) genreFeatureCount[currentGenre].count = 0;
 
-        async.eachOfSeries(genreValue, (track, trackKey, trackCallback) => {
-            danceability = danceability += track.input.danceability;
-            energy = energy += track.input.energy;
-            key = key += track.input.key;
-            loudness = loudness += track.input.loudness;
-            mode = mode += track.input.mode;
-            speechiness = speechiness += track.input.speechiness;
-            instrumentalness = instrumentalness += track.input.instrumentalness;
-            valence = valence += track.input.valence;
-            tempo = tempo += track.input.tempo;
+        let trackFeatures = featureManager(track.input);
 
-            if (trackKey +1 >= genreValue.length) {
-                avgObject[genreKey] = avgObject[genreKey] || {};
-                avgObject[genreKey].danceability = {}; avgObject[genreKey].danceability = getHighLow(danceability / genreValue.length);
-                avgObject[genreKey].energy = {}; avgObject[genreKey].energy = getHighLow(energy / genreValue.length);
-                avgObject[genreKey].key = {}; avgObject[genreKey].key = getHighLow(key / genreValue.length);
-                avgObject[genreKey].loudness = {}; avgObject[genreKey].loudness = getHighLow(loudness / genreValue.length);
-                avgObject[genreKey].mode = {}; avgObject[genreKey].mode = getHighLow(mode / genreValue.length);
-                avgObject[genreKey].speechiness = {}; avgObject[genreKey].speechiness = getHighLow(speechiness / genreValue.length);
-                avgObject[genreKey].instrumentalness = {}; avgObject[genreKey].instrumentalness = getHighLow(instrumentalness / genreValue.length);
-                avgObject[genreKey].valence = {}; avgObject[genreKey].valence = getHighLow(valence / genreValue.length);
-                avgObject[genreKey].tempo = {}; avgObject[genreKey].tempo = getHighLow(tempo / genreValue.length);
-                if (index >= Object.keys(data.musicCats).length) {
-                    callback(avgObject)
-                } else {
-                    genreCallback();
-                }
-            } else {
-                trackCallback();
+        for (let feature in trackFeatures) {
+            if (trackFeatures.hasOwnProperty(feature)) {
+                if (!genreFeatureCount[currentGenre].hasOwnProperty(feature)) genreFeatureCount[currentGenre][feature] = 0;
+
+                genreFeatureCount[currentGenre][feature] = genreFeatureCount[currentGenre][feature] += trackFeatures[feature];
+                genreFeatureCount[currentGenre].count++;
             }
-        });
+        }
 
+        if (trackKey +1 >= data.length) {
+
+            for (let genre in genreFeatureCount) {
+                if (genreFeatureCount.hasOwnProperty(genre)) {
+
+                    if (!avgObject.hasOwnProperty(genre)) avgObject[genre] = {};
+
+                    for (let feature in trackFeatures) {
+                        if (trackFeatures.hasOwnProperty(feature)) {
+                            if (!avgObject[genre].hasOwnProperty(feature)) avgObject[genre][feature] = {};
+                            avgObject[genre][feature] = getHighLow(genreFeatureCount[currentGenre][feature] / genreFeatureCount[currentGenre].count)
+                        }
+                    }
+                }
+            }
+
+            callback(avgObject);
+        } else {
+            trackCallback();
+        }
     });
 }
 
 function normalise (data, avgObject, callback) {
-    let final = {}, index = 0;
+    let final = [];
 
-    async.eachOfSeries(data.musicCats, (genreValue, genreKey, genreCallback) => {
-        index ++;
+    async.eachOfSeries(data, (track, trackKey, trackCallback) => {
+        let currentGenre = Object.keys(track.output)[0], add = true, strikes=0;
 
-        async.eachOfSeries(genreValue, (track, trackKey, trackCallback) => {
-            let add = true;
-
-            if (track.input.danceability > avgObject[genreKey]["danceability"].high || track.input.danceability < avgObject[genreKey]["danceability"].low) {
-                add = false;
-            }
-            if (track.input.energy > avgObject[genreKey]["energy"].high || track.input.energy < avgObject[genreKey]["energy"].low) {
-                add = false;
-            }
-            if (track.input.key > avgObject[genreKey]["key"].high || track.input.key < avgObject[genreKey]["key"].low) {
-                add = false;
-            }
-            if (track.input.loudness > avgObject[genreKey]["loudness"].high || track.input.loudness < avgObject[genreKey]["loudness"].low) {
-                add = false;
-            }
-            if (track.input.mode > avgObject[genreKey]["mode"].high || track.input.mode < avgObject[genreKey]["mode"].low) {
-                add = false;
-            }
-            if (track.input.speechiness > avgObject[genreKey]["speechiness"].high || track.input.speechiness < avgObject[genreKey]["speechiness"].low) {
-                add = false;
-            }
-            if (track.input.instrumentalness > avgObject[genreKey]["instrumentalness"].high || track.input.instrumentalness < avgObject[genreKey]["instrumentalness"].low) {
-                add = false;
-            }
-            if (track.input.valence > avgObject[genreKey]["valence"].high || track.input.valence < avgObject[genreKey]["valence"].low) {
-                add = false;
-            }
-            if (track.input.tempo > avgObject[genreKey]["tempo"].high || track.input.tempo < avgObject[genreKey]["tempo"].low) {
-                add = false;
-            }
-
-            if (add) {
-                final[genreKey] = final[genreKey] || [];
-                final[genreKey].push(track);
-            }
-
-            if (trackKey +1 >= genreValue.length) {
-                if (index >= Object.keys(data.musicCats).length) {
-                    console.log(Object.keys(final).length)
-                    callback(final);
-                } else {
-                    genreCallback();
+        let trackFeatures = featureManager(track.input, false);
+        // Looping through active features of track
+        for (let feature in trackFeatures) {
+            if (trackFeatures.hasOwnProperty(feature)) {
+                // Ensuring that the feature is within the genre feature boundary limit.
+                if (track.input[feature] > avgObject[currentGenre][feature].high || track.input[feature] < avgObject[currentGenre][feature].low) {
+                    add = false;
+                    strikes ++;
                 }
-            } else {
-                trackCallback();
             }
-        });
+        }
+
+        if (add || strikes < config.classification_config.general.maxStrikes) {
+            activeGenres[currentGenre] = true;
+            final.push(track);
+        }
+
+        if (trackKey +1 >= data.length) {
+            console.log(`Active genres: ${Object.keys(activeGenres).length}`)
+            console.log(activeGenres)
+            console.log("==========");
+            if (Object.keys(activeGenres).length < config.recommendation_config.genres.length) {
+                console.log("FAILED: please raise the gap allowance or max strikes in the config file.");
+                process.exit(1);
+            } else {
+                console.log("Success");
+                callback(final);
+            }
+        } else {
+            trackCallback();
+        }
     });
 }
 
-module.exports = (data, callback) => {
-    grabHighLow(data, avgObject => {
-        normalise(data, avgObject, finishedDataSet => {
-            callback(finishedDataSet);
-        });
-    });
-};
+module.exports = (data, callback) => grabHighLow(data, avgObject => normalise(data, avgObject, finishedDataSet => callback(finishedDataSet)));

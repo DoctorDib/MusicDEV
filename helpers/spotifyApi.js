@@ -155,6 +155,8 @@ const run = function(command, data, callback) {
             break;
 
         case 'grabPlaylists':
+            console.log(data.username)
+            console.log(data.access_token)
             spotifyApi[data.username].setAccessToken(data.access_token);
             spotifyApi[data.username].getMe()
                 .then(function(data_root){

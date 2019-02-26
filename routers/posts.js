@@ -39,7 +39,6 @@ module.exports = function () {
             router.get('/grabSavedPlaylists', this.grabSavedPlaylists);
             router.get('/clearHistory', this.clearHistory);
 
-            router.post('/consentLearn', this.consentLearn);
             router.post('/refreshToken', this.refreshToken);
         },
 
@@ -169,7 +168,7 @@ module.exports = function () {
             mongo('grabOne', 'users', { identifier: { id: req.user.id }, options: { activePlaylists: { $exists: true } } }, resp => {
                 if (resp.records !== null) {
                     if (resp.records.activePlaylists !== null) {
-                        console.log("Sending back: ", resp.records.activePlaylists)
+                        console.log("Sending back: ", resp.records.activePlaylists);
                         res.json({
                             success: true,
                             playlists: resp.records.activePlaylists
@@ -217,34 +216,6 @@ module.exports = function () {
             mongo('grabOne', 'users', {identifier: {username: req.user.id}}, resp => {
                 grabNewToken(req.user.id, resp.records.spotify.refresh_token, function () {
                     res.redirect('/');
-                });
-            });
-        },
-        consentLearn: function (req, res) {
-            console.log("Recieved...")
-            let failedSongs = req.query.songs;
-            console.log(failedSongs)
-            async.eachOfSeries(failedSongs, function (song, songKey, songCallback) {
-                song = JSON.parse(song);
-
-                neo('create', {
-                    params: song,
-                    single: true
-                }, function (resp) {
-                    if (!resp.success) return console.log(resp.error);
-                    console.log("Created")
-
-                    console.log(song.genre)
-                    neo('masterLearn', {genre: song.genre}, masterLearnResponse => {
-                        console.log("Learnt")
-                        console.log(masterLearnResponse)
-
-                        if (songKey+1 >= failedSongs.length) {
-                            res.json({success: true});
-                        } else {
-                            songCallback();
-                        }
-                    });
                 });
             });
         },

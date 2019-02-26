@@ -25,7 +25,7 @@ let self = {
                             trackLoopCallback();
                         }
                     } else {
-                        let features = featureManager(value, true);
+                        let features = value;
 
                         if (type) {
                             // Formatting for the Nerual networking process

@@ -9,6 +9,7 @@ let catNum = 0;
 let initial = {
     errors: {
         overall: 0,
+        Blues: 0,
         Pop: 0,
         HipHop: 0,
         Chill: 0,
@@ -17,10 +18,10 @@ let initial = {
         Rock: 0,
         Jazz: 0,
         Classical: 0,
-        Blues: 0
     },
     count: {
         overall: 0,
+        Blues: 0,
         Pop: 0,
         HipHop: 0,
         Chill: 0,
@@ -29,10 +30,10 @@ let initial = {
         Rock: 0,
         Jazz: 0,
         Classical: 0,
-        Blues: 0
     },
     percent: {
         overall: 100,
+        Blues: 100,
         Pop: 100,
         HipHop: 100,
         Chill: 100,
@@ -41,7 +42,6 @@ let initial = {
         Rock: 100,
         Jazz: 100,
         Classical: 100,
-        Blues: 100
     }
 };
 
@@ -57,57 +57,53 @@ function workout(expected, actual, callback){
     callback(expected !== actual);
 }
 
-function round(input, dec){
-    input = Number(input.toFixed(10));
-    return Number(Math.round(input+'e'+dec)+'e-'+dec);
+function round(input, dec) {
+    return Number( Math.round( Number( input.toFixed( 10 ) ) +'e'+dec ) +'e-'+dec );
 }
 
-module.exports = function(spotifyApi, netOptions, data) {
-    let exportJSON = [];
+module.exports = (spotifyApi, netOptions, data) => {
     let net = new brain.NeuralNetwork(config.classification_config.predict);
+    let exportJSON = [];
 
     net.fromJSON(netOptions.memory);
 
     catNum ++;
-    async.eachOfSeries(data, function (trackValue, trackKey, trackCallback) {
-
+    async.eachOfSeries(data, (trackValue, trackKey, trackCallback) => {
         let catKey = Object.keys(trackValue.output)[0]; // Grabbing the expected Genre
 
         predict(net, trackValue.input, (resp) => {
-            initial.count[catKey] ++;
-            initial.count.overall ++;
+            initial.count[catKey]++;
+            initial.count.overall++;
 
             workout(catKey, resp, incorrect => {
+                if (incorrect) exportJSON.push({correct: catKey, predicted:resp, features: trackValue});
 
-                if (incorrect) {
-                     exportJSON.push({correct: catKey, predicted:resp, features: trackValue})
-                }
+                console.log(`======================${catKey}======================`);
                 console.log(catKey + ": " + round(initial.percent[catKey], 2) + "%");
                 console.log("OVERALL: " + round(initial.percent.overall, 2) + "%");
-                console.log("===============================================")
 
-                if(trackKey+1 >= data.length){
-                    console.log("===============SAMPLES=================")
-                    console.log("Pop: " + round(initial.percent.Pop, 2) + "% - " + initial.errors.Pop + "/" + initial.count.Pop);
-                    console.log("HipHop: " + round(initial.percent.HipHop, 2) + "% - " + initial.errors.HipHop + "/" + initial.count.HipHop);
-                    console.log("Chill: " + round(initial.percent.Chill, 2) + "% - " + initial.errors.Chill + "/" + initial.count.Chill);
-                    console.log("ElectronicAndDance: " + round(initial.percent.ElectronicAndDance, 2) + "% - " + initial.errors.ElectronicAndDance + "/" + initial.count.ElectronicAndDance);
-                    console.log("RnB: " + round(initial.percent.RnB, 2) + "% - " + initial.errors.RnB + "/" + initial.count.RnB);
-                    console.log("Rock: " + round(initial.percent.Rock, 2) + "% - " + initial.errors.Rock + "/" + initial.count.Rock);
-                    console.log("Jazz: " + round(initial.percent.Jazz, 2) + "% - " + initial.errors.Jazz + "/" + initial.count.Jazz);
-                    console.log("Classical: " + round(initial.percent.Classical, 2) + "% - " + initial.errors.Classical + "/" + initial.count.Classical);
-                    console.log("Blues: " + round(initial.percent.Blues, 2) + "% - " + initial.errors.Blues + "/" + initial.count.Blues);
-                    console.log("===============OVERALL=================")
-                    console.log("Overall: " + initial.errors.overall + "/" + initial.count.overall)
-                    console.log(round(initial.percent.overall, 2) + "%");
-                    console.log("================================================")
+                if (trackKey+1 >= data.length) {
+                    console.log("======================SAMPLES======================");
 
+                    for (let genre in initial.percent) {
+                        if (initial.percent.hasOwnProperty(genre)) {
+                            let print = '';
+
+                            let outOf = initial.count[genre] - initial.errors[genre];
+                            if (genre !== "overall") {
+                                print = `${genre} ${round(initial.percent[genre], 2)}% - ${outOf}/${initial.count[genre]}`;
+                            }
+                            console.log(print);
+                        }
+                    }
+
+                    console.log("======================OVERALL======================");
+                    console.log(`Overall: ${initial.errors.overall}/${initial.count.overall}`);
+                    console.log(`Accuracy: ${round(initial.percent["overall"], 2)}%`);
+                    console.log("===================================================");
 
                     fs.writeFile("./tests/incorrectSamples.json", JSON.stringify(exportJSON), (err) => {
-                        if (err) {
-                            console.error(err);
-                            return;
-                        }
+                        if (err) return console.error(err);
                         console.log("File has been created");
                     });
                 } else {
@@ -115,8 +111,5 @@ module.exports = function(spotifyApi, netOptions, data) {
                 }
             });
         });
-
-
-
     });
 };

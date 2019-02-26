@@ -60,46 +60,34 @@ class Template extends React.Component {
         }
     }
 
-    consentLearn = () => {
-        Axios.post('consentLearn', null, {
-            params: {
-                songs: this.state.failedSongs
-            }
-        });
-
-        this.props.clickClose();
-    };
-
     render(){
         const { classes } = this.props;
 
         let failedSongsContent = this.state.failedSongs.map((song) =>
             <Card style={{backgroundColor: 'grey', margin: '10px'}}>
                 <CardContent>
-                    <Typography>Name: {song.name}</Typography>
+                    <Typography>Name: {song.name} </Typography>
                     <Divider />
-                    <Typography>Genre: {song.genre}</Typography>
+                    <Typography>Genre: {song.genre} </Typography>
                 </CardContent>
             </Card>
         );
 
         return (
             <Dialog open={this.state.open} onClose={this.props.close('recommendWarningOpen')} >
-                <DialogTitle>Oops, I have not learnt that yet!</DialogTitle>
+                <DialogTitle>Oops... seems like we have not learn that yet!</DialogTitle>
                 <section style={{padding: '20px'}}>
                     <Typography>
-                        Sorry, it seems like we don't have the follow song(s) on record. Please help us by clicking accept
-                        so MusicDEV can widen their songs. The average wait time is between 10-60 minutes per song.
+                        What happens next?
                     </Typography>
                     <Typography>
-                        If you do not wish to add the following song(s), then that's no problem at all! Just click
-                        'Close' or try again. Sorry for any inconvenience.
+                        We have added your song(s) to our temporary blacklist, which then will be processed at midnight
+                        ready and available for yourself and other users the following day. Sorry for any inconveniences.
                     </Typography>
                     <Divider />
                     {failedSongsContent}
                 </section>
                 <section>
-                    <Button onClick={this.consentLearn}>Learn</Button>
                     <Button onClick={this.props.close('recommendWarningOpen')}>Close</Button>
                 </section>
             </Dialog>
