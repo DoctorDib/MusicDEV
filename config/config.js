@@ -89,5 +89,8 @@ module.exports = {
         speechiness: false,
         valence: true,
         tempo: false,
+    },
+    blacklist_options: {
+        tick_interval: 30 // Seconds
     }
 };
