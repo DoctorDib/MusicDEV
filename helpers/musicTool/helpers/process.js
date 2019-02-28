@@ -35,42 +35,43 @@ function grabHighLow (data, callback) {
             if (!genreFeatureCount.hasOwnProperty(genreKey)) genreFeatureCount[genreKey] = {};
             if (!genreFeatureCount[genreKey].hasOwnProperty("count")) genreFeatureCount[genreKey].count = 0;
 
-            let trackFeatures = featureManager(track.input, true);
+            featureManager(track.input, false, trackFeatures => {
 
-            for (let feature in trackFeatures) {
-                if (trackFeatures.hasOwnProperty(feature)) {
-                    if (!genreFeatureCount[genreKey].hasOwnProperty(feature)) genreFeatureCount[genreKey][feature] = 0;
-
-                    genreFeatureCount[genreKey][feature] = genreFeatureCount[genreKey][feature] += trackFeatures[feature];
-                    genreFeatureCount[genreKey].count++;
-                }
-            }
-
-            if (trackKey+1 >= genre.length) {
-
-                // Working out the range
-                if (!avgObject.hasOwnProperty(genre)) avgObject[genreKey] = {};
                 for (let feature in trackFeatures) {
                     if (trackFeatures.hasOwnProperty(feature)) {
-                        if (!avgObject[genreKey].hasOwnProperty(feature)) avgObject[genreKey][feature] = {};
-                        avgObject[genreKey][feature] = getHighLow(genreFeatureCount[genreKey][feature] / genreFeatureCount[genreKey].count)
+                        if (!genreFeatureCount[genreKey].hasOwnProperty(feature)) genreFeatureCount[genreKey][feature] = 0;
+
+                        genreFeatureCount[genreKey][feature] = genreFeatureCount[genreKey][feature] += trackFeatures[feature];
+                        genreFeatureCount[genreKey].count++;
                     }
                 }
 
-                if (index >= Object.keys(data.musicCats).length) {
-                    console.log("Grabbing high and low has finished.");
-                    callback(avgObject);
+                if (trackKey+1 >= genre.length) {
+
+                    // Working out the range
+                    if (!avgObject.hasOwnProperty(genre)) avgObject[genreKey] = {};
+                    for (let feature in trackFeatures) {
+                        if (trackFeatures.hasOwnProperty(feature)) {
+                            if (!avgObject[genreKey].hasOwnProperty(feature)) avgObject[genreKey][feature] = {};
+                            avgObject[genreKey][feature] = getHighLow(genreFeatureCount[genreKey][feature] / genreFeatureCount[genreKey].count)
+                        }
+                    }
+
+                    if (index >= Object.keys(data.musicCats).length) {
+                        console.log("Grabbing high and low has finished.");
+                        callback(avgObject);
+                    } else {
+                        genreCallback();
+                    }
                 } else {
-                    genreCallback();
+                    trackCallback();
                 }
-            } else {
-                trackCallback();
-            }
+            });
         });
     });
 }
 
-function grabSuitableTrainingData (data, limit, callback) {
+function grabSuitableTrainingData (data, counter, limit, callback) {
     let suitableData={}, activeGenres={}, index=0;
 
     async.eachOfSeries(data.musicCats, (genre, genreKey, genreCallback) => {
@@ -79,42 +80,43 @@ function grabSuitableTrainingData (data, limit, callback) {
         async.eachOfSeries(genre, (track, trackKey, trackCallback) => {
             let add=true, strikes=0;
 
-            let trackFeatures = featureManager(track.input, true);
-            // Looping through active features of track
-            for (let feature in trackFeatures) {
-                if (trackFeatures.hasOwnProperty(feature)) {
-                    // Ensuring that the feature is within the genre feature boundary limit.
-                    if (trackFeatures[feature] > limit[genreKey][feature].high || trackFeatures[feature] < limit[genreKey][feature].low) {
-                        add = false;
-                        strikes ++;
+            featureManager(track.input, false, trackFeatures => {
+                // Looping through active features of track
+                for (let feature in trackFeatures) {
+                    if (trackFeatures.hasOwnProperty(feature)) {
+                        // Ensuring that the feature is within the genre feature boundary limit.
+                        if (trackFeatures[feature] > limit[genreKey][feature].high || trackFeatures[feature] < limit[genreKey][feature].low) {
+                            add = false;
+                            strikes ++;
+                        }
                     }
                 }
-            }
 
-            if (add || strikes <= config.classification_config.general.maxStrikes) {
-                if (!activeGenres.hasOwnProperty(genreKey)) activeGenres[genreKey] = true;
+                if (add || strikes <= config.classification_config.general.maxStrikes) {
+                    if (!activeGenres.hasOwnProperty(genreKey)) activeGenres[genreKey] = true;
 
-                // Setting up array
-                if (!suitableData.hasOwnProperty(genreKey)) suitableData[genreKey] = [];
-                // Pushing data into array
-                suitableData[genreKey].push(track);
-            }
+                    // Setting up array
+                    if (!suitableData.hasOwnProperty(genreKey)) suitableData[genreKey] = [];
+                    // Pushing data into array
+                    suitableData[genreKey].push(track);
+                }
 
-            if (trackKey+1 >= genre.length) {
-                if (index >= Object.keys(data.musicCats).length) {
-                    console.log("Grabbed suitable training data.");
+                if (trackKey+1 >= genre.length) {
+                    if (index >= Object.keys(data.musicCats).length) {
+                        console.log("Grabbed suitable training data.");
 
-                    if (Object.keys(suitableData).length) {
-                        callback(suitableData);
+                        if (Object.keys(suitableData).length) {
+                            callback(suitableData);
+                        } else {
+                            console.log("No data can be grabbed... please change around the config file.")
+                        }
                     } else {
-                        console.log("No data can be grabbed... please change around the config file.")
+                        genreCallback();
                     }
                 } else {
-                    genreCallback();
+                    trackCallback();
                 }
-            } else {
-                trackCallback();
-            }
+            });
         });
     });
 }
@@ -202,17 +204,19 @@ function grabTestingSample (data, activeIDs, callback) {
 }
 
 // TODO - Possibly keep raw data for future referencing
-function processData (data, callback) {
+function processData (data, counter, callback) {
     let final=[];
     async.eachOfSeries(data, (track, trackKey, trackCallback) => {
-        track.input = featureManager(track.input, true);
-        final.push(track);
+        featureManager(track.input, true, newTrackFeatures => {
+            track.input = newTrackFeatures;
+            final.push(track);
 
-        if (trackKey+1 >= data.length) {
-            callback(final);
-        } else {
-            trackCallback();
-        }
+            if (trackKey+1 >= data.length) {
+                callback(final);
+            } else {
+                trackCallback();
+            }
+        }, counter);
     });
 }
 
@@ -225,7 +229,7 @@ module.exports = (data, callback) => {
     grabHighLow(data, genreRangeLimit => {
 
         // STAGE 3: Collecting the suitable data for training
-        grabSuitableTrainingData(data, genreRangeLimit, suitableData => {
+        grabSuitableTrainingData(data, data.counter, genreRangeLimit, suitableData => {
 
             // STAGE 4: Grabbing X% of tracks per genre
             grabPercentageOfTracks(suitableData, totalGenreTracks, trainingSample => {
@@ -237,8 +241,8 @@ module.exports = (data, callback) => {
                     grabTestingSample(data, activeList, testingSample => {
 
                         // STAGE 7: Prepare samples
-                        processData(trainingSample, newTrainingSample => {
-                            processData(testingSample, newTestingSample => {
+                        processData(trainingSample, data.counter, newTrainingSample => {
+                            processData(testingSample, data.counter, newTestingSample => {
                                 console.log(genreRangeLimit)
                                 callback({testingSample: newTestingSample, trainingSample: newTrainingSample})
                             });

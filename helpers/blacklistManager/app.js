@@ -29,6 +29,7 @@ MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.
         // Add all tracks as nodes to Neo4j database
         // call finished();
 
+
     }
 
     function tick() {

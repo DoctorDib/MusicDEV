@@ -177,7 +177,6 @@ module.exports = function (spotifyApi, data, callback) {
                             console.log(selectedSong);
 
                             neo('exists', {genre: userPlaylist[random].genre, id: selectedSong.id}, existsResp => { // TODO - FIND OUT IF THIS IS CORRECT
-                                console.log(1)
                                 if (existsResp.success) {
                                     if (existsResp.exist) {
                                         console.log(2)

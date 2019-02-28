@@ -1,30 +1,27 @@
 const config = require('../../../config/config');
 const boundary = require('./boundary');
 
-const mongo = require('../../mongo');
+const async = require('async');
 
 
-module.exports = (featuresList, boundaries) => {
-    let final = {};
+module.exports = (featuresList, boundaries, callback, counter) => {
+    let final = {}, index = 0;
 
+    return async.eachOfSeries(featuresList, function (feature, featureKey, featureCallback) {
+        index ++;
 
-    for (let feature in featuresList) {
-        if (featuresList.hasOwnProperty(feature)) {
-            if (config.track_features[feature]) {
-
-                if (boundaries) {
-                    console.log(1)
-
-
-
-                } else {
-                    final[feature] = featuresList[feature];
-                }
+        if (config.track_features[featureKey]) {
+            if (boundaries) {
+                final[featureKey] = boundary(feature, featuresList[featureKey], counter[featureKey]);
+            } else {
+                final[featureKey] = featuresList[featureKey];
             }
         }
-    }
 
-// final[feature] = (boundaries ? boundary(feature, featuresList[feature]) : featuresList[feature]);
-
-    return final;
+        if (index >= Object.keys(featuresList).length) {
+            callback(final);
+        } else {
+            featureCallback();
+        }
+    });
 };

@@ -20,7 +20,7 @@ module.exports = {
         },
         train: {
             iterations: 200000,    // the maximum times to iterate the training data --> number greater than 0
-            errorThresh: 0.03,     // the acceptable error percentage from training data --> number between 0 and 1
+            errorThresh: 0.01,     // the acceptable error percentage from training data --> number between 0 and 1
             log: false,            // true to use console.log, when a function is supplied it is used --> Either true or a function
             logPeriod: 10,         // iterations between logging out --> number greater than 0
             learningRate: 0.01,    // scales with delta to effect training rate --> number between 0 and 1
@@ -38,8 +38,8 @@ module.exports = {
         general: {
             cutTrainingPercentage: 20, // (1 - 100) - Percentage of training data (the rest will go towards the testing sample)
             grabMin: true, // Equalise the total number of tracks per genre from the lowest value overall.
-            maxStrikes: 1, // Low as possible - How many strikes it takes for the program to delete the track from the training sample
-            gapAllowance: 10, // (1 - 9) - How much gap the program has to offer
+            maxStrikes: 0, // Low as possible - How many strikes it takes for the program to delete the track from the training sample
+            gapAllowance: 5, // (1 - 9) - How much gap the program has to offer
         }
     },
     recommendation_config: {
@@ -86,7 +86,7 @@ module.exports = {
         instrumentalness: false,
         liveness: false,
         loudness: false,
-        speechiness: false,
+        speechiness: true,
         valence: true,
         tempo: false,
     },
