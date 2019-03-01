@@ -57,7 +57,7 @@ MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.
     }
 
     let blacklistInterval = 14 /*Days*/; // 2 weeks
-    var textSched =  later.parse.text('every 5 seconds');
+    const textSched =  later.parse.text('every 2 weeks');
 
     function heartbeat(dev) {
         let day=new Date().getDay();

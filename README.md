@@ -40,6 +40,7 @@ Databases:
   - 8.2. `npm run devmode` - Dev mode for Linux
   - 8.3. `npm run devstart` - Dev mode only running server.js (without building) for Linux/Windows 
   - 8.4. `npm run start` - Run server for Linux / Windows
+  - 8.5 `cd ./helpers/blacklistManager` and `node app.js` - Running the blacklist manager services
     
 ## Future plans
   - Open the program to more music platforms, e.g YouTube music etc...
