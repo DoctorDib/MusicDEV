@@ -63,17 +63,17 @@ module.exports = function (username, currentSong, callback) {
                                     genre: recommended.songUsed.genre,
                                 };
 
-                                songLayout.features = featureManager(recommended.songUsed.features, false);
-
-                                spotify('saveToPlaylist', {username: username, playlistOptions: user.records.playlistOptions, music: [songLayout]}, () => {
-                                    callback({success: true, message: 'New song learnt', song: [songLayout]});
-                                });
+                                 featureManager(recommended.songUsed.features, false, newFeatures => {
+                                     songLayout.features = newFeatures;
+                                     spotify('saveToPlaylist', {username: username, playlistOptions: user.records.playlistOptions, music: [songLayout]}, () => {
+                                         callback({success: true, message: 'New song learnt', song: [songLayout]});
+                                     });
+                                 });
                             }
                             console.log("I recommend: ")
                             console.log(recommended)
                         });
                     });
-
                 });
             });
         });

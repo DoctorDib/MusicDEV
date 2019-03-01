@@ -12,7 +12,7 @@ const styles = {
         justifyContent: 'space-around',
         flexDirection: 'column',
         userSelect: 'none',
-        backgroundImage: 'url("https://www.transparenttextures.com/patterns/binding-dark.png")',
+        backgroundImage: `url(${require('img/background.png')})`,
         zIndex: '4',
         position: 'relative'
     },
@@ -21,7 +21,7 @@ const styles = {
         flexDirection: 'column',
         userSelect: 'none',
         marginTop: 'auto',
-        height: theme.spacing.unit * 13,
+        height: theme.spacing.unit*13,
         marginBottom: 'auto'
     },
     title: {

@@ -86,7 +86,7 @@ let self = {
                 });
             }, function(err) {
                 if(err.statusCode === 404){
-                    console.log(URI + " does not exist...");
+                    console.log(URI, " does not exist...");
                     console.log(err)
                     process.exit(1);
                 }

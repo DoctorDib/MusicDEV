@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import Button from '@material-ui/core/Button';
+import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
 import SpotifyIcon from 'mdi-react/SpotifyIcon';
 
@@ -29,21 +30,17 @@ class Template extends React.Component {
 
         return (
             <section className={classes.body}>
-                <section className={classes.header} style={{height: '100%', backgroundColor: '#252525'}}>
+                <Paper className={classes.header} square style={{height: '40%', backgroundColor: '#252525'}}>
                     <section className={classes.titleContainer} style={{marginTop: '1em', marginBottom: '1em'}}>
                         <Typography variant='display4' className={classes.title} style={{font: '150px'}}> MusicDEV </Typography>
                         <Typography variant='display1' className={classes.titleChild}> Finding the right music </Typography>
                     </section>
-
-                    <section style={{display: 'flex', flexDirection: 'row'}}>
-                        <Button href={'/auth/spotify'} color={'secondary'} variant='raised' size="large" className={classes.mainButton}>
-                            <div style={{width: '25%'}}><SpotifyIcon/></div>
-                            <div style={{width: '100%'}}><Typography>Login</Typography></div>
-                        </Button>
-                        <Button color={'secondary'} variant='raised' size="large" className={classes.mainButton} onClick={this.scrollTop}>About</Button>
-                    </section>
+                    
+                </Paper>
+                <section style={{display: 'flex', flexDirection: 'row'}}>
+                    <Button href={'/auth/spotify'} color={'secondary'} variant='raised' size="large" className={classes.mainButton}><SpotifyIcon style={{marginRight: '0.5em'}}/>Login</Button>
+                    <Button color={'secondary'} variant='raised' size="large" className={classes.mainButton} onClick={this.scrollTop}>About</Button>
                 </section>
-
                 <About />
             </section>
         );

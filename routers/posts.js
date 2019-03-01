@@ -40,8 +40,12 @@ module.exports = function () {
             router.get('/clearHistory', this.clearHistory);
 
             router.post('/refreshToken', this.refreshToken);
+            router.post('/blacklistManager', this.blacklistManager);
         },
 
+        blacklistManager: function(req, res) {
+
+        },
         clearHistory: function(req, res) {
             mongo('update', 'users', { identifier: { id: req.user.id }, data: { history: []} } );
             res.json({success: true})
@@ -54,7 +58,6 @@ module.exports = function () {
         recommendingMusic: function(req, res) {
             let tmpGenres=[];
             let states = JSON.parse(req.query.genreStates);
-
 
             if (Object.keys(states).length) {
                 // Grabs a list of active genres selected by the user.
@@ -157,9 +160,11 @@ module.exports = function () {
             });
         },
         grabPlaylistGenre: function(req, res) {
+            console.log("Grabbing playlist genres")
             mongo('update', 'users', { identifier: { id: req.user.id }, data: { activePlaylists: req.query.playlists } } );
             mongo('grabOne', 'users', { identifier: {id: req.user.id } }, (resp) => {
                 trainer("grabURI", req.user.id, resp.records.spotify.access_token, req.query.playlists, () => {
+                    console.log("DONE")
                     res.json({success: true});
                 });
             });

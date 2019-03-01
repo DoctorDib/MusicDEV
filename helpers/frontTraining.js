@@ -49,18 +49,21 @@ module.exports = (func, username, accessToken, playlists, callback) => {
             sort: function (memory, trackInfo, callback) {
                 let resp = {};
                 async.eachOfSeries(memory, function (memoryValue, memoryKey, memoryCallback) {
-                    resp[memoryValue.id] = {
-                        id: memoryValue.id,
-                        name: trackInfo[memoryValue.id],
-                        features: featureManager(memoryValue.features, false)
-                    };
 
-                    if (memoryKey+1 >= memory.length) {
-                        callback(resp);
-                    } else {
-                        memoryCallback();
-                    }
-                })
+                    featureManager(memoryValue.features, false, newFeatures => {
+                        resp[memoryValue.id] = {
+                            id: memoryValue.id,
+                            name: trackInfo[memoryValue.id],
+                            features: newFeatures
+                        };
+
+                        if (memoryKey+1 >= memory.length) {
+                            callback(resp);
+                        } else {
+                            memoryCallback();
+                        }
+                    });
+                });
             },
             grabURI: function (username, playlists, callback) {
                 let memory = [];
@@ -69,7 +72,6 @@ module.exports = (func, username, accessToken, playlists, callback) => {
                 async.eachOfSeries(playlists, function (playlistValue, playlistKey, playlistCallback) {
                     let format = playlistValue.split(':');
                     format = format[format.length-1];
-
                     //grabTracks
                     spotify("grabTracksFromPlaylist", {username: username, access_token: accessToken, playlist: format}, (trackURIList) => {
                         let tmpTrackList = [];
@@ -78,9 +80,6 @@ module.exports = (func, username, accessToken, playlists, callback) => {
 
                              if (trackKey+1 >= trackURIList.length){
                                  let choppedArray = chunk(tmpTrackList, 50)
-
-                                 console.log(choppedArray.length)
-
                                  async.eachOfSeries(choppedArray, function (uriValues, uriKey, uriCallback) {
                                      spotify("grabTrackInfo", {username: username, access_token: accessToken, tracks: uriValues}, (respTrackInfo) => {
 
@@ -96,6 +95,7 @@ module.exports = (func, username, accessToken, playlists, callback) => {
                                                  if (playlistKey+1 >= playlists.length){
                                                      run.sort(memory, trackInfo, (sortedObject) => {
                                                          run.grabGenreUserPlaylist(username, sortedObject, () => {
+                                                             console.log("FIN")
                                                              callback("finished")
                                                          });
                                                      });

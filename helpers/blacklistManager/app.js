@@ -5,56 +5,92 @@ const config = require('../../config/config');
 const MongoClient = require('mongodb').MongoClient;
 const SpotifyWebApi = require('spotify-web-api-node');
 const Spotify = require('machinepack-spotify');
+const async = require('async');
 
-const spotifyApi = new SpotifyWebApi({
-    clientId : config.spotify.client_id,
-    clientSecret : config.spotify.client_secret,
-    redirectUri : config.spotify.redirect_uri
-});
+const axios = require('axios');
+const later = require('later');
 
-MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.mongo_settings.name}`, function (err, database) {
+MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.mongo_settings.name}`, (err, database) => {
     if (err) return console.error(err);
     const db = database.db(config.mongo_settings.name);
 
     let processing = false;
     let useCollection = db.collection('blacklist');
+    let interval;
 
-    function finished() {
-        // relearn
-        // Once complete replace with old database
+    function finished(failedTracks) {
+        async.eachOfSeries(config.recommendation_config.genres, (genre, genreKey, genreCallback) => {
+            neo('masterLearn', {genre: genre}, () => {
+                if(genreKey+1 >= config.recommendation_config.genres.length) {
+                    console.log("Done")
+                    console.log('finished')
+
+                    db.collection("blacklist").update({blacklist: {$exists: true}}, {$set: {"blacklist": failedTracks} }, {upsert: true});
+                } else {
+                    genreCallback();
+                }
+            });
+        });
     }
 
     function processTracks(tracks) {
-        // Loops Async through tracks
-        // Add all tracks as nodes to Neo4j database
-        // call finished();
+        let index=0, totalLength=Object.keys(tracks).length;
+        async.eachOfSeries(tracks, (track, trackKey, trackCallback) => {
+            index++;
+            // Removing unwanted data
+            delete track.success;
+            console.log(track)
 
+            neo('create', {params: track}, res => {
+                if (res.success || res.error === 'Node already exists!') {
+                    // Removing track if it has been successfully added to database
+                    delete tracks[trackKey];
+                }
 
+                if (index >= totalLength) {
+                    finished(tracks);
+                } else {
+                    trackCallback();
+                }
+            });
+        });
     }
 
-    function tick() {
-        let hour = new Date().getHours();
-        let mins = new Date().getMinutes();
+    let blacklistInterval = 14 /*Days*/; // 2 weeks
+    var textSched =  later.parse.text('every 5 seconds');
+
+    function heartbeat(dev) {
+        let day=new Date().getDay();
 
         // hours and mins = 0 (midnight
-        if (hour === 0 && mins === 0 && !processing) {
+        if ((day % blacklistInterval === 0 && !processing) || dev) {
+            //axios.post('/blacklistManager'); // TODO - SENDING A WARNING MESSAGE TO USERS
             processing = true;
 
-            useCollection.find({id: "blacklist"}, (err, blacklist) => {
-                if (Object.keys(blacklist).length) {
-                    processTracks(blacklist);
+            useCollection.findOne({}, (err, records) => {
+                if (err) console.log(err);
+                console.log(records.blacklist);
+
+                if (Object.keys(records.blacklist).length) {
+                    processTracks(records.blacklist);
                 } else {
                     console.log("No tracks have been blacklisted... continue.")
                 }
             });
-        }
-
-        if (hour === 0 && mins === 1) {
+        } else {
             processing = false; // Resetting for the next usage.
         }
     }
 
-    setInterval(()=> {
-        tick();
-    }, config.blacklist_options.tick_interval * 1000);
+    if (process.argv[2] === "dev") { // DEV TOOL
+        console.log("Dev tool active")
+        heartbeat(true);
+    } else { // DEFAULT
+        console.log("Started default")
+        console.log(textSched)
+        t = later.setInterval(()=> {
+            console.log("heartbeat...")
+            heartbeat(false);
+        }, textSched);
+    }
 });

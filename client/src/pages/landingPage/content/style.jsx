@@ -11,8 +11,12 @@ export default theme => ({
         userSelect: 'none',
         width: '16em',
         display: 'flex',
+        backgroundColor: '#1DB954',
+        color: '#FFFFFF',
     },
     chip: {
         margin: theme.spacing.unit,
     },
+
+
 });

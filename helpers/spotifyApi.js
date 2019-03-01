@@ -3,6 +3,7 @@ const client_id = keys.spotify.client_id;
 const client_secret = keys.spotify.client_secret;
 const redirect_uri = keys.spotify.spotify_callback;
 
+const mongo = require('./mongo');
 const featureManager = require('./musicTool/helpers/trackFeatureManager');
 const async = require('async');
 
@@ -47,7 +48,7 @@ const run = function(command, data, callback) {
                     });
                 }, function(err) {
                     if(err.statusCode === 404){
-                        console.log(data.uri + " does not exist...");
+                        console.log(data.uri, " does not exist...");
                         console.log(err)
                         process.exit(1);
                     }
@@ -56,42 +57,46 @@ const run = function(command, data, callback) {
             break;
         case 'grabFeatures':
             let tmpMemory = [];
-            spotifyApi[data.username].getAudioFeaturesForTracks([data.trackURIList])
-                .then(function(data) {
-                    async.eachOfSeries(data.body.audio_features, function (value, key, trackLoopCallback) {
-                        if(!value){
-                            if(key+1 >= data.body.audio_features.length){
-                                callback(tmpMemory);
-                            } else {
-                                trackLoopCallback();
-                            }
-                        } else {
-                            let features = featureManager(value, true);
-
-                            if (data.type) {
-                                // Formatting for the Nerual networking process
-                                features = {
-                                    input: features,
-                                    output: {
-                                        [data.type]: 1
-                                    }
+            mongo('grabOne', 'masterMusicCats', {identifier: {}}, records => { // TODO - FIND A MORE EFFICIENT WAY... SEEMS DOES EFFECT THE SPEED...
+                console.log(records)
+                spotifyApi[data.username].getAudioFeaturesForTracks([data.trackURIList])
+                    .then(function(data) {
+                        async.eachOfSeries(data.body.audio_features, function (value, key, trackLoopCallback) {
+                            if(!value){
+                                if(key+1 >= data.body.audio_features.length){
+                                    callback(tmpMemory);
+                                } else {
+                                    trackLoopCallback();
                                 }
                             } else {
-                                features.id = value.id;
-                            }
-                            tmpMemory.push({id: value.id, features: features});
 
-                            if(key+1 >= data.body.audio_features.length){
-                                callback(tmpMemory);
-                            } else {
-                                trackLoopCallback();
+                                featureManager(value, true, features => {
+                                    if (data.type) {
+                                        // Formatting for the Nerual networking process
+                                        features = {
+                                            input: features,
+                                            output: {
+                                                [data.type]: 1
+                                            }
+                                        }
+                                    } else {
+                                        features.id = value.id;
+                                    }
+                                    tmpMemory.push({id: value.id, features: features});
+
+                                    if(key+1 >= data.body.audio_features.length){
+                                        callback(tmpMemory);
+                                    } else {
+                                        trackLoopCallback();
+                                    }
+                                }, records.records.counter);
                             }
-                        }
+                        });
+                    }, function(err) {
+                        //console.log(trackURIList)
+                        console.log("PLAYLIST TRACKS ERROR: " + err);
                     });
-                }, function(err) {
-                    //console.log(trackURIList)
-                    console.log("PLAYLIST TRACKS ERROR: " + err);
-                });
+            });
             break;
         case 'grabSingleFeature':
             spotifyApi[data.username].getAudioFeaturesForTrack(data.uri)

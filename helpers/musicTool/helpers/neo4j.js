@@ -23,11 +23,13 @@ function featuresString() {
         a["tempo"]
     ]*/ // EXPECTED FORMAT
 
-    let finalString = '';
+    let finalString = '', index=1;
     for (let feature in config.track_features) {
+        index ++;
         if (config.track_features.hasOwnProperty(feature)) {
             if (config.track_features[feature]) {
-                finalString = finalString + ` a["${feature}"],`;  // TODO POSSIBLE ISSUE WITH THE COMMA
+                let string = index >= Object.keys(config.track_features).length ? ` a["${feature}"]` : ` a["${feature}"],`;
+                finalString = finalString + string;  // TODO POSSIBLE ISSUE WITH THE COMMA
             }
         }
     }
@@ -36,10 +38,9 @@ function featuresString() {
 }
 
 const run = (func, data, callback) => {
-    let query, properties;
+    let query;
     switch (func) {
         case 'create':
-            console.log(data)
             let song = data.params;
 
             console.log("================================")
@@ -47,33 +48,34 @@ const run = (func, data, callback) => {
             console.log(song.genre)
             console.log("================================")
 
-            properties = featureManager(song.features.hasOwnProperty('features') ? song.features.features: song.features, false);
-            properties.name =  JSON.stringify(song.name);
-            properties.id =  song.id;
-            properties.genre =  song.genre;
+            featureManager(song.features.hasOwnProperty('features') ? song.features.features: song.features, false, properties => {
+                properties.name =  song.name;
+                properties.id =  song.id;
+                properties.genre =  song.genre;
 
-            run('exists', {id: song.id, genre: song.genre}, resp => {
-                if (resp.success) {
-                    if (!resp.exist) {
-                        db.cypher({
-                            query: `MATCH(a:${song.genre}_Genre {id: "Genre"}) CREATE (a2:${song.genre} ${JSON.stringify(properties)})-[:GENRE_IS]->(a)`,
-                        }, function (err, returnedData) {
-                            console.log("Finished new training")
-                            if (err) {
-                                console.log(err)
-                            } else {
-                                console.log("h")
-                                callback({success: true, data: returnedData, oldData: data});
-                            }
-                        });
+                run('exists', {id: song.id, genre: song.genre}, resp => {
+                    if (resp.success) {
+                        if (!resp.exist) {
+
+                            db.cypher({
+                                query: `MATCH(a:${song.genre}_Genre {id: "Genre"}) CREATE (a2: ${song.genre} {properties})-[:GENRE_IS]->(a)`,
+                                params: { properties: properties }
+                            }, function (err, returnedData) {
+                                if (err) {
+                                    console.log(err)
+                                } else {
+                                    console.log("h")
+                                    callback({success: true, data: returnedData, oldData: data});
+                                }
+                            });
+                        } else {
+                            callback({success: false, error: "Node already exists!", function: "Checking if the data exists... prt2"})
+                        }
                     } else {
-                        callback({success: false, error: "Node already exists!", function: "Checking if the data exists... prt2"})
+                        callback({ success: false, error: resp.error, function: "Checking if the data exists..." })
                     }
-                } else {
-                    callback({ success: false, error: resp.error, function: "Checking if the data exists..." })
-                }
+                });
             });
-
             break;
         case 'masterLearn':
 
@@ -99,6 +101,10 @@ const run = (func, data, callback) => {
 
             db.cypher({
                 query: query,
+                params: {
+                    genre: data.genre,
+                    stringFeatures: featuresString()
+                }
             }, function (err, data) {
                 if (err) {
                     console.log(err)
@@ -110,14 +116,8 @@ const run = (func, data, callback) => {
             });
             break;
         case 'masterDelete':
-            query = `MATCH (n)
-                OPTIONAL MATCH (n)-[r]-()
-                DELETE n,r
-                RETURN true`;
-            console.log("Deletion stated...")
-
             db.cypher({
-                query: query,
+                query: 'MATCH (n) OPTIONAL MATCH (n)-[r]-() DELETE n,r RETURN true',
             }, function (err, data) {
                 if (err) {
                     callback({success: false, error: err});
@@ -128,25 +128,21 @@ const run = (func, data, callback) => {
             });
             break;
         case 'initialise':
-            query = `CREATE (a:${data.id} {id: ${JSON.stringify(data.id)}, name: ${JSON.stringify(data.id)}}) RETURN a`;
+            query = ``;
             db.cypher({
-                query: query,
+                query: `CREATE (a:${data.id} {id: {id}, name: {id}}) RETURN a`,
+                params: { id: data.id }
             }, function (err) {
                 if (err) {
                     console.log(err)
                     //callback({success: false, error: err});
                 } else {
-
                     async.eachOfSeries(data.genres, function (genre, genreKey, genreCallback) {
-                        /*
-                        MATCH (a:Person),(b:Person)
-                        WHERE a.name = 'A' AND b.name = 'B'
-                        CREATE (a)-[r:RELTYPE]->(b)
-                        RETURN type(r)*/
-                        query = `MATCH (a:Spotify) CREATE (a2:${genre}_Genre {id: 'Genre', name: ${JSON.stringify(genre)}})-[:FROM]->(a)`;
-
                         db.cypher({
-                            query: query,
+                            query: `MATCH (a:Spotify) CREATE (a2:${genre}_Genre {id: 'Genre', name: {genre}})-[:FROM]->(a)`,
+                            params: {
+                                genre: genre
+                            }
                         }, function (err) {
                             if (err) {
                                 console.log(err)
@@ -163,13 +159,12 @@ const run = (func, data, callback) => {
             });
             break;
         case 'exists':
-            query = `MATCH (a:${data.genre} {id: ${JSON.stringify(data.id)}}) RETURN a`;
-
             db.cypher({
-                query: query,
+                query: `MATCH (a:${data.genre} {id: {id}}) RETURN a`,
+                params: { id: data.id }
             }, function (err, data) {
                 if (err) {
-                    console.log("NEO Exist function error: ", err)
+                    console.log("NEO Exist function error: ", err);
                     callback({success: false, error: err});
                 } else {
                     callback({success: true, exist: Boolean(data.length)})
@@ -177,25 +172,24 @@ const run = (func, data, callback) => {
             });
             break;
         case 'learn':
-            properties = featureManager(data.song.features, false);
-            properties.id = data.song.id;
-            properties.name = data.song.name;
-            properties.genre = data.song.genre;
+            featureManager(data.song.features, false, properties => {
+                properties.id = data.song.id;
+                properties.name = data.song.name;
+                properties.genre = data.song.genre;
 
-            // CREATE NEW NODE
-            query = `CREATE (a:${data.song.genre} ${JSON.stringify(properties)} ) RETURN a`;
-            console.log(`Create query = ` + query)
+                db.cypher({
+                    query: `CREATE (a:${data.song.genre} {properties}) RETURN a`,
+                    params: {
+                        properties: properties,
+                    }
+                }, function (err) {
+                    if (err) return console.log("Creating node error: " + err);
+                    console.log("Created node successfully")
 
-            db.cypher({
-                query: query,
-            }, function (err) {
-                if (err) return console.log("Creating node error: " + err);
-                console.log("Created node successfully")
-
-                console.log("Learning")
-                query = `
+                    console.log("Learning")
+                    query = `
                     MATCH (a:${data.genre})
-                    WITH id(a) as id, ${featuresString()} as weights
+                    WITH id(a) as id, {stringList} as weights
                     
                     WITH {item: id, weights: weights} as userData
                     WITH collect(userData) as data
@@ -211,42 +205,44 @@ const run = (func, data, callback) => {
                     
                     RETURN true`;
 
-                console.log("Relearning...")
-                db.cypher({
-                    query: query,
-                }, function (err) {
-                    if (err) callback({success: false, error: err});
-                    console.log("Done")
+                    console.log("Relearning...")
                     db.cypher({
-                        query: recommendQuery,
-                    }, function (err, data) {
-                        if (err) {
-                            callback({success: false, error: err});
-                        } else {
-                            callback({success: true, data: data});
+                        query: query,
+                        params: {
+                            genre: data.genre,
+                            stringList: featuresString()
                         }
+                    }, function (err) {
+                        if (err) callback({success: false, error: err});
+                        console.log("Done")
+                        db.cypher({
+                            query: recommendQuery,
+                        }, function (err, data) {
+                            if (err) {
+                                callback({success: false, error: err});
+                            } else {
+                                callback({success: true, data: data});
+                            }
+                        });
                     });
                 });
             });
             break;
         case 'recommend':
-            properties = featureManager(data.song.features, false);
-            query = `MATCH (a:${data.genre} ${JSON.stringify(properties)})-[:SIMILAR]-(returnedNode) RETURN returnedNode`;
-
-            console.log("=================================")
-            console.log(query)
-
-            db.cypher({
-                query: query,
-            }, function (err, data) {
-                console.log("response?")
-                console.log(data)
-                if (err || !data.length) {
-                    console.log(err)
-                    callback({success: false, error: err});
-                } else {
-                    callback({success: true, data: data});
-                }
+            featureManager(data.song.features, false, properties => {
+                db.cypher({
+                    query: `MATCH (a:${data.genre} {properties})-[:SIMILAR]-(returnedNode) RETURN returnedNode`,
+                    params: { properties: properties },
+                }, function (err, data) {
+                    console.log("response?")
+                    console.log(data)
+                    if (err || !data.length) {
+                        console.log(err)
+                        callback({success: false, error: err});
+                    } else {
+                        callback({success: true, data: data});
+                    }
+                });
             });
             break;
     }

@@ -94,9 +94,10 @@ module.exports = function (spotifyApi, data, callback) {
 
         console.log("Start")
 
-        db.collection("blacklist").findOne({blacklist: {$exists: true}}, blacklistData => {
+        db.collection("blacklist").findOne({blacklist: {$exists: true}}, (err, blacklistRecords) => {
+            if (err) console.log(err);
 
-            let newBlackList = blacklistData || {};
+            let newBlackList = blacklistRecords.blacklist || {};
 
             async.eachOfSeries(data.genres, function (genre, genreKey, genreCallback) {
                 let genreCollection = data.listenFunction ? data.genres : config.recommendation_config.activitiesMap[genre] ;
@@ -127,115 +128,63 @@ module.exports = function (spotifyApi, data, callback) {
                     }
 
                     async.eachOfSeries(ewwArray, function (quantity, quantityKey, quantityCallback) {
-                        let random = Math.floor(Math.random() * userPlaylist.length);
-                        if (indexSelections[random]){
-                            // Song has already been selected
-                            if (Object.keys(indexSelections).length >= userPlaylist.length) {
-                                if (quantityKey+1 >= ewwArray.length){
-                                    if (genreKey+1 >= data.genres.length ) {
 
-                                        // Finished
-                                        db.collection("blacklist").update({blacklist: {$exists: true}}, {$set: {"blacklist": newBlackList} }, {upsert: true});
-                                        if (JSON.parse(data.savePlaylist) && finalReturn.length) {
-                                            saveRecommendedMusic(data.username, finalReturn, () => {
-                                                callback({success: !warningFlag, savePlaylist: data.savePlaylist, successSongs: finalReturn, failedSongs: errorReturn, songUsed: userPlaylist[random]});
-                                            });
-                                        } else {
-                                            callback({success: !warningFlag, savePlaylist: data.savePlaylist, successSongs: finalReturn, failedSongs: errorReturn, songUsed: userPlaylist[random]});
-                                        }
-                                    } else {
-                                        genreCallback()
-                                    }
-                                } else {
-                                    quantityCallback();
-                                }
-                            } else {
-                                // Not enough songs in user playlist to grab recommendations
-                                if (quantityKey+1 >= ewwArray.length) {
-                                    if (genreKey+1 >= data.genres.length ) {
-                                        callback({
-                                            success: !warningFlag,
-                                            savePlaylist: data.savePlaylist,
-                                            successSongs: finalReturn,
-                                            failedSongs: errorReturn,
-                                            error: `Please add more playlists to have ${ewwArray.length} songs.`
+                        function returnData() {
+                            callback({success: !warningFlag, savePlaylist: data.savePlaylist, successSongs: finalReturn, failedSongs: errorReturn, songUsed: userPlaylist[random]});
+                        }
+
+                        function finishCheck() {
+                            if (quantityKey+1 >= ewwArray.length){
+                                if (genreKey+1 >= data.genres.length ) {
+                                    // Finished
+                                    db.collection("blacklist").update({blacklist: {$exists: true}}, {$set: {"blacklist": newBlackList} }, {upsert: true});
+                                    if (JSON.parse(data.savePlaylist) && finalReturn.length) {
+                                        saveRecommendedMusic(data.username, finalReturn, () => {
+                                            returnData();
                                         });
                                     } else {
-                                        genreCallback();
+                                        returnData();
                                     }
                                 } else {
-                                    quantityCallback();
+                                    genreCallback();
                                 }
+                            } else {
+                                quantityCallback();
                             }
+                        }
+
+                        let random = Math.floor(Math.random() * userPlaylist.length); // TODO - FIND OUT WHY QUANTITY SOMETIMES DOES NOT WORK...
+                        let selectedSong =  userPlaylist[random];
+                        if (indexSelections[random] || newBlackList.hasOwnProperty(selectedSong.id)){
+                            /*if (Object.keys(indexSelections).length >= userPlaylist.length) { // TODO - ADD ERROR MANAGEMENT
+                                finishCheck();
+                            } else {
+                                // Not enough songs in user playlist to grab recommendations
+
+                            }*/
+
+                            // Song has already been selected or song is in the black list...
+                            finishCheck();
                         } else {
                             indexSelections[random] = true;
-                            let selectedSong =  userPlaylist[random];
-
-                            console.log(userPlaylist[random])
-                            console.log("Started learning from:")
-
-                            console.log(selectedSong);
 
                             neo('exists', {genre: userPlaylist[random].genre, id: selectedSong.id}, existsResp => { // TODO - FIND OUT IF THIS IS CORRECT
                                 if (existsResp.success) {
                                     if (existsResp.exist) {
-                                        console.log(2)
                                         neo('recommend', {genre: userPlaylist[random].genre, song: selectedSong}, resp => {
-
-                                            console.log(resp.data)
-
                                             let randomSelection = Math.floor(Math.random() * resp.data.length);
-                                            console.log("===========")
-                                            console.log(resp.data[randomSelection])
-                                            console.log(randomSelection)
                                             finalReturn.push(resp.data[randomSelection].returnedNode.properties);
-                                            if (quantityKey+1 >= ewwArray.length){
-                                                console.log(4)
-                                                if (genreKey+1 >= data.genres.length ) {
-                                                    console.log(5)
-                                                    // Finished
-                                                    db.collection("blacklist").update({blacklist: {$exists: true}}, {$set: {"blacklist": newBlackList} }, {upsert: true});
-                                                    if (JSON.parse(data.savePlaylist) && finalReturn.length) {
-                                                        saveRecommendedMusic(data.username, finalReturn, () => {
-                                                            console.log("Callback")
-                                                            callback({success: !warningFlag, savePlaylist: data.savePlaylist, successSongs: finalReturn, failedSongs: errorReturn, songUsed: userPlaylist[random]});
-                                                        });
-                                                    } else {
-                                                        console.log("failed?")
-                                                        callback({success: !warningFlag, savePlaylist: data.savePlaylist, successSongs: finalReturn, failedSongs: errorReturn, songUsed: userPlaylist[random]});
-                                                    }
-                                                } else {
-                                                    console.log(1)
-                                                    genreCallback();
-                                                }
-                                            } else {
-                                                console.log(2)
-                                                console.log(">",ewwArray.length)
-                                                console.log("<",quantityKey+1)
-                                                quantityCallback();
-                                            }
+                                            finishCheck();
                                         });
                                     } else {
-                                        console.log(6)
                                         warningFlag = true; // There is at least one error existing
-                                        console.log("HERE")
                                         selectedSong.success = false;
                                         errorReturn.push(selectedSong);
                                         newBlackList[selectedSong.id] = newBlackList[selectedSong.id] || selectedSong;
-                                        if (quantityKey+1 >= ewwArray.length){
-                                            if (genreKey+1 >= data.genres.length ) {
-                                                // Finished
-                                                db.collection("blacklist").update({blacklist: {$exists: true}}, {$set: {"blacklist": newBlackList} }, {upsert: true});
-                                                callback({success: !warningFlag, successSongs: finalReturn, failedSongs: errorReturn, songUsed: userPlaylist[random]})
-                                            } else {
-                                                genreCallback()
-                                            }
-                                        } else {
-                                            quantityCallback();
-                                        }
+                                        finishCheck();
                                     }
                                 } else {
-                                    callback({success: false, error: respResp.error})
+                                    callback({success: false, error: existsResp.error})
                                 }
                             });
                         }

@@ -178,6 +178,7 @@ class Template extends React.Component {
                         playlists: tmpArr
                     }})
                     .then(resp => {
+                        console.log(">>>>", resp)
                         if(resp.data.success){
                             console.log("Closing window")
                             this.setState({
