@@ -112,7 +112,6 @@ module.exports = function (spotifyApi, data, callback) {
                 ).toArray(function(err, docs) {
                     if (err) console.log(err)
                     console.log(docs);
-                    console.log("Results: ", docs[0].playlist)
 
                     let userPlaylist = [], userFeatureList = [], warningFlag=false;
                     for (let index in docs) {

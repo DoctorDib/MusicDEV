@@ -30,7 +30,7 @@ class Template extends React.Component {
 
         return (
             <section className={classes.body}>
-                <Paper className={classes.header} square style={{height: '40%', backgroundColor: '#252525'}}>
+                <Paper className={classes.header} square style={{height: '85%', backgroundColor: '#252525'}}>
                     <section className={classes.titleContainer} style={{marginTop: '1em', marginBottom: '1em'}}>
                         <Typography variant='display4' className={classes.title} style={{font: '150px'}}> MusicDEV </Typography>
                         <Typography variant='display1' className={classes.titleChild}> Finding the right music </Typography>
@@ -38,8 +38,10 @@ class Template extends React.Component {
                     
                 </Paper>
                 <section style={{display: 'flex', flexDirection: 'row'}}>
-                    <Button href={'/auth/spotify'} color={'secondary'} variant='raised' size="large" className={classes.mainButton}><SpotifyIcon style={{marginRight: '0.5em'}}/>Login</Button>
-                    <Button color={'secondary'} variant='raised' size="large" className={classes.mainButton} onClick={this.scrollTop}>About</Button>
+                    <div style={{display:'flex', marginRight: 'auto', marginLeft: 'auto'}}>
+                        <Button href={'/auth/spotify'} color={'secondary'} variant='raised' size="large" className={classes.mainButton}><SpotifyIcon style={{marginRight: '0.5em'}}/>Login</Button>
+                        <Button color={'secondary'} variant='raised' size="large" className={classes.mainButton} onClick={this.scrollTop}>About</Button>
+                    </div>
                 </section>
                 <About />
             </section>

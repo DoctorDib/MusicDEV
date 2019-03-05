@@ -3,11 +3,12 @@ const client_id = keys.spotify.client_id;
 const client_secret = keys.spotify.client_secret;
 const redirect_uri = keys.spotify.spotify_callback;
 
-const mongo = require('./mongo');
-const featureManager = require('./musicTool/helpers/trackFeatureManager');
 const async = require('async');
-
 const SpotifyWebApi = require('spotify-web-api-node');
+
+const mongo = require('./mongo');
+//const defaultPlaylistImage = require('img/defaultPlaylist');
+const featureManager = require('./musicTool/helpers/trackFeatureManager');
 
 let timer = 100, coolDown = 0;
 
@@ -172,7 +173,8 @@ const run = function(command, data, callback) {
                             return_data.body.items.forEach(function(element){
                                 playlist.push({
                                     name: element.name,
-                                    id: element.id
+                                    image: element.images.length ? element.images[0].url : 'img/defaultPlaylist.png',
+                                    id: element.id,
                                 });
                             });
                             return playlist;

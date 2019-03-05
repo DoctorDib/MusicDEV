@@ -83,14 +83,14 @@ class Template extends React.Component {
                     this.state.buttonOptions.active ?
                         <Button
                             onClick={this.state.buttonOptions.title === "Refresh" ? this.refresh : null}
-                        >{this.state.buttonOptions.title}</Button>
+                        > {this.state.buttonOptions.title} </Button>
                         : null
                 ]}
                 message={
                     <section>
                         <span className={classes.warningSnackbar}>
                             {this.state.warningError ? <ErrorIcon style={{fontSize: '20'}}/> : <WarningIcon style={{fontSize: '20'}}/>}
-                            <Typography style={{marginLeft: '10px'}} color="secondary">{this.state.warningMessage}</Typography>
+                            <Typography style={{marginLeft: '10px'}} color="secondary"> {this.state.warningMessage} </Typography>
                         </span>
                     </section>
                 }

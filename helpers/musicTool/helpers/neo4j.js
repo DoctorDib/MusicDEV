@@ -37,13 +37,26 @@ function featuresString() {
     return `[${finalString}]`;
 }
 
+function propertyManager(properties) {
+    let final = '', index=0;
+
+    for (let feature in properties) {
+        index++;
+        if (properties.hasOwnProperty(feature)) {
+            let comma = index >= Object.keys(properties).length ? '' : ',';
+            final = final += `${feature}: ${properties[feature]}${comma}`
+        }
+    }
+
+    return `{${final}}`;
+}
+
 const run = (func, data, callback) => {
     let query;
     switch (func) {
         case 'create':
             let song = data.params;
 
-            console.log("================================")
             console.log(song)
             console.log(song.genre)
             console.log("================================")
@@ -58,13 +71,12 @@ const run = (func, data, callback) => {
                         if (!resp.exist) {
 
                             db.cypher({
-                                query: `MATCH(a:${song.genre}_Genre {id: "Genre"}) CREATE (a2: ${song.genre} {properties})-[:GENRE_IS]->(a)`,
+                                query: `MATCH(a:${song.genre}_Genre {id: "Genre"}) CREATE (a2:${song.genre} {properties})-[:GENRE_IS]->(a)`,
                                 params: { properties: properties }
                             }, function (err, returnedData) {
                                 if (err) {
                                     console.log(err)
                                 } else {
-                                    console.log("h")
                                     callback({success: true, data: returnedData, oldData: data});
                                 }
                             });
@@ -160,8 +172,7 @@ const run = (func, data, callback) => {
             break;
         case 'exists':
             db.cypher({
-                query: `MATCH (a:${data.genre} {id: {id}}) RETURN a`,
-                params: { id: data.id }
+                query: `MATCH (a:${data.genre} {id: "${data.id}"}) RETURN a`,
             }, function (err, data) {
                 if (err) {
                     console.log("NEO Exist function error: ", err);
@@ -231,16 +242,13 @@ const run = (func, data, callback) => {
         case 'recommend':
             featureManager(data.song.features, false, properties => {
                 db.cypher({
-                    query: `MATCH (a:${data.genre} {properties})-[:SIMILAR]-(returnedNode) RETURN returnedNode`,
-                    params: { properties: properties },
-                }, function (err, data) {
-                    console.log("response?")
-                    console.log(data)
-                    if (err || !data.length) {
+                    query: `MATCH (a:${data.genre} ${propertyManager(properties)})-[:SIMILAR]-(returnedNode) RETURN returnedNode`,
+                }, function (err, respData) {
+                    if (err || !respData.length) {
                         console.log(err)
                         callback({success: false, error: err});
                     } else {
-                        callback({success: true, data: data});
+                        callback({success: true, data: respData});
                     }
                 });
             });

@@ -38,13 +38,32 @@ module.exports = function () {
             router.get('/managePlaylist', this.managePlaylist);
             router.get('/grabSavedPlaylists', this.grabSavedPlaylists);
             router.get('/clearHistory', this.clearHistory);
+            router.get('/createPlaylist', this.createPlaylist);
+            router.get('/deleteAccount', this.deleteAccount);
 
             router.post('/refreshToken', this.refreshToken);
-            router.post('/blacklistManager', this.blacklistManager);
         },
 
-        blacklistManager: function(req, res) {
+        deleteAccount: function(req, res) {
+            if (req.query.name === req.user.id) {
+                mongo('remove', 'users', { identifier: {id: req.user.id }});
+                res.redirect('logout'); // TODO - DOES NOT SEEM TO REDIRECT FOR SOME UNKNOWN REASON...
+            } else {
+                res.json({success: false, error: "Could not validate"})
+            }
+        },
+        createPlaylist: function(req, res) {
+            mongo('grabOne', 'users', { identifier: {id: req.user.id } }, user => {
+                spotify('createPlaylist', {username: req.user.id, playlistOptions: user.records.playlistOptions}, (resp) => {
+                    console.log(resp)
+                    let newPlaylistOptions = user.records.playlistOptions;
+                    newPlaylistOptions.is_active = true;
+                    newPlaylistOptions.id = resp.data.body.id;
 
+                    mongo('update', 'users', {identifier: {id: req.user.id}, data: {playlistOptions: newPlaylistOptions}});
+                    res.json({success: true, playlistOptions: newPlaylistOptions});
+                });
+            });
         },
         clearHistory: function(req, res) {
             mongo('update', 'users', { identifier: { id: req.user.id }, data: { history: []} } );
@@ -173,7 +192,6 @@ module.exports = function () {
             mongo('grabOne', 'users', { identifier: { id: req.user.id }, options: { activePlaylists: { $exists: true } } }, resp => {
                 if (resp.records !== null) {
                     if (resp.records.activePlaylists !== null) {
-                        console.log("Sending back: ", resp.records.activePlaylists);
                         res.json({
                             success: true,
                             playlists: resp.records.activePlaylists
@@ -202,6 +220,7 @@ module.exports = function () {
                                     new_user: !resp.records.hasOwnProperty('playlist'),
                                     access_token: resp.records.spotify.access_token,
                                     privatePlaylist: resp.records.playlistOptions.is_private,
+                                    playlistActive: resp.records.playlistOptions.is_active,
                                     playlistName: resp.records.playlistOptions.name,
                                     savedTracks: resp.records.playlistOptions.savedTracks || [],
                                     activePlaylists: resp.records.activePlaylists,
@@ -261,11 +280,11 @@ module.exports = function () {
                                 spotify("deletePlaylist", {username: req.user.id, playlistOptions: resp.records.playlistOptions}, data => {
                                     if(data.success){
                                         let newPlaylistOptions = resp.records.playlistOptions;
-                                        newPlaylistOptions.name = '';
+                                        newPlaylistOptions.name = 'MusicDEV Recommendation';
                                         newPlaylistOptions.id = '';
                                         newPlaylistOptions.is_private = true;
                                         newPlaylistOptions.is_active = false;
-                                        mongo('update', 'users', { identifier: { id: req.user.id }, data: { playlistOptions: req.query.playlists } } );
+                                        mongo('update', 'users', { identifier: { id: req.user.id }, data: { playlistOptions: newPlaylistOptions } } );
                                         console.log("Delete playlist")
                                         res.json(data);
                                     }

@@ -36,6 +36,7 @@ class Template extends React.Component {
             activePlaylists: [],
             newUser: false,
             privatePlaylist: false,
+            playlistActive: false,
             history: [],
 
             // Notifications
@@ -73,6 +74,7 @@ class Template extends React.Component {
                         profileUsername: resp.data.userAccount.id,
                         profileLink: resp.data.userAccount.profileUrl,
                         privatePlaylist: resp.data.privatePlaylist,
+                        playlistActive: resp.data.playlistActive,
                         playlistName: resp.data.playlistName, // TODO - MAY NOT BE NEEDED
                         activePlaylists: resp.data.activePlaylists,
                         history: resp.data.history,
@@ -102,6 +104,11 @@ class Template extends React.Component {
 
     updateState = params => {
         this.setState({[params.title]: params.value});
+    };
+
+    newUserActivePlaylist = params => {
+        console.log("><><><", params)
+        this.setState({activePlaylists: params});
     };
 
     render(){
@@ -141,17 +148,19 @@ class Template extends React.Component {
                     profilePlaylists={this.state.profilePlaylists}
                     accessToken={this.state.profileAccessToken}
                     privatePlaylist={this.state.privatePlaylist}
+                    playlistActive={this.state.playlistActive} // To determine is user has a musicDEV playlist
                     activePlaylists={this.state.activePlaylists}
                     history={this.state.history}
                 />
 
                 <NewUserComponent
                     open={this.state.newUserOpen}
-                    close={params => this.handleClose(params)}
                     profilePlaylists={this.state.profilePlaylists}
                     newUser={this.state.newUser}
                     username={this.state.profileUsername}
                     activePlaylists={this.state.activePlaylists}
+                    close={params => this.handleClose(params)}
+                    newUserActivePlaylist={params => this.newUserActivePlaylist(params)}
                 />
 
                 <WarningComponent

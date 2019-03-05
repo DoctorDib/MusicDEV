@@ -33,6 +33,11 @@ class Template extends React.Component {
         this.state = {
             tableContent: [],
             tableType: 'recommend',
+
+            active: "#04040491",
+            notActive: "#ffffff00", // Transparent
+
+            currentSong: '',
         };
     }
 
@@ -54,6 +59,7 @@ class Template extends React.Component {
         this.setState({
             tableContent: this.props.tableContent,
             tableType: this.props.tableType,
+            currentSong: this.props.currentSong,
         });
     };
 
@@ -99,22 +105,26 @@ class Template extends React.Component {
         const { classes } = this.props;
 
         let headers = headerMap[this.state.tableType].map(header =>
-            <TableCell style={{textAlign: header==='Play' || header==="Tools" ? 'center' : 'none'}}>{header}</TableCell>
+            <TableCell style={{textAlign: header==='Play' || header==="Tools" ? 'center' : 'none'}}> {header} </TableCell>
         );
 
+        let isActive = (name) => {
+            return this.state.currentSong === name ? this.state.active : this.state.notActive;
+        };
+
         let newTable = this.state.tableContent.map(recommended =>
-            <TableRow>
+            <TableRow style={{background: isActive(recommended.name)}}>
                 <TableCell>
                     {this.formatIcons(iconManager(recommended.genre), classes)}
                 </TableCell>
-                <TableCell>{recommended.name}</TableCell>
-                <TableCell>{recommended.genre}</TableCell>
+                <TableCell> {recommended.name} </TableCell>
+                <TableCell> {recommended.genre} </TableCell>
                 <TableCell style={{width: '2%'}}>
                     <Button href={"https://open.spotify.com/track/" + recommended.id}> <PlayButtonIcon /> </Button>
                 </TableCell>
                 {this.state.tableType === 'history' ?
                     <TableCell asign="center">
-                        <Typography variant="caption">{this.formatTime(recommended.time)}</Typography>
+                        <Typography variant="caption"> {this.formatTime(recommended.time)} </Typography>
                     </TableCell>
                     : null}
 
@@ -134,9 +144,9 @@ class Template extends React.Component {
             <Paper className={classes.main} square>
                 <Table className={classes.table}>
                     <TableHead>
-                        <TableRow>{headers}</TableRow>
+                        <TableRow> {headers} </TableRow>
                     </TableHead>
-                    <TableBody>{newTable}</TableBody>
+                    <TableBody> {newTable} </TableBody>
                 </Table>
             </Paper>
         );

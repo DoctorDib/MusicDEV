@@ -82,7 +82,6 @@ module.exports = (func, username, accessToken, playlists, callback) => {
                                  let choppedArray = chunk(tmpTrackList, 50)
                                  async.eachOfSeries(choppedArray, function (uriValues, uriKey, uriCallback) {
                                      spotify("grabTrackInfo", {username: username, access_token: accessToken, tracks: uriValues}, (respTrackInfo) => {
-
                                          let agg = respTrackInfo.body.tracks;
                                          for (let tmp = 0; tmp < agg.length; tmp++) {
                                              trackInfo[agg[tmp].id] = agg[tmp].name;

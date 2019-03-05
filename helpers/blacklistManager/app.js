@@ -15,7 +15,7 @@ MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.
     const db = database.db(config.mongo_settings.name);
 
     let processing = false;
-    let useCollection = db.collection('blacklist');
+    const useCollection = db.collection('blacklist');
     let interval;
 
     function finished(failedTracks) {

@@ -16,6 +16,7 @@ import Checkbox from '@material-ui/core/Checkbox';
 import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
 import Paper from '@material-ui/core/Paper';
+import InputBase from '@material-ui/core/InputBase';
 import InputLabel from "@material-ui/core/InputLabel/InputLabel";
 
 import { withStyles } from '@material-ui/core/styles';
@@ -40,9 +41,14 @@ class Template extends React.Component {
             playlistName: '',
             playlist_privacy: true,
 
+            deleteConfirm: false,
+            deleteConfirmText: '',
+
             playlistChanges: false,
             playlistNameChanges: false,
             playlistPrivateChanges: false,
+
+            playlistActive: false,
 
             settingChanges: [],
         };
@@ -113,8 +119,6 @@ class Template extends React.Component {
             this.setState({playlistNames: this.tickIt(props.activePlaylists)});
         }
 
-        console.log("New user? ", props.newUser)
-
         if (!props.newUser) {
             Axios.get('grabActivePlaylist', {
                 params: {
@@ -122,8 +126,6 @@ class Template extends React.Component {
                 }
             })
                 .then((resp) => {
-                    console.log("RESP: ", resp)
-                    console.log("hi")
                     if(resp.data.hasOwnProperty('playlists')){
                         this.setState({
                             activePlaylist: resp.data.playlists
@@ -162,8 +164,6 @@ class Template extends React.Component {
                 }
             }
 
-            console.log(tmpArr)
-
             if(tmpArr.length){
                 this.setState({
                     learnDisabled: true,
@@ -178,9 +178,12 @@ class Template extends React.Component {
                         playlists: tmpArr
                     }})
                     .then(resp => {
-                        console.log(">>>>", resp)
                         if(resp.data.success){
-                            console.log("Closing window")
+                            this.setState({
+                                playlistChanges: false,
+                                playlistNameChanges: false,
+                                playlistPrivateChanges: false,
+                            });
                             this.setState({
                                 learnDisabled: false,
                                 warningSnack: false,
@@ -226,17 +229,9 @@ class Template extends React.Component {
     handleChange = playlist => () => {
         let tmp = this.state.playlistNames;
 
-        console.log("Playlist selection: ", playlist)
-        console.log(tmp)
-
         if(!tmp.hasOwnProperty(playlist.id)){
-            console.log("iniitalised")
             // Initialising it
-            tmp[playlist.id] = {
-                name: playlist.name,
-                id: playlist.id,
-                active: false,
-            };
+            tmp[playlist.id] = { name: playlist.name, id: playlist.id, active: false, };
         }
         tmp[playlist.id] = {
             name: playlist.name,
@@ -282,29 +277,73 @@ class Template extends React.Component {
                 task: task,
                 data: {new_name: this.state.playlistName || 'default', privatePlaylist: this.state.privatePlaylist}
             }
-        }).then(function (resp) {
+        }).then(resp => {
             if (resp.data.success) {
                 // Notify user
                 console.log("Delete or clear COMPLETE")
+                this.setState({
+                    playlistChanges: false,
+                    playlistNameChanges: false,
+                    playlistPrivateChanges: false,
+                    playlistActive: false,
+                });
             }
         }).catch(function(err) {
             console.error("Manage playlist: ", err)
         });
     };
 
+    deleteAccount = () => {
+        this.setState({
+            deleteConfirm: !this.state.deleteConfirm
+        });
+    };
+
+    confirmedDeletion = () => {
+        Axios.get('deleteAccount', {params: {name: this.state.deleteConfirmText}})
+            .then(resp => {
+                if (!resp.data.success) {
+                    this.setState({deleteConfirmText: ''});
+                }
+            })
+            .catch(err => {
+                console.log(err);
+            });
+    };
+
+    createPlaylist = () => {
+        Axios.get('createPlaylist')
+            .then((resp) => {
+                console.log(resp)
+                this.setState({
+                    playlistActive: resp.data.playlistOptions.is_active || false,
+                });
+            })
+            .catch((err) => {
+                console.log(err);
+            });
+    };
+
+    handleDeletionTextChange = name => event => {
+        this.setState({ [name]: event.target.value });
+    };
+
     render(){
         const { classes } = this.props;
 
         let playlistSelection = this.state.profilePlaylists.map(tile => (
-            <div>
+            <div className={classes.gridItem}>
+                <img src={tile.image} className={classes.playlistIcon}/>
                 <FormControlLabel
                     control={
-                        <Switch
-                            checked={this.state.playlistNames.hasOwnProperty(tile.id) ? this.state.playlistNames[tile.id].active : false}
-                            onChange={this.handleChange(tile)}
-                            value={slugify(tile.name, '_')}
-                            color="primary"
-                        />
+                        <div className={classes.formStyle}>
+                            <Switch
+                                checked={this.state.playlistNames.hasOwnProperty(tile.id) ? this.state.playlistNames[tile.id].active : false}
+                                onChange={this.handleChange(tile)}
+                                value={slugify(tile.name, '_')}
+                                color="primary"
+                            />
+                        </div>
                     }
                     label={tile.name}
                 />
@@ -315,41 +354,64 @@ class Template extends React.Component {
             <Paper square className={classes.main}>
                 <section>
                     <FormGroup>
-                        <FormLabel component="legend">Select your favourite playlists: (50 max)</FormLabel>
+                        <Paper className={classes.item}>
+                            <Typography variant="title" gutterBottom>Your playlists</Typography>
+                            <FormLabel component="legend">Select your favourite playlists: (50 max)</FormLabel>
+                            <div className={classes.rootContainer}>
+                                { playlistSelection ? playlistSelection : <Typography> No playlists detected </Typography> }
+                            </div>
+                        </Paper>
 
-                        {console.log(playlistSelection)}
-                        {playlistSelection ? playlistSelection : <Typography> No playlists detected </Typography>}
+                        <Divider />
 
-                        <div>
-                            <Divider />
-                            <FormLabel component="legend">Saved playlist</FormLabel>
+                        <Paper className={classes.item} >
+                            <Typography variant="title" gutterBottom>Playlist manager</Typography>
+
                             <TextField
                                 color="primary"
                                 label="New playlist name"
                                 placeholder="Playlist name"
                                 margin="normal"
+                                disabled={!this.state.playlistActive}
                                 value={this.state.playlistName}
                                 onChange={this.handleTextChange('playlistName')}
                             />
 
-                            <InputLabel>Make playlist private</InputLabel>
-                            <Checkbox
-                                checked={this.state.privatePlaylist}
-                                onChange={this.handleBooleanChange('privatePlaylist')}
-                                value="privatePlaylist"
-                                color="primary"
-                            />
+                            <div>
+                                <Checkbox
+                                    checked={this.state.privatePlaylist}
+                                    onChange={this.handleBooleanChange('privatePlaylist')}
+                                    disabled={!this.state.playlistActive}
+                                    value="privatePlaylist"
+                                    color="primary"
+                                />
+                                <InputLabel>Make playlist private</InputLabel>
+                            </div>
 
-                            <Divider />
+                            <Button color="primary" disabled={!this.state.playlistActive} onClick={this.managePlaylist('clear')}>Clear Playlist</Button>
+                            <Button color="primary" disabled={!this.state.playlistActive} onClick={this.managePlaylist('delete')}>Delete Playlist</Button>
+                            <Button color="primary" disabled={this.state.playlistActive} onClick={this.createPlaylist}>Create Playlist</Button>
+                        </Paper>
 
-                            <Button color="primary" onClick={this.managePlaylist('clear')}>Clear Playlist</Button>
-                            <Button color="primary" onClick={this.managePlaylist('delete')}>Delete Playlist</Button>
+                        <Divider />
+
+                        <Paper className={classes.item} >
+                            <Typography variant="title" gutterBottom>History manager</Typography>
                             <Button color="primary" onClick={this.clearHistory}>Clear History</Button>
+                        </Paper>
 
-                            <Divider />
+                        <Divider />
 
-                            <Button color="primary" disabled={true} onClick={this.managePlaylist('delete')}>Delete Account</Button>
-                        </div>
+                        <Paper className={classes.item}>
+                            <Typography variant="title" gutterBottom>Admin</Typography>
+
+                            {console.log(this.state.deleteConfirm)}
+
+                            {this.state.deleteConfirm ? <Paper className={classes.textInput} elevation={1}>
+                                <InputBase className={classes.textField} placeholder="Enter username" onChange={this.handleDeletionTextChange('deleteConfirmText')} />
+                                <Button onClick={this.confirmedDeletion}>Confirm delete</Button>
+                            </Paper> : <Button color="primary" onClick={this.deleteAccount}>Delete Account</Button> }
+                        </Paper>
                     </FormGroup>
 
                     <Button color="primary" onClick={this.learn} disabled={this.state.loading === 'block' || !(this.state.playlistChanges || this.state.playlistNameChanges || this.state.playlistPrivateChanges)}>Save</Button>

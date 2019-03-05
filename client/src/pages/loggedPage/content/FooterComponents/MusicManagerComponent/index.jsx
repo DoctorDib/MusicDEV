@@ -66,6 +66,7 @@ class Template extends React.Component {
                 {this.state.savedTracks ? <TableComponent
                     tableType={"manager"}
                     tableContent={this.state.savedTracks}
+                    currentSong={''}
                 /> : <LinearProgress />}
             </Paper>
         );

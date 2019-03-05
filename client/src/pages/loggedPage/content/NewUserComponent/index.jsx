@@ -27,6 +27,7 @@ class Template extends React.Component {
             playlist: {},
             open: this.props.open || false,
             close: '',
+            newUserActivePlaylist: '',
             activePlaylist: [],
             playlistNames: {},
             activePlaylists: [],
@@ -99,6 +100,7 @@ class Template extends React.Component {
             username: this.props.username,
             activePlaylists: this.props.activePlaylists,
             close: this.props.close,
+            newUserActivePlaylist: this.props.newUserActivePlaylist,
         });
 
         if (this.props.activePlaylists) {
@@ -162,6 +164,7 @@ class Template extends React.Component {
             }
 
             console.log(tmpArr)
+            this.props.newUserActivePlaylist(tmpArr);
 
             if(tmpArr.length){
                 this.setState({
@@ -183,6 +186,7 @@ class Template extends React.Component {
                                 loading: 'none'
                             });
 
+                            console.log(this.state.activePlaylists)
                             this.props.close('newUserOpen');
                         } else {
                             console.log("Please try again");

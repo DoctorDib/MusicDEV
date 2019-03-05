@@ -94,6 +94,7 @@ class Template extends React.Component {
             playlistNames: {},
             newUser: false,
             privatePlaylist: false,
+            playlistActive: false,
             history: [],
 
             helperOpen: false,
@@ -159,6 +160,7 @@ class Template extends React.Component {
             username: this.props.username,
             accessToken: this.props.accessToken,
             privatePlaylist: this.props.privatePlaylist,
+            playlistActive: this.props.playlistActive,
             activePlaylists: this.props.activePlaylists,
             history: this.props.history,
         });
@@ -218,7 +220,7 @@ class Template extends React.Component {
         }
     }
 
-    listCreator = (list)  => {
+    listCreator = list  => {
         return list.map(val =>
             <Tooltip disableHoverListener={this.state.open} disableFocusListener disableTouchListener title={val.name} placement="right">
                 <ListItem
@@ -226,15 +228,15 @@ class Template extends React.Component {
                     selected={this.state.selectedIndex === val.id}
                     onClick={event => this.handleListItemClick(event, val.id, val.name)}
                 >
-                    <ListItemIcon>{val.icon}</ListItemIcon>
+                    <ListItemIcon> {val.icon} </ListItemIcon>
                     <Typography style={{color: '#cacaca', marginLeft: '10px', fontSize: '0.95rem'}} > {val.name} </Typography>
                 </ListItem>
             </Tooltip>
         );
     };
 
-    formatDate = (miliseconds) => {
-        return timeAgo.simple(new Date(miliseconds));
+    formatDate = milliseconds => {
+        return timeAgo.simple(new Date(milliseconds));
     };
 
     render(){
@@ -250,7 +252,7 @@ class Template extends React.Component {
                     onClick={event => this.handleListItemClick(event, index+100, new Date(val.time).toUTCString())}
                 >
                     <ListItemIcon><RecentIcon /></ListItemIcon>
-                    <Typography style={{color: '#cacaca', marginLeft: '25px', fontSize: '0.95rem'}}>{this.formatDate(val.time)}</Typography>
+                    <Typography style={{color: '#cacaca', marginLeft: '25px', fontSize: '0.95rem'}}> {this.formatDate(val.time)} </Typography>
                 </ListItem>
             </Tooltip>
         ) : null;
@@ -259,6 +261,7 @@ class Template extends React.Component {
             this.state.selectedIndex === index+100 ? <TableComponent
                 tableType='recommend'
                 tableContent={val.songs}
+                currentSong={''}
             /> : null
         ) : null;
 
@@ -296,7 +299,7 @@ class Template extends React.Component {
                                         <MenuIcon />
                                     </IconButton>
                                 </Toolbar>
-                                <Typography variant="h6" gutterBottom className={classes.title}>{this.state.menuTitle}</Typography>
+                                <Typography variant="h6" gutterBottom className={classes.title}> {this.state.menuTitle} </Typography>
                             </div>
                         </AppBar>
                     </div>
@@ -332,7 +335,7 @@ class Template extends React.Component {
                                                 <CircularProgress color="secondary" style={{display: this.state.profilePicLoading, width: '35px', height: '35px'}} />
                                                 <img src={this.state.profilePic} className={classes.profilePic} style={{display: this.state.profilePicActive}}/>
                                             </ListItemIcon>
-                                            <Typography style={{color: '#cacaca', marginLeft: '10px', fontSize: '0.95rem'}}>{this.state.profileUsername}</Typography>
+                                            <Typography style={{color: '#cacaca', marginLeft: '10px', fontSize: '0.95rem'}}> {this.state.profileUsername} </Typography>
                                         </ListItem>
                                     </Tooltip>
                                     <Divider />
@@ -379,7 +382,7 @@ class Template extends React.Component {
                             <div className={classes.toolbar} />
 
                             <div style={{height: '76vh', overflow:'auto'}}>
-                                {this.state.selectedIndex === 0 && <ListenComponent/>}
+                                {this.state.selectedIndex === 0 && <ListenComponent playlistActive={this.state.playlistActive}/>}
 
                                 {this.state.selectedIndex === 1 && <RecommendationComponent
                                     updateTable={this.state.updateTable}
@@ -388,13 +391,14 @@ class Template extends React.Component {
                                 />}
 
                                 {this.state.selectedIndex === 2 && <MusicManagerComponent />}
-                                {this.state.selectedIndex === 3 && <TableComponent tableType='history' tableContent={this.getAllHistorySongs()}/>}
+                                {this.state.selectedIndex === 3 && <TableComponent tableType='history' tableContent={this.getAllHistorySongs()} currentSong={''}/>}
                                 {this.state.selectedIndex === 4 && <SettingsComponent
                                     playlistNames={this.state.playlistNames}
                                     profilePlaylists={this.state.profilePlaylists}
                                     activePlaylists={this.state.activePlaylists}
                                     newUser={this.state.newUser}
                                     username={this.state.username}
+                                    playlistActive={this.state.playlistActive}
                                     updateHistory={params => this.updateHistory(params)}
                                 />}
 

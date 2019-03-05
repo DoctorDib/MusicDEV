@@ -202,8 +202,7 @@ class Template extends React.Component {
     };
 
     clear = () => {
-        let buttonColors = this.state.buttonColors;
-        let genreStates = this.state.genreStates;
+        let { buttonColors, genreStates }= this.state;
         for (let color in buttonColors) {
             if (buttonColors.hasOwnProperty(color)) {
                 buttonColors[color] = 'rgba(81,81,81,0)';
@@ -286,7 +285,7 @@ class Template extends React.Component {
         const content = genres.map((genre, index) =>
             <GridListTile key={index} style={{width: '3.5em', height: '3.5em', textAlign: 'center'}}>
                 <Tooltip disableFocusListener disableTouchListener title={genre.title}>
-                    <IconButton color="primary" style={this.toggleColour(genre.title)} onClick={this.handleGenreClick(genre.title)}>{genre.Icon}</IconButton>
+                    <IconButton color="primary" style={this.toggleColour(genre.title)} onClick={this.handleGenreClick(genre.title)}> {genre.Icon} </IconButton>
                 </Tooltip>
             </GridListTile>
         );
@@ -317,7 +316,7 @@ class Template extends React.Component {
 
                     <div className={classes.optionSection}>
                         <Typography>Select your current activity</Typography>
-                        <GridList style={{marginTop: '10px'}}>{content}</GridList>
+                        <GridList style={{marginTop: '10px'}}> {content} </GridList>
                     </div>
 
                     <Divider/>
@@ -364,6 +363,7 @@ class Template extends React.Component {
                 <TableComponent
                     tableType='recommend'
                     tableContent={this.state.successSongs}
+                    currentSong={''}
                 />
             </div>
         );
