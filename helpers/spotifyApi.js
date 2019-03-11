@@ -59,7 +59,6 @@ const run = function(command, data, callback) {
         case 'grabFeatures':
             let tmpMemory = [];
             mongo('grabOne', 'masterMusicCats', {identifier: {}}, records => { // TODO - FIND A MORE EFFICIENT WAY... SEEMS DOES EFFECT THE SPEED...
-                console.log(records)
                 spotifyApi[data.username].getAudioFeaturesForTracks([data.trackURIList])
                     .then(function(data) {
                         async.eachOfSeries(data.body.audio_features, function (value, key, trackLoopCallback) {
@@ -142,8 +141,6 @@ const run = function(command, data, callback) {
 
         case 'grabTracksFromPlaylist':
             spotifyApi[data.username].setAccessToken(data.access_token);
-
-            console.log(data.playlist + " >>>")
             spotifyApi[data.username].getPlaylist(data.playlist)
                 .then(function(data) {
                     callback(data.body.tracks.items)
@@ -155,14 +152,11 @@ const run = function(command, data, callback) {
         case 'grabFeaturesFromTracks':
             spotifyApi[data.username].setAccessToken(data.access_token);
             run('grabFeatures', {username: data.username, type: false, trackURIList: data.trackURIs}, (list) => {
-                console.log(list)
                 callback(list)
             });
             break;
 
         case 'grabPlaylists':
-            console.log(data.username)
-            console.log(data.access_token)
             spotifyApi[data.username].setAccessToken(data.access_token);
             spotifyApi[data.username].getMe()
                 .then(function(data_root){
@@ -200,7 +194,6 @@ const run = function(command, data, callback) {
 
             tmp.getMe()
                 .then(function(data_root){
-                    console.log(data_root)
                     callback({
                         username: data_root.body.id,
                         name: data_root.body.display_name,
@@ -237,16 +230,11 @@ const run = function(command, data, callback) {
                     let uriArray = [];
                     for (let index in data.music) {
                         if (data.music.hasOwnProperty(index) && !existingTracks.hasOwnProperty(data.music[index].id)) { // Ensuring no duplication
-                            console.log(">>", data.music[index]);
                             uriArray.push("spotify:track:" + data.music[index].id);
                         }
                     }
 
                     if(uriArray.length){
-                        console.log("Saving to:")
-                        console.log(data.playlistOptions.id)
-                        console.log(uriArray)
-
                         spotifyApi[data.username].addTracksToPlaylist(data.playlistOptions.id, uriArray)
                             .then(function(data){
                                 callback({success: true, data:data})
@@ -268,8 +256,6 @@ const run = function(command, data, callback) {
                     name: newChanges.new_name,
                     public : newChanges.privatePlaylist
                 }).then(function(data) {
-                console.log(data)
-                console.log(data.playlistOptions.id)
                 callback({success:true, data: {name: data.new_changes.new_name, is_private: data.new_changes.privatePlaylist}})
             }, function(err) {
                 console.log('Modifying playlist details: ', err);
@@ -309,7 +295,6 @@ const run = function(command, data, callback) {
             });
             break;
         case 'deletePlaylist': // TODO - Adding a deleting recommended playlist on user profile.
-            console.log(data)
             spotifyApi[data.username].unfollowPlaylist(data.playlistOptions.id)
                 .then(function() {
                     callback({success: true})
@@ -319,7 +304,6 @@ const run = function(command, data, callback) {
                 });
             break;
         case 'deletePlaylistTrack':
-            console.log(data)
             let tracks = [{ uri : "spotify:track:"+data.uri }];
             let options = { };
             console.log(tracks)

@@ -94,7 +94,6 @@ module.exports = (func, username, accessToken, playlists, callback) => {
                                                  if (playlistKey+1 >= playlists.length){
                                                      run.sort(memory, trackInfo, (sortedObject) => {
                                                          run.grabGenreUserPlaylist(username, sortedObject, () => {
-                                                             console.log("FIN")
                                                              callback("finished")
                                                          });
                                                      });
@@ -123,7 +122,6 @@ module.exports = (func, username, accessToken, playlists, callback) => {
                         console.log("Memory not found... Please teach me...");
                         process.exit(1);
                     } else {
-                        console.log("Found");
                         run.grabGenre(resp.memory, playlists, (finalResp) => {
                             console.log(finalResp)
 

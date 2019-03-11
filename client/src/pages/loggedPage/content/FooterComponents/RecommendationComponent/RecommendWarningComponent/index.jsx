@@ -50,7 +50,6 @@ class Template extends React.Component {
     componentWillReceiveProps(props) {
 
         if(props.open !== this.props.open || props.failedSongs !== this.props.failedSongs){
-            console.log("New update")
             this.setState({
                 open: props.open,
                 failedSongs: props.failedSongs

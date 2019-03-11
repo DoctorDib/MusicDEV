@@ -3,6 +3,12 @@ import styles from 'styles/mainStyle';
 export default theme => ({
     ...styles,
     // Profile information card
+    body: {
+        display: 'flex',
+        flexDirection: 'column',
+        width: '100%',
+        height: '100%',
+    },
     accountHolder: {
         backgroundColor: '#d7d7d7',
         width: '22em',

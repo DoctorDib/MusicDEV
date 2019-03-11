@@ -2,10 +2,8 @@ import theme from './theme';
 
 const styles = {
     header: {
-        height: theme.spacing.unit * 39,
-        [theme.breakpoints.down('sm')]: {
-            height: '100vh',
-        },
+        height: '85%',
+        backgroundColor: '#252525',
         color: '#eeeeee',
         display: 'flex',
         alignItems: 'center',
@@ -14,7 +12,10 @@ const styles = {
         userSelect: 'none',
         backgroundImage: `url(${require('img/background.png')})`,
         zIndex: '4',
-        position: 'relative'
+        position: 'relative',
+        [theme.breakpoints.down('sm')]: {
+            height: '20%',
+        },
     },
     titleContainer:{
         display: 'flex',
@@ -27,11 +28,20 @@ const styles = {
     title: {
         color: '#eeeeee',
         userSelect: 'none',
+        fontSize: '100px',
+        [theme.breakpoints.down('sm')]: {
+            fontSize: '60px',
+        },
     },
     titleChild: {
         color: '#eeeeee',
         marginLeft: 'auto',
-        userSelect: 'none'
+        userSelect: 'none',
+        fontSize: '25px',
+        [theme.breakpoints.down('sm')]: {
+            fontSize: '20px',
+        },
+
     },
     loginContainer: {
         display: 'flex',

@@ -38,6 +38,8 @@ const defaultStates = {
     playlistActive: false,
 
     createPlaylist: null,
+
+    desktopMode: true,
 };
 
 class Template extends React.Component {
@@ -70,13 +72,14 @@ class Template extends React.Component {
     };
 
     componentDidMount(props) {
-
         window.setInterval(() => {
             if (this.state.listening){
                 console.log(">>", this.state)
                 this.grabCurrentSong();
             }
         }, 1000);
+
+        this.setState({desktopMode:this.props.desktopMode});
 
         const createPlaylistButton = <Button onClick={this.createPlaylistFunction}> Create Playlist </Button>;
 
@@ -234,6 +237,7 @@ class Template extends React.Component {
                     tableType={"manager"}
                     tableContent={this.state.savedTracks}
                     currentSong={this.state.currentPlayingSong}
+                    desktopMode={this.state.desktopMode}
                 /> : <LinearProgress />}
 
                 <WarningComponent

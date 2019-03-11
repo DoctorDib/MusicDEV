@@ -22,6 +22,11 @@ import MenuItem from '@material-ui/core/MenuItem';
 import Button from '@material-ui/core/Button';
 import IconButton from '@material-ui/core/IconButton';
 
+import ExpansionPanel from '@material-ui/core/ExpansionPanel';
+import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
+import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+
 import WorkoutIcon from 'mdi-react/WeightsIcon';
 import ChillIcon from 'mdi-react/CouchIcon';
 import FocusIcon from 'mdi-react/DeskLampIcon';
@@ -109,6 +114,7 @@ const defaultStates = {
     warningOpen: false,
     warningError: false,
     warningMessage: '',
+    desktopMode: true,
 };
 
 class Template extends React.Component {
@@ -121,6 +127,7 @@ class Template extends React.Component {
         let newProps = {};
 
         for (let prop in props) {
+            console.log(prop)
             if(props.hasOwnProperty(prop)) {
                 if (props[prop] !== this.props[prop]) {
                     newProps[prop] = props[prop];
@@ -133,7 +140,8 @@ class Template extends React.Component {
 
     componentDidMount(props) {
         this.setState({
-            updateHistory: this.props.updateHistory
+            updateHistory: this.props.updateHistory,
+            desktopMode: this.props.desktopMode
         });
     };
 
@@ -290,80 +298,86 @@ class Template extends React.Component {
             </GridListTile>
         );
 
+        const options = <Paper square className={classes.main}>
+            <Typography>Control Panel</Typography>
+            <div className={classes.optionSection}>
+                <FormControl className={classes.quantityControl}>
+                    <InputLabel>Quantity of Songs</InputLabel>
+                    <Select
+                        value={this.state.musicQuantity}
+                        onChange={this.handleChange("musicQuantity")}
+                        color="primary"
+                    >
+                        <MenuItem value={1}>1</MenuItem>
+                        <MenuItem value={2}>2</MenuItem>
+                        <MenuItem value={5}>5</MenuItem>
+                        <MenuItem value={10}>10</MenuItem>
+                        <MenuItem value={20}>20</MenuItem>
+                    </Select>
+                </FormControl>
+            </div>
+            <Divider/>
+            <div className={classes.optionSection}>
+                <Typography>Select your current activity</Typography>
+                <GridList style={{marginTop: '10px'}}> {content} </GridList>
+            </div>
+            <Divider/>
+            <div className={classes.optionSection}>
+                <div className={classes.selectionContainer}>
+                    <Typography style={{paddingBottom: '10px'}}>Expected</Typography>
+                    <section> {this.state.genreSelection} </section>
+                </div>
+            </div>
+            <Divider/>
+            <div className={classes.optionSection}>
+                <InputLabel>Save Playlist</InputLabel>
+                <Checkbox
+                    checked={this.state.savePlaylist}
+                    onChange={this.handleBooleanChange('savePlaylist')}
+                    value="Save Playlist"
+                    color="primary"
+                />
+                <section className={classes.buttonHolder}>
+                    <Button variant="contained" style={{width: this.state.desktopMode ? '10vw' : '30vw'}} color="primary" onClick={this.recommendMusic}>Recommend</Button>
+                    <Button variant="contained" style={{width: this.state.desktopMode ? '10vw' : '30vw'}} color="primary" onClick={this.clear}>Clear</Button>
+                </section>
+            </div>
+
+            <RecommendWarning
+                open={this.state.recommendWarningOpen}
+                close={(params) => this.handleClose(params)}
+                clickClose={this.clickCloseRecommend}
+                failedSongs={this.state.failedSongs}
+            />
+
+            <WarningComponent
+                buttonOptions={this.state.buttonOptions}
+                warningMessage={this.state.warningMessage}
+                warningError= {this.state.warningError} // false (warning)
+                warningOpen={this.state.warningOpen}
+            />
+
+        </Paper>
+
         return (
             <div className={classes.mainView}>
-                <Paper square className={classes.main}>
-
-                    <Typography>Control Panel</Typography>
-                    <div className={classes.optionSection}>
-                        <FormControl className={classes.quantityControl}>
-                            <InputLabel>Quantity of Songs</InputLabel>
-                            <Select
-                                value={this.state.musicQuantity}
-                                onChange={this.handleChange("musicQuantity")}
-                                color="primary"
-                            >
-                                <MenuItem value={1}>1</MenuItem>
-                                <MenuItem value={2}>2</MenuItem>
-                                <MenuItem value={5}>5</MenuItem>
-                                <MenuItem value={10}>10</MenuItem>
-                                <MenuItem value={20}>20</MenuItem>
-                            </Select>
-                        </FormControl>
-                    </div>
-
-                    <Divider/>
-
-                    <div className={classes.optionSection}>
-                        <Typography>Select your current activity</Typography>
-                        <GridList style={{marginTop: '10px'}}> {content} </GridList>
-                    </div>
-
-                    <Divider/>
-
-                    <div className={classes.optionSection}>
-                        <div className={classes.selectionContainer}>
-                            <Typography style={{paddingBottom: '10px'}}>Expected</Typography>
-                            <section> {this.state.genreSelection} </section>
-                        </div>
-                    </div>
-
-                    <Divider/>
-
-                    <div className={classes.optionSection}>
-                        <InputLabel>Save Playlist</InputLabel>
-                        <Checkbox
-                            checked={this.state.savePlaylist}
-                            onChange={this.handleBooleanChange('savePlaylist')}
-                            value="Save Playlist"
-                            color="primary"
-                        />
-                        <section className={classes.buttonHolder}>
-                            <Button variant="contained" style={{width: '10vw'}} color="primary" onClick={this.recommendMusic}>Recommend</Button>
-                            <Button variant="contained" style={{width: '10vw'}} color="primary" onClick={this.clear}>Clear</Button>
-                        </section>
-                    </div>
-
-                    <RecommendWarning
-                        open={this.state.recommendWarningOpen}
-                        close={(params) => this.handleClose(params)}
-                        clickClose={this.clickCloseRecommend}
-                        failedSongs={this.state.failedSongs}
-                    />
-
-                    <WarningComponent
-                        buttonOptions={this.state.buttonOptions}
-                        warningMessage={this.state.warningMessage}
-                        warningError= {this.state.warningError} // false (warning)
-                        warningOpen={this.state.warningOpen}
-                    />
-
-                </Paper>
+                {console.log("Desktop mode?", this.state.desktopMode)}
+                {this.state.desktopMode ? options :
+                    <ExpansionPanel square>
+                        <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+                            <Typography >Settings</Typography>
+                        </ExpansionPanelSummary>
+                        <ExpansionPanelDetails style={{padding: 0}}>
+                            {options}
+                        </ExpansionPanelDetails>
+                    </ExpansionPanel>
+                }
 
                 <TableComponent
                     tableType='recommend'
                     tableContent={this.state.successSongs}
                     currentSong={''}
+                    desktopMode={this.state.desktopMode}
                 />
             </div>
         );

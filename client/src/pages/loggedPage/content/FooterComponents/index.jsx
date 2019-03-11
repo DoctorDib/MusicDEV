@@ -98,7 +98,8 @@ class Template extends React.Component {
             history: [],
 
             helperOpen: false,
-            menuTitle: 'Music Continuation'
+            menuTitle: 'Music Continuation',
+            desktopMode: true
         }
     }
 
@@ -163,6 +164,7 @@ class Template extends React.Component {
             playlistActive: this.props.playlistActive,
             activePlaylists: this.props.activePlaylists,
             history: this.props.history,
+            desktopMode: this.props.desktopMode,
         });
     };
 
@@ -262,15 +264,16 @@ class Template extends React.Component {
                 tableType='recommend'
                 tableContent={val.songs}
                 currentSong={''}
+                desktopMode={this.state.desktopMode}
             /> : null
         ) : null;
 
         return (
-            <section className={classes.main}>
+            <section className={classes.main} style={{height: this.state.desktopMode ? '85%' : '100%'}}>
                 <div className={classes.root}>
                     <CssBaseline />
 
-                    <div style={{display: 'flex', flexDirection: 'row'}}>
+                    <div style={{height: this.state.desktopMode ? '5%' : '7%', display: 'flex', flexDirection: 'row'}}>
                         <IconButton
                             onClick={this.handleDrawerClose}
                             className={classNames(classes.closeButton, {
@@ -304,7 +307,7 @@ class Template extends React.Component {
                         </AppBar>
                     </div>
 
-                    <div style={{display: 'flex', flexDirection: 'row'}}>
+                    <div style={{height: this.state.desktopMode ? '95%' : '93%', display: 'flex', flexDirection: 'row'}}>
                         <Drawer
                             variant="permanent"
                             style={{position: 'relative'}}
@@ -381,17 +384,18 @@ class Template extends React.Component {
                         <main className={classes.content} style={{overflowY: 'auto'}}>
                             <div className={classes.toolbar} />
 
-                            <div style={{height: '76vh', overflow:'auto'}}>
-                                {this.state.selectedIndex === 0 && <ListenComponent playlistActive={this.state.playlistActive}/>}
+                            <div style={{height: '100%', overflow:'auto'}}>
+                                {this.state.selectedIndex === 0 && <ListenComponent playlistActive={this.state.playlistActive} desktopMode={this.state.desktopMode}/>}
 
                                 {this.state.selectedIndex === 1 && <RecommendationComponent
                                     updateTable={this.state.updateTable}
                                     username={this.state.username}
                                     updateHistory={params => this.updateHistory(params)}
+                                    desktopMode={this.state.desktopMode}
                                 />}
 
-                                {this.state.selectedIndex === 2 && <MusicManagerComponent />}
-                                {this.state.selectedIndex === 3 && <TableComponent tableType='history' tableContent={this.getAllHistorySongs()} currentSong={''}/>}
+                                {this.state.selectedIndex === 2 && <MusicManagerComponent desktopMode={this.state.desktopMode} />}
+                                {this.state.selectedIndex === 3 && <TableComponent tableType='history' tableContent={this.getAllHistorySongs()} currentSong={''} desktopMode={this.state.desktopMode}/>}
                                 {this.state.selectedIndex === 4 && <SettingsComponent
                                     playlistNames={this.state.playlistNames}
                                     profilePlaylists={this.state.profilePlaylists}

@@ -115,7 +115,6 @@ class Template extends React.Component {
 
     componentWillReceiveProps(props){
         if (props.activePlaylists !== this.props.activePlaylists) {
-            console.log("Scanning: ", props.activePlaylists)
             this.setState({playlistNames: this.tickIt(props.activePlaylists)});
         }
 
@@ -271,7 +270,6 @@ class Template extends React.Component {
     };
 
     managePlaylist = task => () => {
-
         Axios.get('managePlaylist', {
             params: {
                 task: task,
@@ -313,15 +311,13 @@ class Template extends React.Component {
 
     createPlaylist = () => {
         Axios.get('createPlaylist')
-            .then((resp) => {
-                console.log(resp)
-                this.setState({
-                    playlistActive: resp.data.playlistOptions.is_active || false,
-                });
-            })
-            .catch((err) => {
-                console.log(err);
+        .then((resp) => {
+            this.setState({
+                playlistActive: resp.data.playlistOptions.is_active || false,
             });
+        }).catch((err) => {
+            console.log(err);
+        });
     };
 
     handleDeletionTextChange = name => event => {
@@ -404,8 +400,6 @@ class Template extends React.Component {
 
                         <Paper className={classes.item}>
                             <Typography variant="title" gutterBottom>Admin</Typography>
-
-                            {console.log(this.state.deleteConfirm)}
 
                             {this.state.deleteConfirm ? <Paper className={classes.textInput} elevation={1}>
                                 <InputBase className={classes.textField} placeholder="Enter username" onChange={this.handleDeletionTextChange('deleteConfirmText')} />

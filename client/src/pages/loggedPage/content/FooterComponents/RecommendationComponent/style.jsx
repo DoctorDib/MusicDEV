@@ -1,9 +1,13 @@
 import styles from 'styles/mainStyle';
+import theme from "../../../../../styles/theme";
 
 export default theme => ({
     ...styles,
     main: {
         width: theme.spacing.unit * 90,
+        [theme.breakpoints.down('sm')]: {
+            width: '100%',
+        },
         height: '100%',
         zIndex: '1',
         padding: '2em',
@@ -41,6 +45,10 @@ export default theme => ({
 
     mainView: {
         display: 'flex',
-        flexDirection: 'row'
+        flexDirection: 'row',
+
+        [theme.breakpoints.down('sm')]: {
+            flexDirection: 'column',
+        },
     }
 });

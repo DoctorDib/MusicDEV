@@ -22,9 +22,16 @@ import TrashIcon from 'mdi-react/TrashIcon';
 import { withStyles } from '@material-ui/core/styles';
 
 const headerMap = {
-    recommend: ['Activity', 'Song name', 'Genre', 'Play'],
-    history: ['Activity', 'Song name', 'Genre', 'Play', 'Time'],
-    manager: ['Activity', 'Song name', 'Genre', 'Play', 'Tools'],
+    desktop: {
+        recommend: ['Activity', 'Song name', 'Genre', 'Play'],
+        history: ['Activity', 'Song name', 'Genre', 'Play', 'Time'],
+        manager: ['Activity', 'Song name', 'Genre', 'Play', 'Tools'],
+    },
+    mobile: {
+        recommend: ['Song name', 'Play'],
+        history: ['Song name', 'Play'],
+        manager: ['Song name', 'Play', 'Tools'],
+    }
 };
 
 class Template extends React.Component {
@@ -38,6 +45,7 @@ class Template extends React.Component {
             notActive: "#ffffff00", // Transparent
 
             currentSong: '',
+            desktopMode: true,
         };
     }
 
@@ -60,6 +68,7 @@ class Template extends React.Component {
             tableContent: this.props.tableContent,
             tableType: this.props.tableType,
             currentSong: this.props.currentSong,
+            desktopMode: this.props.desktopMode,
         });
     };
 
@@ -104,7 +113,7 @@ class Template extends React.Component {
     render(){
         const { classes } = this.props;
 
-        let headers = headerMap[this.state.tableType].map(header =>
+        let headers = headerMap[this.state.desktopMode ? 'desktop' : 'mobile'][this.state.tableType].map(header =>
             <TableCell style={{textAlign: header==='Play' || header==="Tools" ? 'center' : 'none'}}> {header} </TableCell>
         );
 

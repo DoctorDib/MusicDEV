@@ -57,7 +57,7 @@ export default theme => ({
     },
 
     main: {
-        height: '76vh',
+        height: '85%',
         backgroundColor: '#6ed786'
     },
     root: {
@@ -104,7 +104,6 @@ export default theme => ({
             easing: theme.transitions.easing.sharp,
             duration: theme.transitions.duration.leavingScreen,
         }),
-        overflowX: 'hidden',
         width: theme.spacing.unit * 11 + 3,
         [theme.breakpoints.up('sm')]: {
             width: theme.spacing.unit * 11 + 3,

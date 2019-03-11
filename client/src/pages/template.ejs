@@ -5,28 +5,29 @@
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js"></script>
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+            ::-webkit-scrollbar {
+                width: 0.5em;
+                background-color: rgba(0,0,0,0)
+            }
+
+            ::-webkit-scrollbar-track {
+                -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+            }
+
+            ::-webkit-scrollbar-thumb {
+                background-color: #787878;
+                outline: 1px solid #c1c1c1;
+            }
+
+            body {
+                background: #f3f1f1 url("https://www.transparenttextures.com/patterns/brilliant.png");
+            }
+        </style>
     </head>
     <body ondragstart="return false;" ondrop="return false;" style="margin: 0; overflow: hidden">
         <section id="importContent"></section>
     </body>
 
-    <style>
-        ::-webkit-scrollbar {
-            width: 0.5em;
-            background-color: rgba(0,0,0,0)
-        }
 
-        ::-webkit-scrollbar-track {
-            -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
-        }
-
-        ::-webkit-scrollbar-thumb {
-    	    background-color: #787878;
-            outline: 1px solid #c1c1c1;
-        }
-
-        body {
-            background: #f3f1f1 url("https://www.transparenttextures.com/patterns/brilliant.png");
-        }
-    </style>
 </html>

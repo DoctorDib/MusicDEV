@@ -18,12 +18,17 @@ class Template extends React.Component {
         this.state = {
             playlistOptions: {},
             savedTracks: [],
+            desktopMode: true,
         }
     }
 
     componentDidMount(props) {
+        this.setState({
+            desktopMode: this.props.desktopMode
+        });
+
         Axios('grabSavedPlaylists')
-            .then(resp=> {
+            .then(resp => {
                 console.log(resp)
                 if (resp.data.success) {
                     this.setState({
@@ -67,6 +72,7 @@ class Template extends React.Component {
                     tableType={"manager"}
                     tableContent={this.state.savedTracks}
                     currentSong={''}
+                    desktopMode={this.state.desktopMode}
                 /> : <LinearProgress />}
             </Paper>
         );

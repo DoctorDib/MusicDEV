@@ -56,6 +56,8 @@ class Template extends React.Component {
             warningMessage: '',
 
             newUserOpen: false,
+
+            desktopMode: window.innerWidth >= 500
         };
     }
 
@@ -115,19 +117,17 @@ class Template extends React.Component {
         const { classes } = this.props;
 
         return (
-            <section className={classes.body}>
-                <Paper square className={classes.topBar}>
-                    <div>
-                        <img src={LogoIcon} style={{marginLeft: '5px', height: '100%', width: '50px'}}/>
-                    </div>
-                </Paper>
-
-                <AppBar className={classes.header} color="secondary">
-                    <section className={classes.titleContainer} >
-                        <Typography variant='display4' color="secondary" className={classes.title} style={{fontSize: '4.5em'}}>MusicDEV</Typography>
-                        <Typography variant='display1' color="secondary" className={classes.titleChild} style={{fontSize: '1em'}}>Finding the right music</Typography>
-                    </section>
-                </AppBar>
+            <section className={classes.body} style={{background: "pink"}}>
+                {this.state.desktopMode ?
+                    <AppBar className={classes.header} style={{height: '15%'}} color="secondary">
+                        <section className={classes.titleContainer}>
+                            <Typography variant='display4' color="secondary" className={classes.title}
+                                        style={{fontSize: '4.5em'}}>MusicDEV</Typography>
+                            <Typography variant='display1' color="secondary" className={classes.titleChild}
+                                        style={{fontSize: '1em'}}>Finding the right music</Typography>
+                        </section>
+                    </AppBar>
+                : null}
 
                 <FooterComponent
                     tableContent={this.state.tableRecommendation}
@@ -151,6 +151,7 @@ class Template extends React.Component {
                     playlistActive={this.state.playlistActive} // To determine is user has a musicDEV playlist
                     activePlaylists={this.state.activePlaylists}
                     history={this.state.history}
+                    desktopMode={this.state.desktopMode}
                 />
 
                 <NewUserComponent

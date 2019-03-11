@@ -72,4 +72,5 @@ config/secretKeys.json.swp
 
 # Other files
 .idea/
+.well-known/
 *.swp
