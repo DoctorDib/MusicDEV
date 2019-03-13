@@ -1,6 +1,6 @@
 const async = require('async');
 const config = require('../../../config/config');
-const featureManager = require('./trackFeatureManager');
+const featureManager = require('../helpers/trackFeatureManager');
 
 
 function grabSizingOfGenres (data) {

@@ -2,7 +2,6 @@
 const dictionary =  require('../Data/genreDictionary'); // For genre
 //const dictionary =  require('./Data/playlistSmall');
 const trackDictionary =  require('../Data/trackDictionary');
-const config = require('../../config/config');
 
 // ==== Training models ==== \\
 const trainer = require('./helpers/train');
@@ -10,12 +9,14 @@ const recommender = require('./helpers/recommend');
 //const trainer = require('./helpers/train-synaptic');
 
 const spotify = require('./helpers/spotifyApi');
-const sample = require('./helpers/sample');
+const sample = require('./mainHelper/sample');
 const predict = require('./helpers/predict');
 const push = require('./helpers/pushbullet');
 const neo4j = require('./helpers/neo4j');
-const processData = require('./helpers/process');
-const recommendConfig = require('../../config/config');
+const config = require('../../config/config');
+
+const builder = require('./mainHelper/build');
+const processData = require('./mainHelper/process');
 
 const client_id = config.spotify.client_id;
 const client_secret = config.spotify.client_secret;
@@ -44,16 +45,16 @@ function setUpAccount(callback) {
         clientId: client_id,
         clientSecret: client_secret,
     })
-        .exec({
-            error: err => {
-                console.log("Access Token: " + err)
-            },
-            success: access => {
-                spotifyApi.setAccessToken(access);
-                console.log("ACCESS TOKEN SENT");
-                callback();
-            }
-        });
+    .exec({
+        error: err => {
+            console.log("Access Token: " + err)
+        },
+        success: access => {
+            spotifyApi.setAccessToken(access);
+            console.log("ACCESS TOKEN SENT");
+            callback();
+        }
+    });
 }
 
 function defaultError() {
@@ -73,13 +74,6 @@ function defaultError() {
     console.log("        - node app.js build [NUMBER OF (num).json]");
     console.log("------------------------------------------------");
     process.exit(1);
-}
-
-function readTextFile(fileText, callback) {
-    fs.readFile(fileText, 'utf8', (err, data) => {
-        if (err) return console.log(err);
-        callback(JSON.parse(data).playlists);
-    });
 }
 
 function writeTextFile(fileName, data, callback) {
@@ -124,7 +118,7 @@ MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.
                         mongoCallback();
                     });
                 } else {
-                    console.log(`${collection} does not exit...`);
+                    console.log(collection, ` does not exit...`);
                     mongoCallback();
                 }
             });
@@ -474,11 +468,11 @@ MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.
             });
         },
         sample: function () {
-            let useCollectionMemory = db.collection("musicMemory");
-            let useCollectionCats = db.collection("samples");
+            const useCollectionMemory = db.collection("musicMemory");
+            const useCollectionCats = db.collection("samples");
 
             // Default = "test" - TrainingSet = "train"
-            let sampleSelection = process.argv[3] === "train" ? "trainingSet" : "testingSet";
+            const sampleSelection = process.argv[3] === "train" ? "trainingSet" : "testingSet";
 
             useCollectionMemory.findOne({"id": 'memory'}, (err, resp) => {
                 if (!resp || resp === null) {
@@ -498,9 +492,9 @@ MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.
             });
         },
         relate: function () {
-            async.eachOfSeries(recommendConfig.recommendation_config.genres, function (genre, genreKey, genreCallback) {
+            async.eachOfSeries(config.recommendation_config.genres, function (genre, genreKey, genreCallback) {
                 neo4j('masterLearn', {genre: genre}, function () {
-                    if(genreKey+1 >= recommendConfig.recommendation_config.genres.length) {
+                    if(genreKey+1 >= config.recommendation_config.genres.length) {
                         console.log("Done")
                     } else {
                         genreCallback();
@@ -509,184 +503,30 @@ MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.
             });
         },
         build: function () {
-            neo4j('masterDelete', {}, function () { // Resetting
-                neo4j('initialise', { id: "Spotify", genres: recommendConfig.recommendation_config.genres }, () => { // Initialising database
+            if (!process.argv[3]) {
+                console.log("Please enter the number of files you wish to process.");
+            } else {
+                neo4j('masterDelete', {}, function () { // Resetting
+                    neo4j('initialise', { id: "Spotify", genres: config.recommendation_config.genres }, () => { // Initialising database
+                        const arr = _.range(parseInt(process.argv[3]));
+                        useCollection = db.collection("musicMemory");
+                        saveCollection = db.collection("masterMusic");
 
-                    const arr = _.range(parseInt(process.argv[3]));
-                    console.log(arr)
-
-                    let finalObject = {}, finalArray = [], count = 0;
-
-                    useCollection = db.collection("musicMemory");
-                    saveCollection = db.collection("masterMusic");
-
-                    // Resetting collection
-                    mongoAction.checkDelete(saveCollection, "master", () => {
-                        useCollection.findOne({"id": 'memory'}, function (err, resp) {
-                            if (!resp || resp === null) {
-                                console.log("Memory not found... Please teach me...");
-                                process.exit(1);
-                            } else {
-                                console.log("Found")
-                                async.eachOfSeries(arr, function (value, keyFiles, callbackFiles) {
-                                    //mpd.slice.1000-1999.json
-                                    //"../Data/trackData/mpd.slice." + value + ".json"
-                                    readTextFile(`../Data/trackData/mpd.slice.${value+1}000-${value+1}999.json`, function (json) {
-                                        async.eachOfSeries(json, function (jsonValue, jsonKey, jsonCallback) {
-                                            let uriArray = [];
-                                            async.eachOfSeries(jsonValue.tracks, function (trackValue, trackKey, trackCallback) {
-                                                if (trackValue.hasOwnProperty("track_uri")) {
-                                                    let uri = trackValue.track_uri.split(':');
-                                                    uri = uri[uri.length - 1];
-                                                    count++;
-
-                                                    if (finalObject.hasOwnProperty(uri)) {
-                                                        console.log("DUPLICATED")
-                                                        if (jsonKey + 1 >= Object.keys(json).length) {
-                                                            if (keyFiles + 1 >= arr.length) {
-
-                                                                async.eachOfSeries(recommendConfig.recommendation_config.genres, function (genre, genreKey, genreCallback) {
-                                                                    neo4j('masterLearn', {genre: genre}, function () {
-                                                                        if (genreKey + 1 >= recommendConfig.recommendation_config.genres.length) {
-                                                                            let body = `Database build has been completed with ${finalArray.length} entries.`;
-                                                                            push.send({
-                                                                                title: "Database build complete",
-                                                                                body: body
-                                                                            });
-                                                                        } else {
-                                                                            genreCallback();
-                                                                        }
-                                                                    });
-                                                                });
-                                                            } else {
-                                                                console.log('========================')
-                                                                console.log("Next file")
-                                                                let body = `${value+1}/${arr.length} complete`;
-                                                                push.send({
-                                                                    title: "Partial",
-                                                                    body: body
-                                                                });
-
-                                                                callbackFiles();
-                                                            }
-                                                        } else {
-                                                            jsonCallback();
-                                                        }
-                                                    } else {
-
-                                                        uriArray.push(uri); // Adding uri to array
-                                                        finalObject[uri] = {name: trackValue.track_name, id: uri}; // Creating empty object for duplicated data detection
-
-                                                        if (trackKey + 1 >= Object.keys(jsonValue.tracks).length) {
-                                                            uriArray = uriArray.chunk(50);
-                                                            async.eachOfSeries(uriArray, function (uriArrayValue, uriArrayKey, uriArrayCallback) {
-                                                                setTimeout(function () {
-                                                                    spotify.grabFeatures(spotifyApi, false, uriArrayValue, (data) => {
-                                                                        async.eachOfSeries(data, function (featuresValue, featuresKey, featuresCallback) {
-                                                                            let ident = featuresValue.id;
-                                                                            delete featuresValue.id; // Sorting out data
-
-                                                                            // Grabbing the predicted Genre
-                                                                            run.grabGenre(resp.memory, featuresValue, (genre) => {
-
-                                                                                finalObject[ident].features = featuresValue;
-                                                                                finalObject[ident].genre = genre;
-                                                                                finalArray.push(finalObject[ident]);
-
-                                                                                let tmpObj = finalObject[ident];
-
-                                                                                neo4j('create', {
-                                                                                    count: count,
-                                                                                    params: tmpObj,
-                                                                                    single: false
-                                                                                }, function (resp) {
-                                                                                    if (!resp.success) console.log("Create Error: ", resp.error);
-                                                                                    // else continue with life
-
-                                                                                    let finalResponse = `==================================================\nID: ${count}\nName: ${finalObject[ident].name}\nGenre: ${genre}`;
-                                                                                    console.log(finalResponse)
-
-                                                                                    if (featuresKey + 1 >= data.length) {
-                                                                                        if (uriArrayKey + 1 >= uriArray.length) {
-                                                                                            if (jsonKey + 1 >= Object.keys(json).length) {
-                                                                                                if (keyFiles + 1 >= arr.length) {
-
-                                                                                                    async.eachOfSeries(recommendConfig.recommendation_config.genres, function (genre, genreKey, genreCallback) {
-                                                                                                        neo4j('masterLearn', {genre: genre}, function () {
-                                                                                                            if (genreKey + 1 >= recommendConfig.recommendation_config.genres.length) {
-                                                                                                                let body = `Database build has been completed with ${finalArray.length} entries.`;
-                                                                                                                push.send({
-                                                                                                                    title: "Database build complete",
-                                                                                                                    body: body
-                                                                                                                });
-                                                                                                            } else {
-                                                                                                                genreCallback();
-                                                                                                            }
-                                                                                                        });
-                                                                                                    });
-                                                                                                } else {
-
-                                                                                                    let body = `${value+1}/${arr.length} complete`;
-                                                                                                    push.send({
-                                                                                                        title: "Partial",
-                                                                                                        body: body
-                                                                                                    });
-                                                                                                    callbackFiles();
-                                                                                                }
-                                                                                            } else {
-                                                                                                jsonCallback();
-                                                                                            }
-                                                                                        } else {
-                                                                                            uriArrayCallback();
-                                                                                        }
-                                                                                    } else {
-                                                                                        featuresCallback();
-                                                                                    }
-                                                                                });
-                                                                            });
-                                                                        });
-                                                                    });
-                                                                }, 100);
-                                                            });
-                                                        } else {
-                                                            trackCallback();
-                                                        }
-                                                    }
-                                                }
-                                            });
-                                        });
-                                    });
-                                });
-                            }
+                        // Resetting collection
+                        mongoAction.checkDelete(saveCollection, "master", () => {
+                            useCollection.findOne({"id": 'memory'}, (err, resp) => {
+                                if (!resp || resp === null) {
+                                    console.log("Memory not found... Please teach me...");
+                                    process.exit(1);
+                                } else {
+                                    console.log("Found")
+                                    builder(spotifyApi, arr, resp);
+                                }
+                            });
                         });
                     });
                 });
-            });
-        },
-        recommend: function () { // TODO DOES NOT WORK AT THE MOMENT, ONLY FOR TESTING PURPOSES
-            let uri=process.argv[3]; // String
-            /*let genres=process.argv[4]; // Array
-            let quantity=process.argv[5];*/ // TODO - NOT REQUIRED AT THE MOMENT
-
-            /*genres = JSON.stringify(genres)
-            genres = JSON.parse(genres);*/
-
-            let genres = ["Blues"]
-
-            let tmpRecommendations={};
-
-            async.eachOfSeries(genres, function (genre, genreKey, genreCallback) {
-                recommender(spotifyApi, uri, genre, resp => {
-                    console.log("Response: ")
-
-                    if (genreKey <= genres.length) {
-                        // Finished
-                        callback()
-                    } else {
-                        genreCallback()
-                    }
-                });
-            });
+            }
         }
     };
 

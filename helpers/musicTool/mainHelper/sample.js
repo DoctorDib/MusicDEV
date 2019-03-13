@@ -2,7 +2,7 @@ const brain = require('brain.js');
 const async = require('async');
 const fs = require('fs');
 const config = require('../../../config/config');
-const predict = require('./predict');
+const predict = require('../helpers/predict');
 
 let catNum = 0;
 
