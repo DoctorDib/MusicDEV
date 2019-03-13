@@ -1,27 +1,16 @@
 const fs = require('fs');
 const async = require('async');
-const brain = require('brain.js');
 
 const neo4j = require('../helpers/neo4j');
 const config = require('../../../config/config');
 const spotify = require('../helpers/spotifyApi');
 const push = require('../helpers/pushbullet');
-
-const predict = require('../helpers/predict');
+const grabGenre = require('./grabGenre');
 
 function readTextFile(fileText, callback) {
     fs.readFile(fileText, 'utf8', (err, data) => {
         if (err) return console.log(err);
         callback(JSON.parse(data).playlists);
-    });
-}
-
-function grabGenre (respMemory, inputData, callback) {
-    let net = new brain.NeuralNetwork(config.classification_config.predict);
-    net.fromJSON(respMemory);
-
-    predict(net, inputData, resp => {
-        callback(resp);
     });
 }
 
