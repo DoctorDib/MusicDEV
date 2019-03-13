@@ -162,7 +162,7 @@ MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.
             useCollection = db.collection("masterMusicCats");
             saveCollection = db.collection("samples");
 
-            useCollection.findOne({}).then(data => {
+            useCollection.findOne({}).then(data => { // TODO - LOOK INTO INDEXING THE DATA FROM THE DATABASE
                 if (!data || Object.keys(data.musicCats).length !== 9) {
                     console.warn("No music categories found... please teach me by running the following command")
                     console.log("                   - node app.js learn initial") // TODO - Temp.
@@ -173,8 +173,8 @@ MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.
                     console.log("Starting to save now")
                     saveCollection.findOne({"id": 'musicCats'}, (err, respData) => {
 
-                        writeTextFile('./trainingSample.json', newData.trainingSample, () => {
-                            writeTextFile('./testingSample.json', newData.testingSample, () => {
+                        writeTextFile('./tests/trainingSample.json', newData.trainingSample, () => {
+                            writeTextFile('./tests/testingSample.json', newData.testingSample, () => {
                                 if (respData === null) {
                                     // Insert new record
                                     console.log("Inserting new record to Database");
@@ -474,8 +474,8 @@ MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.
             });
         },
         sample: function () {
-            let useCollectionMemory = db.collection("musicMemory");
-            let useCollectionCats = db.collection("samples");
+            const useCollectionMemory = db.collection("musicMemory");
+            const useCollectionCats = db.collection("samples");
 
             // Default = "test" - TrainingSet = "train"
             let sampleSelection = process.argv[3] === "train" ? "trainingSet" : "testingSet";

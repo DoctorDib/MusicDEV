@@ -36,10 +36,10 @@ module.exports = {
             leakyReluAlpha: 0.01   // supported for activation type 'leaky-relu'
         },
         general: {
-            cutTrainingPercentage: 70, // (1 - 100) - Percentage of training data (the rest will go towards the testing sample)
+            cutTrainingPercentage: 90, // (1 - 100) - Percentage of training data (the rest will go towards the testing sample)
             grabMin: true, // Equalise the total number of tracks per genre from the lowest value overall.
-            maxStrikes: 0, // Low as possible - How many strikes it takes for the program to delete the track from the training sample
-            gapAllowance: 7, // (1 - 9) - How much gap the program has to offer
+            maxStrikes: 1, // Low as possible - How many strikes it takes for the program to delete the track from the training sample
+            gapAllowance: 9, // (1 - 9) - How much gap the program has to offer
         }
     },
     recommendation_config: {
@@ -78,14 +78,14 @@ module.exports = {
         max_limit: 10
     },
     track_features: {
-        key: false,
-        mode: false,
-        acousticness: false,
+        key: false, // Either 0 or 1
+        mode: false, // Either 0 or 1
+        acousticness: true,
         danceability: true,
         energy: true,
-        instrumentalness: false,
+        instrumentalness: true,
         liveness: false,
-        loudness: false,
+        loudness: true,
         speechiness: true,
         valence: true,
         tempo: true,
