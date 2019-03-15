@@ -64,7 +64,6 @@ class Template extends React.Component {
     initialLoad = () => {
         Axios.get('initial')
             .then((resp) => {
-                console.log("initial data: ", resp)
                 if(resp.data.success){
                     this.setState({
                         profilePicLoading: 'none',
@@ -87,7 +86,7 @@ class Template extends React.Component {
                         warningOpen: true,
                         warningError: true,
                         warningMessage: 'Error: Session timeout, please logout and then back in...',
-                        buttonOptions: {active:false, title: ''},
+                        buttonOptions: { active:false, title: '' },
                     });
                 }
             })
@@ -109,7 +108,6 @@ class Template extends React.Component {
     };
 
     newUserActivePlaylist = params => {
-        console.log("><><><", params)
         this.setState({activePlaylists: params});
     };
 

@@ -18,13 +18,15 @@ const client_id = config.spotify.client_id;
 const client_secret = config.spotify.client_secret;
 const redirect_uri = config.spotify.spotify_callback;
 
+const fs = require('fs');
 const async = require('async');
 const brain = require('brain.js');
 const _ = require('underscore');
 const SpotifyWebApi = require('spotify-web-api-node');
 const MongoClient = require('mongodb').MongoClient;
 
-const fs = require('fs');
+const inputTwo = process.argv[2];
+const inputThree = process.argv[3];
 
 const timeoutIntervals = 125;
 let timeoutCount = 0;
@@ -99,8 +101,6 @@ Object.defineProperty(Array.prototype, 'chunk', {
 MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.mongo_settings.name}`, function (err, database) {
     if (err) return console.error(err);
     const db = database.db(config.mongo_settings.name);
-
-    let memory = {};
     let useCollection, saveCollection;
 
     const mongoAction = {
@@ -167,10 +167,10 @@ MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.
         learn: function () {
             let limit = false;
             saveCollection = db.collection("masterMusicCats");
-            if (process.argv[3] && process.argv[3] !== "initial") {
+            if (inputThree && inputThree !== "initial") {
                 // Default save location - musicCats
                 saveCollection = db.collection("musicCats");
-                limit = Number(process.argv[3]);
+                limit = Number(inputThree);
             }
 
             learn(spotifyApi, limit, (featureCount, newMemory) => {
@@ -229,7 +229,6 @@ MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.
                             }
                         });
                     }
-
                     start(data);
                 }).catch((err) => {
                     console.log(err);
@@ -243,17 +242,10 @@ MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.
                     console.log("Memory not found... Please teach me...");
                     endProgram(true);
                 } else {
-                    console.log("Found")
-
                     let net = new brain.NeuralNetwork(config.classification_config.predict);
                     net.fromJSON(resp.memory);
 
-                    let splitVal = ':';
-                    if (process.argv[3].indexOf("http") !== -1) {
-                        splitVal = '/';
-                    }
-
-                    let uri = process.argv[3].split(splitVal);
+                    let uri = inputThree.split(inputThree.indexOf("http") !== -1 ? '/' : ':');
                     uri = uri[uri.length - 1];
 
                     spotify.grabSingleFeature(spotifyApi, uri, (data) => {
@@ -271,7 +263,7 @@ MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.
             const useCollectionCats = db.collection("samples");
 
             // Default = "test" - TrainingSet = "train"
-            const sampleSelection = process.argv[3] === "train" ? "trainingSet" : "testingSet";
+            const sampleSelection = inputThree === "train" ? "trainingSet" : "testingSet";
 
             useCollectionMemory.findOne({"id": 'memory'}, (err, resp) => {
                 if (!resp || resp === null) {
@@ -284,7 +276,7 @@ MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.
                             console.log("Cats not found... please teach me");
                             endProgram(true);
                         } else {
-                            sample(spotifyApi, resp, cats[sampleSelection])
+                            sample(spotifyApi, resp, cats[sampleSelection]);
                         }
                     });
                 }
@@ -302,12 +294,12 @@ MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.
             });
         },
         build: function () {
-            if (!process.argv[3]) {
+            if (!inputThree) {
                 console.log("Please enter the number of files you wish to process.");
             } else {
                 neo4j('masterDelete', {}, function () { // Resetting
                     neo4j('initialise', { id: "Spotify", genres: config.recommendation_config.genres }, () => { // Initialising database
-                        const arr = _.range(parseInt(process.argv[3]));
+                        const arr = _.range(parseInt(inputThree));
                         useCollection = db.collection("musicMemory");
                         saveCollection = db.collection("masterMusic");
 
@@ -329,10 +321,10 @@ MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.
         }
     };
 
-    setUpAccount(function () {
-        if (run[process.argv[2]]) {
+    setUpAccount(() => {
+        if (run.hasOwnProperty(inputTwo)) {
             // Runs main application
-            run[process.argv[2]]();
+            run[inputTwo]();
         } else {
             // Default error shows which commands are valid
             endProgram(false);

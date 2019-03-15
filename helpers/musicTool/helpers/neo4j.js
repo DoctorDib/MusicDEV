@@ -28,12 +28,11 @@ function featuresString() {
         index ++;
         if (config.track_features.hasOwnProperty(feature)) {
             if (config.track_features[feature]) {
-                let string = index >= Object.keys(config.track_features).length ? ` a["${feature}"]` : ` a["${feature}"],`;
+                let string = index > Object.keys(config.track_features).length ? ` a["${feature}"]` : ` a["${feature}"],`;
                 finalString = finalString + string;  // TODO POSSIBLE ISSUE WITH THE COMMA
             }
         }
     }
-
     return `[${finalString}]`;
 }
 
@@ -54,11 +53,22 @@ function propertyManager(properties) {
 const run = (func, data, callback) => {
     let query;
     switch (func) {
+        case 'merge':
+            db.cypher({
+                query: 'WITH toLower(n.name) as name, collect(n) as nodes CALL apoc.refactor.mergeNodes(nodes) yield node RETURN *',
+                params: { properties: properties }
+            }, function (err, returnedData) {
+                if (err) {
+                    console.log(err)
+                } else {
+                    callback({success: true, data: returnedData, oldData: data});
+                }
+            });
+
+            break;
         case 'create':
             let song = data.params;
-
             console.log(song)
-            console.log(song.genre)
             console.log("================================")
 
             featureManager(song.features.hasOwnProperty('features') ? song.features.features: song.features, false, properties => {
@@ -76,6 +86,7 @@ const run = (func, data, callback) => {
                             }, function (err, returnedData) {
                                 if (err) {
                                     console.log(err)
+                                    callback({success: false, data: returnedData, oldData: data});
                                 } else {
                                     callback({success: true, data: returnedData, oldData: data});
                                 }
@@ -94,12 +105,14 @@ const run = (func, data, callback) => {
             console.log('-------------------------------------------')
             console.log(`Relation learning stated for: ${data.genre}`)
 
+            //algo.similarity.jaccard.stream( // new
+
             query = `MATCH (a:${data.genre})
                         WITH id(a) as id, ${featuresString()} as weights
                         
                         WITH {item: id, weights: weights} as userData
                         WITH collect(userData) as data
-                        CALL algo.similarity.cosine.stream(data,{similarityCutoff:0.9,topK:2})
+                        CALL algo.similarity.cosine.stream(data,{graph: 'cypher', similarityCutoff: 0.8, topK: 2})
                         YIELD item1, item2, count1, count2, similarity
                        
                         MATCH (a:${data.genre} {id: algo.getNodeById(item1).id})
@@ -117,12 +130,24 @@ const run = (func, data, callback) => {
                     genre: data.genre,
                     stringFeatures: featuresString()
                 }
-            }, function (err, data) {
+            }, (err, data) => {
                 if (err) {
                     console.log(err)
                     //callback({success: false, error: err});
                 } else {
                     console.log('FINISHED')
+                    callback({success: true, data: data});
+                }
+            });
+            break;
+        case 'masterDeleteRelations':
+            db.cypher({
+                query: 'MATCH ()-[r:RELEASED]-() DELETE r',
+            }, function (err, data) {
+                if (err) {
+                    callback({success: false, error: err});
+                } else {
+                    console.log('DELETED')
                     callback({success: true, data: data});
                 }
             });

@@ -13,7 +13,7 @@ module.exports = {
             activation: 'sigmoid',  // supported activation types: ['sigmoid', 'relu', 'leaky-relu', 'tanh'],
             inputSize: 7,
             inputRange: 7,
-            hiddenLayers: [1000, 1000],
+            hiddenLayers: [250, 250],
             outputSize: 7,
             learningRate: 0.03,
             decayRate: 0.999,

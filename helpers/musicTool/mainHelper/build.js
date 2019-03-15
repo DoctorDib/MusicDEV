@@ -1,5 +1,6 @@
 const fs = require('fs');
 const async = require('async');
+const slugify = require('slugify');
 
 const neo4j = require('../helpers/neo4j');
 const config = require('../../../config/config');
@@ -34,11 +35,11 @@ module.exports = function (spotifyApi, arrayLength, dataTracks) {
                     });
                 });
             } else {
-                let body = `${value+1}/${arrayLength.length} complete`;
+                /*let body = `${value+1}/${arrayLength.length} complete`; // TODO - COMMENTED OUT BECAUSE OF API 500 MONTHLY LIMIT
                 push.send({
                     title: "Partial",
                     body: body
-                });
+                });*/
                 callbackFiles();
             }
         }
@@ -49,9 +50,10 @@ module.exports = function (spotifyApi, arrayLength, dataTracks) {
             async.eachOfSeries(json, (jsonValue, jsonKey, jsonCallback) => {
                 let uriArray = [];
                 async.eachOfSeries(jsonValue.tracks, (trackValue, trackKey, trackCallback) => {
+                    let uri = trackValue.track_uri.split(':');
+
                     let count = trackValue.pos;
                     if (trackValue.hasOwnProperty("track_uri")) {
-                        let uri = trackValue.track_uri.split(':');
                         uri = uri[uri.length - 1];
                         if (finalObject.hasOwnProperty(uri)) {
                             console.log("DUPLICATED")

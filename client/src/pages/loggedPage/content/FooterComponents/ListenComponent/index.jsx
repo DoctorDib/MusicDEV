@@ -45,16 +45,13 @@ const defaultStates = {
 class Template extends React.Component {
     constructor(props) {
         super(props);
-
         this.state = defaultStates;
     }
 
     createPlaylistFunction = () => {
         const createPlaylistButton = <Button onClick={this.createPlaylistFunction}> Create Playlist </Button>;
-        console.log("Creating playlist")
         Axios.get('createPlaylist')
             .then((resp) => {
-                console.log(resp)
                 this.setState({
                     playlistActive: resp.data.playlistOptions.is_active || false,
                     createPlaylist: resp.data.playlistOptions.is_active ? null : createPlaylistButton,
@@ -63,32 +60,26 @@ class Template extends React.Component {
             .catch((err) => {
                 console.log(err);
             });
-
     };
 
     clear = () => {
-
-        this.setState(defaultStates);
+        this.setState(defaultStates); // TODO DOES NOT WORK, BUT SAME CODE ELSE WHERE DOES?
     };
 
     componentDidMount(props) {
         window.setInterval(() => {
             if (this.state.listening){
-                console.log(">>", this.state)
                 this.grabCurrentSong();
             }
         }, 1000);
 
-        this.setState({desktopMode:this.props.desktopMode});
+        this.setState({ desktopMode:this.props.desktopMode });
 
         const createPlaylistButton = <Button onClick={this.createPlaylistFunction}> Create Playlist </Button>;
 
         Axios.get('grabSavedPlaylists')
             .then(resp=> {
-                console.log(resp)
                 if (resp.data.success) {
-                    console.log(resp.data.playlistOptions)
-
                     this.setState({
                         playlistOptions: resp.data.playlistOptions,
                         playlistActive: resp.data.playlistOptions.is_active,
@@ -115,7 +106,6 @@ class Template extends React.Component {
 
     manageNewProps = (props) => {
         let newProps = {};
-
         for (let prop in props) {
             if(props.hasOwnProperty(prop)) {
                 if (props[prop] !== this.props[prop]) {
@@ -123,14 +113,11 @@ class Template extends React.Component {
                 }
             }
         }
-
         return newProps;
     };
 
     handleListen = () => {
-        this.setState({
-            listening: !this.state.listening
-        });
+        this.setState({ listening: !this.state.listening });
     };
 
     grabCurrentSong = () => {
@@ -138,11 +125,8 @@ class Template extends React.Component {
             this.setState({searching: true});
             Axios.get('currentSong', {params: { current: this.state.currentPlayingSong, is_playing: this.state.is_playing } } )
                 .then(resp => {
-                    console.log(resp)
                     if(resp.data.isPlaying){
-
                         if (resp.data.different) {
-                            console.log("Saving new song")
                             this.setState({
                                 currentPlayingSong: resp.data.song,
                                 currentPlayingAuthor: resp.data.artist,
@@ -226,7 +210,6 @@ class Template extends React.Component {
                     </div>
                     <div className={classes.topButtonOptions}>
                         {this.state.createPlaylist}
-                        <Button onClick={this.clear}> test </Button>
                         <Tooltip disableFocusListener disableTouchListener title="Toggle Listen">
                             <FormControlLabel color="primary" control={<Switch checked={this.state.listening} disabled={!this.state.playlistActive} color="primary" onClick={this.handleListen} />} label="Toggle Listening" />
                         </Tooltip>

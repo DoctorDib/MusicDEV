@@ -41,7 +41,6 @@ class Template extends React.Component {
             loading: 'none',
 
             playlistName: '',
-
             playlistChanges: false,
         };
     }
@@ -68,7 +67,6 @@ class Template extends React.Component {
 
     manageProps = (newProps) => {
         let newSelection = {};
-
         for (let prop in newProps) {
             if(newProps.hasOwnProperty(prop)) {
                 if (newProps[prop] !== this.props[prop]) {
@@ -110,11 +108,8 @@ class Template extends React.Component {
 
     componentWillReceiveProps(props){
         if (props.activePlaylists !== this.props.activePlaylists) {
-            console.log("Scanning: ", props.activePlaylists)
             this.setState({playlistNames: this.tickIt(props.activePlaylists)});
         }
-
-        console.log("New user? ", props.newUser)
 
         if (!props.newUser) {
             Axios.get('grabActivePlaylist', {
@@ -123,8 +118,6 @@ class Template extends React.Component {
                 }
             })
                 .then((resp) => {
-                    console.log("RESP: ", resp)
-                    console.log("hi")
                     if(resp.data.hasOwnProperty('playlists')){
                         this.setState({
                             activePlaylist: resp.data.playlists
@@ -163,10 +156,9 @@ class Template extends React.Component {
                 }
             }
 
-            console.log(tmpArr)
             this.props.newUserActivePlaylist(tmpArr);
 
-            if(tmpArr.length){
+            if (tmpArr.length) {
                 this.setState({
                     learnDisabled: true,
                     warningNotification: 'Learning',
