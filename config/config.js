@@ -39,7 +39,7 @@ module.exports = {
             cutTrainingPercentage: 90, // (1 - 100) - Percentage of training data (the rest will go towards the testing sample)
             grabMin: true, // Equalise the total number of tracks per genre from the lowest value overall.
             maxStrikes: 1, // Low as possible - How many strikes it takes for the program to delete the track from the training sample
-            gapAllowance: 9, // (1 - 9) - How much gap the program has to offer
+            gapAllowance: 6, // (1 - 9) - How much gap the program has to offer
         }
     },
     recommendation_config: {
@@ -85,10 +85,10 @@ module.exports = {
         energy: true,
         instrumentalness: true,
         liveness: false,
-        loudness: true,
+        loudness: false,
         speechiness: true,
         valence: true,
-        tempo: true,
+        tempo: false,
     },
     blacklist_options: {
         tick_interval: 30 // Seconds

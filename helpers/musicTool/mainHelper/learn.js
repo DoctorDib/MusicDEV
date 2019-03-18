@@ -10,18 +10,16 @@ module.exports = function (spotifyApi, limit, callback) {
     let memory = {};
     let type;
 
-    function finished(memory, savedTracks, finishedCallback) {
+    function sortDupes(memory, savedTracks, finishedCallback) {
         let dupes = {};
         for (let uri in savedTracks) {
             if (savedTracks.hasOwnProperty(uri)) {
                 if (Object.keys(savedTracks[uri]).length > 1) {
 
-                    let high = 0;
-                    let selectedType = '';
-
+                    let high = 0, selectedType = '';
                     for (let type in savedTracks[uri]) {
-                        if(savedTracks[uri].hasOwnProperty(type) && type !== "track"){
-                            if(savedTracks[uri][type] > high) {
+                        if (savedTracks[uri].hasOwnProperty(type) && type !== "track") {
+                            if (savedTracks[uri][type] > high) {
                                 high = savedTracks[uri][type];
                                 selectedType = type;
                             }
@@ -29,8 +27,12 @@ module.exports = function (spotifyApi, limit, callback) {
                     }
 
                     savedTracks[uri].track.features.output = { [selectedType] : 1 };
-                    memory[selectedType].push( savedTracks[uri].track.features);
-                    dupes[uri] = savedTracks[uri];
+                    if (savedTracks[uri].hasOwnProperty("track")) {
+                        dupes[uri] = savedTracks[uri];
+
+                    } else {
+                        memory[selectedType].push(savedTracks[uri].track.features);
+                    }
                 }
             }
         }
@@ -71,7 +73,7 @@ module.exports = function (spotifyApi, limit, callback) {
 
         console.log(featureCount);
 
-        finished(memory, savedTracks, newMemory => {
+        sortDupes(memory, savedTracks, newMemory => {
             callback(featureCount, newMemory)
         });
     }
