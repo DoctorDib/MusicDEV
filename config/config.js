@@ -7,13 +7,32 @@ module.exports = {
         port: secret.mongo.port,
         secret: secret.mongo.secret
     },
+    track_features: {
+        key: false, // Either 0 or 1
+        mode: false, // Either 0 or 1
+        acousticness: true,
+        danceability: true,
+        energy: true,
+        instrumentalness: true,
+        liveness: false,
+        loudness: false,
+        speechiness: true,
+        valence: true,
+        tempo: false,
+    },
     classification_config: {
+        general: {
+            cutTrainingPercentage: 90, // (1 - 100) - Percentage of training data (the rest will go towards the testing sample)
+            grabMin: true, // Equalise the total number of tracks per genre from the lowest value overall.
+            maxStrikes: 1, // Low as possible - How many strikes it takes for the program to delete the track from the training sample
+            gapAllowance: 9, // (1 - 9) - How much gap the program has to offer
+        },
         config: {
             binaryThresh: 0.5,
             activation: 'sigmoid',  // supported activation types: ['sigmoid', 'relu', 'leaky-relu', 'tanh'],
             inputSize: 7,
             inputRange: 7,
-            hiddenLayers: [250, 250],
+            hiddenLayers: [200, 200],
             outputSize: 7,
             learningRate: 0.03,
             decayRate: 0.999,
@@ -30,17 +49,11 @@ module.exports = {
             timeout: Infinity      // the max number of milliseconds to train for --> number greater than 0
         },
         predict: {
-            binaryThresh: 0.10,
+            binaryThresh: 0.99,
             hiddenLayers: [100, 100],     // array of ints for the sizes of the hidden layers in the network
             activation: 'sigmoid',  // supported activation types: ['sigmoid', 'relu', 'leaky-relu', 'tanh'],
-            leakyReluAlpha: 0.01   // supported for activation type 'leaky-relu'
+            leakyReluAlpha: 0.999   // supported for activation type 'leaky-relu'
         },
-        general: {
-            cutTrainingPercentage: 90, // (1 - 100) - Percentage of training data (the rest will go towards the testing sample)
-            grabMin: true, // Equalise the total number of tracks per genre from the lowest value overall.
-            maxStrikes: 1, // Low as possible - How many strikes it takes for the program to delete the track from the training sample
-            gapAllowance: 6, // (1 - 9) - How much gap the program has to offer
-        }
     },
     recommendation_config: {
         activitiesMap: {
@@ -76,19 +89,6 @@ module.exports = {
     },
     table_settings: {
         max_limit: 10
-    },
-    track_features: {
-        key: false, // Either 0 or 1
-        mode: false, // Either 0 or 1
-        acousticness: true,
-        danceability: true,
-        energy: true,
-        instrumentalness: true,
-        liveness: false,
-        loudness: false,
-        speechiness: true,
-        valence: true,
-        tempo: false,
     },
     blacklist_options: {
         tick_interval: 30 // Seconds

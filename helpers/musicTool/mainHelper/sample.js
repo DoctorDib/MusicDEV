@@ -7,58 +7,33 @@ const predict = require('../helpers/predict');
 let catNum = 0;
 
 let initial = {
-    errors: {
-        overall: 0,
-        Blues: 0,
-        Pop: 0,
-        HipHop: 0,
-        Chill: 0,
-        ElectronicAndDance: 0,
-        RnB: 0,
-        Rock: 0,
-        Jazz: 0,
-        Classical: 0,
-    },
-    count: {
-        overall: 0,
-        Blues: 0,
-        Pop: 0,
-        HipHop: 0,
-        Chill: 0,
-        ElectronicAndDance: 0,
-        RnB: 0,
-        Rock: 0,
-        Jazz: 0,
-        Classical: 0,
-    },
-    percent: {
-        overall: 100,
-        Blues: 100,
-        Pop: 100,
-        HipHop: 100,
-        Chill: 100,
-        ElectronicAndDance: 100,
-        RnB: 100,
-        Rock: 100,
-        Jazz: 100,
-        Classical: 100,
-    }
+    errors: {},
+    count: {},
+    percent: {},
+    incorrectCount: {}
 };
 
 function workout(expected, actual, callback){
     if (expected !== actual) {
-        initial.errors[expected] ++;
-        initial.errors.overall ++;
 
+
+        if (!initial.errors.hasOwnProperty(expected)) initial.errors[expected] = 0;
+        initial.errors[expected] ++;
+
+        if (!initial.percent.hasOwnProperty(expected)) initial.percent[expected] = 100;
         initial.percent[expected] = 100 - ((initial.errors[expected] / initial.count[expected]) * 100);
-        initial.percent.overall = 100 - ((initial.errors.overall / initial.count.overall) * 100);
+
+        if (!initial.incorrectCount.hasOwnProperty(expected)) initial.incorrectCount[expected] = {};
+        if (!initial.incorrectCount[expected].hasOwnProperty(actual)) initial.incorrectCount[expected][actual] = 0;
+        initial.incorrectCount[expected][actual] ++;
     }
 
     callback(expected !== actual);
 }
 
 function round(input, dec) {
-    return Number( Math.round( Number( input.toFixed( 10 ) ) +'e'+dec ) +'e-'+dec );
+    console.log(input)
+    return  Number( Math.round( Number( input.toFixed( 10 ) ) +'e'+dec ) +'e-'+dec );
 }
 
 module.exports = (spotifyApi, netOptions, data) => {
@@ -72,19 +47,21 @@ module.exports = (spotifyApi, netOptions, data) => {
         let catKey = Object.keys(trackValue.output)[0]; // Grabbing the expected Genre
 
         predict(net, trackValue.input, (resp) => {
+
+            if (!initial.count.hasOwnProperty(catKey)) initial.count[catKey] = 0;
             initial.count[catKey]++;
-            initial.count.overall++;
 
             workout(catKey, resp, incorrect => {
                 if (incorrect) exportJSON.push({correct: catKey, predicted:resp, features: trackValue});
 
-                console.log(`======================${catKey}======================`);
-                console.log(catKey + ": " + round(initial.percent[catKey], 2) + "%");
-                console.log("OVERALL: " + round(initial.percent.overall, 2) + "%");
+                //console.log(`======================${catKey}======================`);
+                if (!initial.percent.hasOwnProperty(catKey)) initial.percent[catKey] = 100;
+                //console.log(catKey + ": " + round(initial.percent[catKey], 2) + "%");
 
                 if (trackKey+1 >= data.length) {
                     console.log("======================SAMPLES======================");
 
+                    let overallPercentage = 0;
                     for (let genre in initial.percent) {
                         if (initial.percent.hasOwnProperty(genre)) {
                             let print = '';
@@ -93,14 +70,19 @@ module.exports = (spotifyApi, netOptions, data) => {
                             if (genre !== "overall") {
                                 print = `${genre} ${round(initial.percent[genre], 2)}% - ${outOf}/${initial.count[genre]}`;
                             }
-                            console.log(print);
+
+                            overallPercentage += Number(round(initial.percent[genre], 2));
+                            //console.log(print)
                         }
                     }
 
+                    overallPercentage = overallPercentage / 9;
+
                     console.log("======================OVERALL======================");
-                    console.log(`Overall: ${initial.errors.overall}/${initial.count.overall}`);
-                    console.log(`Accuracy: ${round(initial.percent["overall"], 2)}%`);
+                    console.log(`ACCURACY: ${round(overallPercentage, 2)}%`);
                     console.log("===================================================");
+
+                    console.log(initial.incorrectCount)
 
                     fs.writeFile("./tests/incorrectSamples.json", JSON.stringify(exportJSON), (err) => {
                         if (err) return console.error(err);
