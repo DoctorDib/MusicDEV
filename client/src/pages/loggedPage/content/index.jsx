@@ -46,6 +46,7 @@ class Template extends React.Component {
             warningSnack: false,
 
             tableRecommendation: [],
+            accuracy: 0,
 
             buttonOptions: {
                 active: false,
@@ -64,7 +65,8 @@ class Template extends React.Component {
     initialLoad = () => {
         Axios.get('initial')
             .then((resp) => {
-                if(resp.data.success){
+                if (resp.data.success) {
+                    console.log(resp.data.accuracy)
                     this.setState({
                         profilePicLoading: 'none',
                         profilePicActive: 'block',
@@ -79,7 +81,8 @@ class Template extends React.Component {
                         playlistName: resp.data.playlistName, // TODO - MAY NOT BE NEEDED
                         activePlaylists: resp.data.activePlaylists,
                         history: resp.data.history,
-                        newUserOpen: resp.data.new_user
+                        newUserOpen: resp.data.new_user,
+                        accuracy: resp.data.accuracy,
                     });
                 } else {
                     this.setState({
@@ -141,6 +144,7 @@ class Template extends React.Component {
                     profilePicLoading={this.state.profilePicLoading}
                     profilePicActive={this.state.profilePicActive}
                     profileLink={this.state.profileLink}
+                    accuracy={this.state.accuracy}
 
                     newUser={this.state.newUser}
                     profilePlaylists={this.state.profilePlaylists}

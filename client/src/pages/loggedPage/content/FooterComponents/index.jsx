@@ -5,6 +5,7 @@ import classNames from 'classnames';
 
 import styles from './style';
 
+import HomeComponent  from './HomeComponent';
 import RecommendationComponent  from './RecommendationComponent';
 import SettingsComponent  from './SettingsComponent';
 import HelpComponent  from './HelpComponent';
@@ -29,6 +30,7 @@ import RecentIcon from 'mdi-react/RecentIcon';
 import BrainIcon from 'mdi-react/BrainIcon';
 import ListenIcon from 'mdi-react/EarHearingIcon';
 import ManagerIcon from 'mdi-react/ContentSaveEditIcon';
+import HouseIcon from 'mdi-react/HouseIcon';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import MenuIcon from '@material-ui/icons/Menu';
 import SettingsIcon from '@material-ui/icons/Settings';
@@ -40,21 +42,26 @@ import { withStyles } from '@material-ui/core/styles';
 const buttonContent = [
     {
         id: 0,
+        name: 'Home',
+        icon: <HouseIcon />
+    },
+    {
+        id: 1,
         name: 'Music Continuation',
         icon: <ListenIcon />
     },
     {
-        id: 1,
+        id: 2,
         name: 'Recommendation',
         icon: <BrainIcon />
     },
     {
-        id: 2,
+        id: 3,
         name: 'Music Manager',
         icon: <ManagerIcon />
     },
     {
-        id: 3,
+        id: 4,
         name: 'All History',
         icon: <RecentIcon />
     }
@@ -87,6 +94,7 @@ class Template extends React.Component {
             profileLink: 'https://www.spotify.com/uk/',
 
             hideButton: 'none',
+            accuracy: 0,
 
             profileAccessToken: '',
             profilePlaylists: [],
@@ -98,7 +106,7 @@ class Template extends React.Component {
             history: [],
 
             helperOpen: false,
-            menuTitle: 'Music Continuation',
+            menuTitle: 'Home',
             desktopMode: true
         }
     }
@@ -126,7 +134,7 @@ class Template extends React.Component {
     };
 
     handleClose = target => () => {
-        this.setState({ [target]: false });
+        this.setState( { [target]: false } );
     };
 
     visitProfile = () => {
@@ -138,8 +146,7 @@ class Template extends React.Component {
         this.setState({helperOpen: !this.state.helperOpen})
     };
 
-    componentDidMount(props) {
-
+    componentDidMount (props) {
         this.setState({
             tableRecommendation: this.props.tableContent,
             currentPlayingSong: this.props.currentPlayingSong,
@@ -165,6 +172,7 @@ class Template extends React.Component {
             activePlaylists: this.props.activePlaylists,
             history: this.props.history,
             desktopMode: this.props.desktopMode,
+            accuracy: this.props.accuracy,
         });
     };
 
@@ -188,6 +196,39 @@ class Template extends React.Component {
 
     updateHistory = newHistory => {
         this.setState({history: newHistory})
+    };
+
+    updateNavigation = indexID => {
+        /*{id: 0, name: 'Music Continuation' }, 1
+          {id: 1, name: 'Recommendation' }, 2
+          {id: 2, name: 'Music Manager' }, 3
+          {id: 3, name: 'All History' }, 4
+          {id: 4, name: 'Help' },
+          {id: 5, name: 'Settings' },
+          {id: 6, name: 'Logout' } * */
+        switch (indexID) {
+            case 0:
+                this.handleListItemClick(null, 1, 'Music Continuation');
+                break;
+            case 1:
+                this.handleListItemClick(null, 2, 'Recommendation');
+                break;
+            case 2:
+                this.handleListItemClick(null, 3, 'Music Manager');
+                break;
+            case 3:
+                this.handleListItemClick(null, 4, 'All History');
+                break;
+            case 4:
+                this.openHelper();
+                break;
+            case 5:
+                this.handleListItemClick(null, 5, 'Settings');
+                break;
+            case 6:
+                this.logout();
+                break;
+        }
     };
 
     getAllHistorySongs = () => {
@@ -360,8 +401,8 @@ class Template extends React.Component {
                                     <Tooltip disableHoverListener={this.state.open} disableFocusListener disableTouchListener title="Settings" placement="right">
                                         <ListItem
                                             button
-                                            selected={this.state.selectedIndex === 4}
-                                            onClick={event => this.handleListItemClick(event, 4, "Settings")}
+                                            selected={this.state.selectedIndex === 5}
+                                            onClick={event => this.handleListItemClick(event, 5, "Settings")}
                                         >
                                             <ListItemIcon><SettingsIcon /></ListItemIcon>
                                             <Typography style={{color: '#cacaca', marginLeft: '10px', fontSize: '0.95rem'}}>Settings</Typography>
@@ -385,18 +426,19 @@ class Template extends React.Component {
                             <div className={classes.toolbar} />
 
                             <div style={{height: '100%', overflow:'auto'}}>
-                                {this.state.selectedIndex === 0 && <ListenComponent playlistActive={this.state.playlistActive} desktopMode={this.state.desktopMode}/>}
+                                {this.state.selectedIndex === 0 && <HomeComponent accuracy={this.state.accuracy} updateNavigation={params => this.updateNavigation(params)}/>}
+                                {this.state.selectedIndex === 1 && <ListenComponent playlistActive={this.state.playlistActive} desktopMode={this.state.desktopMode}/>}
 
-                                {this.state.selectedIndex === 1 && <RecommendationComponent
+                                {this.state.selectedIndex === 2 && <RecommendationComponent
                                     updateTable={this.state.updateTable}
                                     username={this.state.username}
                                     updateHistory={params => this.updateHistory(params)}
                                     desktopMode={this.state.desktopMode}
                                 />}
 
-                                {this.state.selectedIndex === 2 && <MusicManagerComponent desktopMode={this.state.desktopMode} />}
-                                {this.state.selectedIndex === 3 && <TableComponent tableType='history' tableContent={this.getAllHistorySongs()} currentSong={''} desktopMode={this.state.desktopMode}/>}
-                                {this.state.selectedIndex === 4 && <SettingsComponent
+                                {this.state.selectedIndex === 3 && <MusicManagerComponent desktopMode={this.state.desktopMode} />}
+                                {this.state.selectedIndex === 4 && <TableComponent tableType='history' tableContent={this.getAllHistorySongs()} currentSong={''} desktopMode={this.state.desktopMode}/>}
+                                {this.state.selectedIndex === 5 && <SettingsComponent
                                     playlistNames={this.state.playlistNames}
                                     profilePlaylists={this.state.profilePlaylists}
                                     activePlaylists={this.state.activePlaylists}

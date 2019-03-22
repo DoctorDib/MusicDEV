@@ -1,12 +1,10 @@
-function check(outcome, callback) {
+function check (outcome, callback) {
     let high = -1000000, highLabel;
 
     for (let index in outcome) {
         if(outcome.hasOwnProperty(index)){
             let tmpOut = outcome[index];
-
             //tmpOut = Number(Number.parseFloat(tmpOut).toFixed(20)); //TODO - MAKE SURE THIS IS THE CORRECT METHOD?
-
 
             if (tmpOut > high) {
                 high = tmpOut;
@@ -22,7 +20,6 @@ function check(outcome, callback) {
     }
     callback(highLabel);
 }
-
 
 module.exports = function (net, data, callback) {
     let outcome = net.run(data.features || data);

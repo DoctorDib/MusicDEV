@@ -203,34 +203,38 @@ module.exports = function () {
             });
         },
         initialise: function (req, res) {
-            spotify('new_user', {username: req.user.id}, () => {
-                mongo('grabOne', 'users', {identifier: {id: req.user.id}}, resp => {
-                    // Automatically refresh on load
-                    grabNewToken(req.user.id, resp.records.spotify.refresh_token, () => {
-                        spotify('grabPlaylists', {
-                            username: req.user.id,
-                            access_token: resp.records.spotify.access_token
-                        }, playlists => {
-                            console.log(resp)
-                            if (playlists.success) {
-                                res.json({
-                                    success: true,
-                                    userAccount: req.user,
-                                    playlists: playlists.data,
-                                    new_user: !resp.records.hasOwnProperty('playlist'),
-                                    access_token: resp.records.spotify.access_token,
-                                    privatePlaylist: resp.records.playlistOptions.is_private,
-                                    playlistActive: resp.records.playlistOptions.is_active,
-                                    playlistName: resp.records.playlistOptions.name,
-                                    savedTracks: resp.records.playlistOptions.savedTracks || [],
-                                    activePlaylists: resp.records.activePlaylists,
-                                    history: resp.records.history || [],
-                                });
-                            } else {
-                                console.log(req.user.id);
-                                console.log(resp.records);
-                                res.json({success: false});
-                            }
+            mongo('grabOne', 'musicMemory', {identifier: {id: "accuracy"}}, accuracyRecords => {
+                spotify('new_user', {username: req.user.id}, () => {
+                    mongo('grabOne', 'users', {identifier: {id: req.user.id}}, resp => {
+                        // Automatically refresh on load
+                        grabNewToken(req.user.id, resp.records.spotify.refresh_token, () => {
+                            spotify('grabPlaylists', {
+                                username: req.user.id,
+                                access_token: resp.records.spotify.access_token
+                            }, playlists => {
+                                console.log(resp)
+                                console.log(accuracyRecords.records.accuracy)
+                                if (playlists.success) {
+                                    res.json({
+                                        success: true,
+                                        userAccount: req.user,
+                                        playlists: playlists.data,
+                                        new_user: !resp.records.hasOwnProperty('playlist'),
+                                        access_token: resp.records.spotify.access_token,
+                                        privatePlaylist: resp.records.playlistOptions.is_private,
+                                        playlistActive: resp.records.playlistOptions.is_active,
+                                        playlistName: resp.records.playlistOptions.name,
+                                        savedTracks: resp.records.playlistOptions.savedTracks || [],
+                                        activePlaylists: resp.records.activePlaylists,
+                                        accuracy: accuracyRecords.records.accuracy,
+                                        history: resp.records.history || [],
+                                    });
+                                } else {
+                                    console.log(req.user.id);
+                                    console.log(resp.records);
+                                    res.json({success: false});
+                                }
+                            });
                         });
                     });
                 });

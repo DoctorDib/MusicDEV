@@ -24,15 +24,15 @@ module.exports = {
         general: {
             cutTrainingPercentage: 90, // (1 - 100) - Percentage of training data (the rest will go towards the testing sample)
             grabMin: true, // Equalise the total number of tracks per genre from the lowest value overall.
-            maxStrikes: 1, // Low as possible - How many strikes it takes for the program to delete the track from the training sample
-            gapAllowance: 9, // (1 - 9) - How much gap the program has to offer
+            maxStrikes: 0, // Low as possible - How many strikes it takes for the program to delete the track from the training sample
+            gapAllowance: 8, // (1 - 9) - How much gap the program has to offer
         },
         config: {
             binaryThresh: 0.5,
             activation: 'sigmoid',  // supported activation types: ['sigmoid', 'relu', 'leaky-relu', 'tanh'],
             inputSize: 7,
             inputRange: 7,
-            hiddenLayers: [200, 200],
+            hiddenLayers: [500, 500],
             outputSize: 7,
             learningRate: 0.03,
             decayRate: 0.999,
@@ -41,7 +41,7 @@ module.exports = {
             iterations: 200000,    // the maximum times to iterate the training data --> number greater than 0
             errorThresh: 0.01,     // the acceptable error percentage from training data --> number between 0 and 1
             log: false,            // true to use console.log, when a function is supplied it is used --> Either true or a function
-            logPeriod: 10,         // iterations between logging out --> number greater than 0
+            logPeriod: 1,         // iterations between logging out --> number greater than 0 = DEFAULT 10
             learningRate: 0.01,    // scales with delta to effect training rate --> number between 0 and 1
             momentum: 0.1,         // scales with next layer's change value --> number between 0 and 1
             callback: null,        // a periodic call back that can be triggered while training --> null or function

@@ -1,6 +1,6 @@
 const brain = require('brain.js');
 const config = require('../../../config/config');
-const push = require('./pushbullet');
+const push = require('../helpers/pushbullet');
 
 let error = 0, iteration = 'default';
 let timerStart=0;

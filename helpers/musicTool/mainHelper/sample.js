@@ -32,12 +32,12 @@ function workout(expected, actual, callback){
 }
 
 function round(input, dec) {
-    console.log(input)
     return  Number( Math.round( Number( input.toFixed( 10 ) ) +'e'+dec ) +'e-'+dec );
 }
 
-module.exports = (spotifyApi, netOptions, data) => {
-    let net = new brain.NeuralNetwork(config.classification_config.predict);
+module.exports = (spotifyApi, netOptions, data, callback) => {
+    //let net = new brain.NeuralNetwork(config.classification_config.predict);
+    let net = new brain.NeuralNetwork();
     let exportJSON = [];
 
     net.fromJSON(netOptions.memory);
@@ -45,7 +45,6 @@ module.exports = (spotifyApi, netOptions, data) => {
     catNum ++;
     async.eachOfSeries(data, (trackValue, trackKey, trackCallback) => {
         let catKey = Object.keys(trackValue.output)[0]; // Grabbing the expected Genre
-
         predict(net, trackValue.input, (resp) => {
 
             if (!initial.count.hasOwnProperty(catKey)) initial.count[catKey] = 0;
@@ -72,14 +71,15 @@ module.exports = (spotifyApi, netOptions, data) => {
                             }
 
                             overallPercentage += Number(round(initial.percent[genre], 2));
-                            //console.log(print)
+                            console.log(print)
                         }
                     }
 
                     overallPercentage = overallPercentage / 9;
 
+                    let finalAccuracy = round(overallPercentage, 2);
                     console.log("======================OVERALL======================");
-                    console.log(`ACCURACY: ${round(overallPercentage, 2)}%`);
+                    console.log(`ACCURACY: ${finalAccuracy}%`);
                     console.log("===================================================");
 
                     console.log(initial.incorrectCount)
@@ -87,6 +87,7 @@ module.exports = (spotifyApi, netOptions, data) => {
                     fs.writeFile("./tests/incorrectSamples.json", JSON.stringify(exportJSON), (err) => {
                         if (err) return console.error(err);
                         console.log("File has been created");
+                        callback(finalAccuracy);
                     });
                 } else {
                     trackCallback()

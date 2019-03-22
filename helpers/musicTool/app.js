@@ -1,5 +1,5 @@
 // ==== Training models ==== \\
-const trainer = require('./helpers/train');
+const trainer = require('./mainHelper/train');
 const recommender = require('./helpers/recommend');
 //const trainer = require('./helpers/train-synaptic');
 
@@ -261,6 +261,7 @@ MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.
         sample: function () {
             const useCollectionMemory = db.collection("musicMemory");
             const useCollectionCats = db.collection("samples");
+            const saveCollection = db.collection("musicMemory");
 
             // Default = "test" - TrainingSet = "train"
             const sampleSelection = inputThree === "train" ? "trainingSet" : "testingSet";
@@ -276,7 +277,9 @@ MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.
                             console.log("Cats not found... please teach me");
                             endProgram(true);
                         } else {
-                            sample(spotifyApi, resp, cats[sampleSelection]);
+                            sample(spotifyApi, resp, cats[sampleSelection], finalAccuracy => {
+                                saveCollection.update( { id: "accuracy" }, { id: "accuracy", accuracy: finalAccuracy }, { upsert: true } );
+                            });
                         }
                     });
                 }
