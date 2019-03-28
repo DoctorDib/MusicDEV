@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import Paper from '@material-ui/core/Paper';
 import Button from '@material-ui/core/Button';
 import Divider from '@material-ui/core/Divider';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
 
 import RecentIcon from 'mdi-react/RecentIcon';
@@ -62,14 +63,21 @@ class Template extends React.Component {
         this.state = {
             updateNavigation: '',
             accuracy: 0,
+            progress: 0,
         }
     }
 
     componentWillReceiveProps(props) {
         if (props.accuracy !== this.props.accuracy) {
-            this.setState({
-                accuracy: props.accuracy,
-            });
+            setInterval(function () {
+                if (this.state.progress > this.state.accuracy) {
+                    this.setState({progress: this.state.accuracy});
+                    clearInterval()
+                } else {
+                    this.setState({progress: this.state.progress += 0.01});
+                }
+            }, 100);
+            this.setState({ accuracy: props.accuracy, });
         }
     }
 
@@ -85,7 +93,11 @@ class Template extends React.Component {
         return (
             <Paper square className={classes.main}>
                 <Typography> Genre Classification Accuracy: {this.state.accuracy}% </Typography>
-                <div style={{width: this.state.progress, borderBottom: '3px black solid'}}> </div> // TODO - PROGRESS BAR
+                <CircularProgress
+                    className={classes.progress}
+                    variant="static"
+                    value={this.state.progress}
+                />
                 <Divider />
                 <div className={classes.buttonContainer}> {buttonMapping} </div>
                 <Divider />

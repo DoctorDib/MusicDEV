@@ -5,12 +5,12 @@ const featureManager = require('../helpers/trackFeatureManager');
 
 function grabSizingOfGenres (data) {
     let tmp = {};
-    for (let genreTracks in data.musicCats) {
-        if (data.musicCats.hasOwnProperty(genreTracks)) {
-            if (!tmp.hasOwnProperty(genreTracks)) tmp[genreTracks] = {};
-            tmp[genreTracks] = {
-                total: data.musicCats[genreTracks].length,
-                percentage: Math.ceil(data.musicCats[genreTracks].length * (config.classification_config.general.cutTrainingPercentage / 100))
+    for (let genre in config.active_genres) {
+        if (config.active_genres.hasOwnProperty(genre) && config.active_genres[genre]) {
+            if (!tmp.hasOwnProperty(genre)) tmp[genre] = {};
+            tmp[genre] = {
+                total: data.musicCats[genre].length,
+                percentage: Math.ceil(data.musicCats[genre].length * (config.classification_config.general.cutTrainingPercentage / 100))
             };
         }
     }
@@ -220,31 +220,49 @@ function processData (data, counter, callback) {
     });
 }
 
+function grabActiveGenreMusic (data, callback) {
+
+    let activeMusic = { musicCats: {}, counter: data.counter };
+
+    for (let genre in config.active_genres) {
+        // If exists and value is true...
+        if (config.active_genres.hasOwnProperty(genre) && config.active_genres[genre]) {
+            activeMusic.musicCats[genre] = data.musicCats[genre];
+        }
+    }
+
+    callback(activeMusic);
+}
+
 module.exports = (data, callback) => {
 
     // STAGE 1: Grabbing total sizing of tracks per genre
     let totalGenreTracks = grabSizingOfGenres(data);
 
-    // STAGE 2: Grabbing compatible genre range
-    grabHighLow(data, genreRangeLimit => {
+    // NEW STAGE TODO - GRAB LIST OF AVAILABLE GENRE MUSIC IN ARRAY FORMAT
+    grabActiveGenreMusic(data, musicData => {
 
-        // STAGE 3: Collecting the suitable data for training
-        grabSuitableTrainingData(data, data.counter, genreRangeLimit, suitableData => {
+        // STAGE 2: Grabbing compatible genre range
+        grabHighLow(musicData, genreRangeLimit => {
 
-            // STAGE 4: Grabbing X% of tracks per genre
-            grabPercentageOfTracks(suitableData, totalGenreTracks, trainingSample => {
+            // STAGE 3: Collecting the suitable data for training
+            grabSuitableTrainingData(musicData, data.counter, genreRangeLimit, suitableData => {
 
-                // STAGE 5: Grab active tracks from training sample (to work out the remaining tracks)
-                grabTrackIDTrainingSample(trainingSample, activeList => {
+                // STAGE 4: Grabbing X% of tracks per genre
+                grabPercentageOfTracks(suitableData, totalGenreTracks, trainingSample => {
 
-                    // STAGE 6: Grab the remaining genre tracks into a testing sample
-                    grabTestingSample(data, activeList, testingSample => {
+                    // STAGE 5: Grab active tracks from training sample (to work out the remaining tracks)
+                    grabTrackIDTrainingSample(trainingSample, activeList => {
 
-                        // STAGE 7: Prepare samples
-                        processData(trainingSample, data.counter, newTrainingSample => {
-                            processData(testingSample, data.counter, newTestingSample => {
-                                console.log(genreRangeLimit)
-                                callback({testingSample: newTestingSample, trainingSample: newTrainingSample})
+                        // STAGE 6: Grab the remaining genre tracks into a testing sample
+                        grabTestingSample(musicData, activeList, testingSample => {
+
+                            // STAGE 7: Prepare samples
+                            processData(trainingSample, data.counter, newTrainingSample => {
+                                processData(testingSample, data.counter, newTestingSample => {
+                                    console.log(genreRangeLimit)
+                                    callback({testingSample: newTestingSample, trainingSample: newTrainingSample})
+                                });
                             });
                         });
                     });
