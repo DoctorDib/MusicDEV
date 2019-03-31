@@ -1,5 +1,41 @@
 const secret = require('./secretKeys');
 
+const active_genre = {
+    HipHop: true,
+    RnB: true,
+    Pop: true,
+    ElectronicAndDance: true,
+    Jazz: true,
+    Blues: false, // getting the most hate
+    Chill: false,
+    Classical: true,
+    Rock: true,
+};
+
+const track_features = {
+    key: false, // Either 0 or 1
+    mode: false, // Either 0 or 1
+    acousticness: true,
+    danceability: true,
+    energy: true,
+    instrumentalness: true,
+    liveness: false,
+    loudness: false, // negative number
+    speechiness: true,
+    valence: false,
+    tempo: false,
+};
+
+function generateGenreList(genreList) {
+    let final = [];
+    for (let genre in genreList) {
+        if (genreList.hasOwnProperty(genre) && active_genre[genreList[genre]]) {
+            final.push(genreList[genre]);
+        }
+    }
+    return final;
+}
+
 module.exports = {
     port: secret.main.port,
     mongo_settings: {
@@ -7,53 +43,31 @@ module.exports = {
         port: secret.mongo.port,
         secret: secret.mongo.secret
     },
-    active_genres: {
-        HipHop: true,
-        RnB: false,
-        Pop: false,
-        ElectronicAndDance: false,
-        Jazz: false,
-        Blues: false,
-        Chill: true,
-        Classical: true,
-        Rock: true,
-    },
-    track_features: {
-        key: false, // Either 0 or 1
-        mode: false, // Either 0 or 1
-        acousticness: false,
-        danceability: true,
-        energy: true,
-        instrumentalness: true,
-        liveness: false,
-        loudness: true,
-        speechiness: false,
-        valence: false,
-        tempo: false,
-    },
+    active_genres: active_genre,
+    track_features: track_features,
     classification_config: {
         general: {
             cutTrainingPercentage: 90, // (1 - 100) - Percentage of training data (the rest will go towards the testing sample)
             grabMin: true, // Equalise the total number of tracks per genre from the lowest value overall.
-            maxStrikes: 1, // Low as possible - How many strikes it takes for the program to delete the track from the training sample
-            gapAllowance: 5, // (1 - 9) - How much gap the program has to offer
+            maxStrikes: 0, // Low as possible - How many strikes it takes for the program to delete the track from the training sample
+            gapAllowance: 9, // (1 - 9) - How much gap the program has to offer
         },
         config: {
             binaryThresh: 0.5,
             activation: 'sigmoid',  // supported activation types: ['sigmoid', 'relu', 'leaky-relu', 'tanh'],
-            inputSize: 10,
-            inputRange: 10,
-            hiddenLayers: [250, 250],
-            outputSize: 10,
-            learningRate: 0.9,
-            decayRate: 0.9,
+            inputSize: 110,
+            inputRange: 110,
+            hiddenLayers: [300, 300],
+            outputSize: 110,
+            learningRate: 0.05,
+            decayRate: 0.999,
         },
         train: {
             iterations: 3000,    // the maximum times to iterate the training data --> number greater than 0
-            errorThresh: 0.015,     // the acceptable error percentage from training data --> number between 0 and 1
+            errorThresh: 0.01,     // the acceptable error percentage from training data --> number between 0 and 1
             log: false,            // true to use console.log, when a function is supplied it is used --> Either true or a function
             logPeriod: 1,         // iterations between logging out --> number greater than 0 = DEFAULT 10
-            learningRate: 0.9,    // scales with delta to effect training rate --> number between 0 and 1
+            learningRate: 0.4,    // scales with delta to effect training rate --> number between 0 and 1
             momentum: 0.1,         // scales with next layer's change value --> number between 0 and 1
             callback: null,        // a periodic call back that can be triggered while training --> null or function
             callbackPeriod: 10,    // the number of iterations through the training data between callback calls --> number greater than 0
@@ -68,15 +82,15 @@ module.exports = {
     },
     recommendation_config: {
         activitiesMap: {
-            Workout: ["Rock", "RnB", "ElectronicAndDance"],
-            Party: ["Pop", "HipHop", "Rock", "ElectronicAndDance"],
-            Focus: ["Jazz", "Classical", "Blues"],
-            Sleep: ["Classical", "Blues"],
-            Romance: ["Classical", "Blues", "Jazz"],
-            Gaming: ["Rock", "RnB", "ElectronicAndDance"],
-            Dinner: ["Chill", "Jazz", "Classical"],
-            Travel: ["Pop", "HipHop", "RnB"],
-            Relax: ["Chill", "Jazz", "Classical"]
+            Workout: generateGenreList(["Rock", "RnB", "ElectronicAndDance"]),
+            Party: generateGenreList(["Pop", "HipHop", "Rock", "ElectronicAndDance"]),
+            Focus: generateGenreList(["Jazz", "Classical", "Blues"]),
+            Sleep: generateGenreList(["Classical", "Blues"]),
+            Romance: generateGenreList(["Classical", "Blues", "Jazz"]),
+            Gaming: generateGenreList(["Rock", "RnB", "ElectronicAndDance"]),
+            Dinner: generateGenreList(["Chill", "Jazz", "Classical"]),
+            Travel: generateGenreList(["Pop", "HipHop", "RnB"]),
+            Relax: generateGenreList(["Chill", "Jazz", "Classical"]),
         },
         genres: ["Rock", "RnB", "ElectronicAndDance", "Pop", "HipHop", "Jazz", "Classical", "Blues", "Chill"],
         activities: ["Workout", "Party", "Focus", "Sleep", "Romance", "Gaming", "Dinner", "Travel", "Relax"],

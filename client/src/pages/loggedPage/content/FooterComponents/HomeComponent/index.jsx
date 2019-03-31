@@ -6,6 +6,7 @@ import Button from '@material-ui/core/Button';
 import Divider from '@material-ui/core/Divider';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
+import Avatar from '@material-ui/core/Avatar';
 
 import RecentIcon from 'mdi-react/RecentIcon';
 import BrainIcon from 'mdi-react/BrainIcon';
@@ -63,23 +64,32 @@ class Template extends React.Component {
         this.state = {
             updateNavigation: '',
             accuracy: 0,
+            username: '',
             progress: 0,
         }
     }
 
     componentWillReceiveProps(props) {
+        if (props.username !== this.props.username) {
+            this.setState({username: this.state.username});
+        }
         if (props.accuracy !== this.props.accuracy) {
-            setInterval(function () {
-                if (this.state.progress > this.state.accuracy) {
+            this.setState({ accuracy: props.accuracy, progress: 0});
+            setInterval(() => {
+                if (this.state.progress >= this.state.accuracy) {
                     this.setState({progress: this.state.accuracy});
-                    clearInterval()
+                    clearInterval();
                 } else {
-                    this.setState({progress: this.state.progress += 0.01});
+                    console.log(this.state.progress)
+                    this.setState({progress: this.state.progress += 0.1});
                 }
-            }, 100);
-            this.setState({ accuracy: props.accuracy, });
+            }, 10);
         }
     }
+
+    background = perc => {
+        return 'hsl('+100 * perc / 100+', 50%, 50%)';
+    };
 
     render () {
         const { classes } = this.props;
@@ -92,12 +102,19 @@ class Template extends React.Component {
 
         return (
             <Paper square className={classes.main}>
-                <Typography> Genre Classification Accuracy: {this.state.accuracy}% </Typography>
-                <CircularProgress
-                    className={classes.progress}
-                    variant="static"
-                    value={this.state.progress}
-                />
+                <div className={classes.content}>
+                    <Typography variant="title" gutterBottom>{this.state.username ? `Welcome ${this.state.username}` : null}</Typography>
+                    <Typography variant="title" gutterBottom>Genre Classification Accuracy:</Typography>
+                    <div className={classes.wrapper}>
+                        <Avatar borderRadius="50%" className={classes.avatar} style={{background: this.background(this.state.progress)}}>{this.state.progress.toFixed(2)}%</Avatar>
+                        <CircularProgress
+                            className={classes.accuracyCircle}
+                            size={200}
+                            thickness={1.5}
+                            variant="static"
+                            value={this.state.progress}/>
+                    </div>
+                </div>
                 <Divider />
                 <div className={classes.buttonContainer}> {buttonMapping} </div>
                 <Divider />

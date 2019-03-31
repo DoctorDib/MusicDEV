@@ -138,8 +138,8 @@ class Template extends React.Component {
     };
 
     visitProfile = () => {
-        window.open(this.state.profileLink, '_blank');
-        this.setState({open: false});
+        window.open("https://open.spotify.com/user/" + this.state.username);
+        this.setState({ open: false });
     };
 
     openHelper = () => {
@@ -426,7 +426,7 @@ class Template extends React.Component {
                             <div className={classes.toolbar} />
 
                             <div style={{height: '100%', overflow:'auto'}}>
-                                {this.state.selectedIndex === 0 && <HomeComponent accuracy={this.state.accuracy} updateNavigation={params => this.updateNavigation(params)}/>}
+                                {this.state.selectedIndex === 0 && <HomeComponent accuracy={this.state.accuracy} updateNavigation={params => this.updateNavigation(params)} username={this.state.username}/>}
                                 {this.state.selectedIndex === 1 && <ListenComponent playlistActive={this.state.playlistActive} desktopMode={this.state.desktopMode}/>}
 
                                 {this.state.selectedIndex === 2 && <RecommendationComponent

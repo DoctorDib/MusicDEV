@@ -13,7 +13,6 @@ import styles from './style';
 class Template extends React.Component {
     constructor(props) {
         super(props);
-
         this.state = {
             stepActive: 0,
         };

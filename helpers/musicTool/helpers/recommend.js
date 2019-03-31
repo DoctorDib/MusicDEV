@@ -80,10 +80,6 @@ function saveRecommendedMusic (username, music, callback) {
     });
 }
 
-function blacklistTrack() {
-
-}
-
 module.exports = function (spotifyApi, data, callback) {
     MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.mongo_settings.name}`, function (err, database) {
         const db = database.db(config.mongo_settings.name);
@@ -154,6 +150,7 @@ module.exports = function (spotifyApi, data, callback) {
 
                         let random = Math.floor(Math.random() * userPlaylist.length); // TODO - FIND OUT WHY QUANTITY SOMETIMES DOES NOT WORK...
                         let selectedSong =  userPlaylist[random];
+                        console.log(selectedSong)
                         if (indexSelections[random] || newBlackList.hasOwnProperty(selectedSong.id)){
                             /*if (Object.keys(indexSelections).length >= userPlaylist.length) { // TODO - ADD ERROR MANAGEMENT
                                 finishCheck();

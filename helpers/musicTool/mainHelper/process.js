@@ -2,7 +2,6 @@ const async = require('async');
 const config = require('../../../config/config');
 const featureManager = require('../helpers/trackFeatureManager');
 
-
 function grabSizingOfGenres (data) {
     let tmp = {};
     for (let genre in config.active_genres) {
@@ -221,7 +220,6 @@ function processData (data, counter, callback) {
 }
 
 function grabActiveGenreMusic (data, callback) {
-
     let activeMusic = { musicCats: {}, counter: data.counter };
 
     for (let genre in config.active_genres) {

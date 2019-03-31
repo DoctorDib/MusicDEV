@@ -9,10 +9,11 @@ export default theme => ({
         padding: theme.spacing.unit * 4,
     },
     iconButtons: {
-        width: '12em',
-        height: '12em',
+        width: '8em',
+        height: '8em',
         margin: '.5em',
-        background: '#6ed786'
+        background: '#6ed786',
+        color: 'black',
     },
     buttonContainer: {
         paddingTop: "1em",
@@ -22,5 +23,31 @@ export default theme => ({
         display: 'flex',
         flexWrap: 'wrap',
         justifyContent: 'space-evenly',
-    }
+    },
+    content: {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginLeft: 'auto',
+        marginRight: 'auto',
+        height: '30%',
+    },
+    wrapper: {
+        position: 'relative',
+    },
+    accuracyCircle: {
+        position: 'absolute',
+        margin: 'auto',
+        top: 0,
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 1,
+    },
+    avatar: {
+        margin: 10,
+        width: 200,
+        height: 200,
+    },
 });

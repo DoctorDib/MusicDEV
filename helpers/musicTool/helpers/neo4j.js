@@ -10,30 +10,16 @@ const db = new neo4j.GraphDatabase(graphDatabase);
 const async = require('async');
 
 function featuresString() {
-    /*[
-        a["danceability"],
-        a["energy"],
-        a["key"],
-        a["loudness"],
-        a["speechiness"],
-        a["acousticness"],
-        a["instrumentalness"],
-        a["liveness"],
-        a["valence"],
-        a["tempo"]
-    ]*/ // EXPECTED FORMAT
-
-    let finalString = '', index=1;
+    let finalString = '', index = 1;
     for (let feature in config.track_features) {
         index ++;
-        if (config.track_features.hasOwnProperty(feature)) {
-            if (config.track_features[feature]) {
-                let string = index > Object.keys(config.track_features).length ? ` a["${feature}"]` : ` a["${feature}"],`;
-                finalString = finalString + string;  // TODO POSSIBLE ISSUE WITH THE COMMA
-            }
+        if (config.track_features.hasOwnProperty(feature) && config.track_features[feature]) {
+            let string = ` a["${feature}"],`;
+            finalString = finalString + string;  // TODO POSSIBLE ISSUE WITH THE COMMA
         }
     }
-    return `[${finalString}]`;
+    /*[ a["feature"], a["feature"], a["feature"], a["feature"]]*/ // EXPECTED FORMAT
+    return (`[${finalString}]`).replace(',]', ']');
 }
 
 function propertyManager(properties) {
