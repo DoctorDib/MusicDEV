@@ -118,7 +118,8 @@ const run = (func, data, callback) => {
                 }
             }, (err, data) => {
                 if (err) {
-                    console.log(err)
+                    console.log(query)
+                    console.log("Err:", err)
                     //callback({success: false, error: err});
                 } else {
                     console.log('FINISHED')

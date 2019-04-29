@@ -1,13 +1,8 @@
-const spotify = require('../musicTool/helpers/spotifyApi');
 const neo = require('../musicTool/helpers/neo4j');
 const config = require('../../config/config');
 
 const MongoClient = require('mongodb').MongoClient;
-const SpotifyWebApi = require('spotify-web-api-node');
-const Spotify = require('machinepack-spotify');
 const async = require('async');
-
-const axios = require('axios');
 const later = require('later');
 
 MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.mongo_settings.name}`, (err, database) => {
@@ -16,7 +11,6 @@ MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.
 
     let processing = false;
     const useCollection = db.collection('blacklist');
-    let interval;
 
     function finished(failedTracks) {
         async.eachOfSeries(config.recommendation_config.genres, (genre, genreKey, genreCallback) => {
@@ -41,7 +35,7 @@ MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.
             delete track.success;
             console.log(track)
 
-            neo('create', {params: track}, res => {
+            neo('create', {params: track, single: false}, res => {
                 if (res.success || res.error === 'Node already exists!') {
                     // Removing track if it has been successfully added to database
                     delete tracks[trackKey];
@@ -57,9 +51,9 @@ MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.
     }
 
     let blacklistInterval = 14 /*Days*/; // 2 weeks
-    const textSched =  later.parse.text('every 2 weeks');
+    const textSched = later.parse.text('every 2 weeks');
 
-    function heartbeat(dev) {
+    function heartbeat (dev) {
         let day=new Date().getDay();
 
         // hours and mins = 0 (midnight

@@ -93,7 +93,7 @@ module.exports = function (spotifyApi, data, callback) {
         db.collection("blacklist").findOne({blacklist: {$exists: true}}, (err, blacklistRecords) => {
             if (err) console.log(err);
 
-            let newBlackList = blacklistRecords.blacklist || {};
+            let newBlackList = blacklistRecords !== null && blacklistRecords.hasOwnProperty("blacklist") ? blacklistRecords.blacklist : {};
 
             async.eachOfSeries(data.genres, function (genre, genreKey, genreCallback) {
                 let genreCollection = data.listenFunction ? data.genres : config.recommendation_config.activitiesMap[genre] ;
@@ -103,11 +103,10 @@ module.exports = function (spotifyApi, data, callback) {
                     [
                         { '$match': {"id": data.username} },
                         { '$unwind': '$playlist'},
-                        { '$match': {'playlist.genre': { $in: genreCollection }}}
+                        { '$match': {'playlist.genre': { $in: genreCollection } } },
                     ]
                 ).toArray(function(err, docs) {
-                    if (err) console.log(err)
-                    console.log(docs);
+                    if (err) console.log(err);
 
                     let userPlaylist = [], userFeatureList = [], warningFlag=false;
                     for (let index in docs) {
@@ -118,14 +117,14 @@ module.exports = function (spotifyApi, data, callback) {
                     }
 
                     let ewwArray = [];
-                    for (let eww=0; eww<data.musicQuantity; eww++){
+                    for (let eww=0; eww<data.musicQuantity; eww++) {
                         ewwArray.push(eww);
                     }
 
                     async.eachOfSeries(ewwArray, function (quantity, quantityKey, quantityCallback) {
 
                         function returnData() {
-                            callback({success: !warningFlag, savePlaylist: data.savePlaylist, successSongs: finalReturn, failedSongs: errorReturn, songUsed: userPlaylist[random]});
+                            callback({ success: !warningFlag, savePlaylist: data.savePlaylist, successSongs: finalReturn, failedSongs: errorReturn, songUsed: userPlaylist[random] });
                         }
 
                         function finishCheck() {
@@ -150,8 +149,8 @@ module.exports = function (spotifyApi, data, callback) {
 
                         let random = Math.floor(Math.random() * userPlaylist.length); // TODO - FIND OUT WHY QUANTITY SOMETIMES DOES NOT WORK...
                         let selectedSong =  userPlaylist[random];
-                        console.log(selectedSong)
-                        if (indexSelections[random] || newBlackList.hasOwnProperty(selectedSong.id)){
+
+                        if (selectedSong && indexSelections[random] || newBlackList.hasOwnProperty(selectedSong.id)){
                             /*if (Object.keys(indexSelections).length >= userPlaylist.length) { // TODO - ADD ERROR MANAGEMENT
                                 finishCheck();
                             } else {
@@ -168,8 +167,11 @@ module.exports = function (spotifyApi, data, callback) {
                                 if (existsResp.success) {
                                     if (existsResp.exist) {
                                         neo('recommend', {genre: userPlaylist[random].genre, song: selectedSong}, resp => {
-                                            let randomSelection = Math.floor(Math.random() * resp.data.length);
-                                            finalReturn.push(resp.data[randomSelection].returnedNode.properties);
+                                            if (resp.data) {
+                                                let randomSelection = Math.floor(Math.random() * resp.data.length);
+                                                finalReturn.push(resp.data[randomSelection].returnedNode.properties);
+                                            }
+
                                             finishCheck();
                                         });
                                     } else {

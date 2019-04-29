@@ -78,6 +78,9 @@ module.exports = function () {
             let tmpGenres=[];
             let states = JSON.parse(req.query.genreStates);
 
+            console.log(req.query.genreStates)
+            console.log(states)
+
             if (Object.keys(states).length) {
                 // Grabs a list of active genres selected by the user.
                 for (let index in states) {

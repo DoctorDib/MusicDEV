@@ -53,7 +53,6 @@ const iconList = {
     Gaming: <GamingIcon style={{backgroundColor: '#ffffff00'}} />,
     Dinner: <DinnerIcon style={{backgroundColor: '#ffffff00'}} />,
     Travel: <TravelIcon style={{backgroundColor: '#ffffff00'}} />,
-    Electronic_and_Dance: <EAndDIcon style={{backgroundColor: '#ffffff00'}} />,
 };
 
 const genres = [
@@ -84,9 +83,6 @@ const genres = [
     }, {
         title: 'Travel',
         Icon: iconList['Travel']
-    }, {
-        title: 'Electronic and Dance',
-        Icon: iconList["Electronic_and_Dance"]
     }
 ];
 
@@ -240,7 +236,7 @@ class Template extends React.Component {
             }
         })
         .then(resp => {
-           console.log("<<<<><><><><", resp)
+           console.log(resp)
 
             if(resp.data.resp.successSongs.length){
                 this.setState({successSongs: resp.data.resp.successSongs});

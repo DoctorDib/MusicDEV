@@ -35,7 +35,6 @@ const iconList = {
     Gaming: <GamingIcon />,
     Dinner: <DinnerIcon />,
     Travel: <TravelIcon />,
-    Electronic_and_Dance: <EAndDIcon />,
 };
 
 class Template extends React.Component {

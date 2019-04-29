@@ -7,23 +7,23 @@ const active_genre = {
     ElectronicAndDance: true,
     Jazz: true,
     Blues: false, // getting the most hate
-    Chill: false,
+    Chill: true,
     Classical: true,
     Rock: true,
 };
 
 const track_features = {
-    key: false, // Either 0 or 1
-    mode: false, // Either 0 or 1
+    key: true, // Either 0 or 1
+    mode: true, // Either 0 or 1
     acousticness: true,
     danceability: true,
     energy: true,
     instrumentalness: true,
-    liveness: false,
+    liveness: false, // Detects if the song is live... (useless)
     loudness: false, // negative number
     speechiness: true,
-    valence: false,
-    tempo: false,
+    valence: true,
+    tempo: true,
 };
 
 function generateGenreList(genreList) {
@@ -49,25 +49,25 @@ module.exports = {
         general: {
             cutTrainingPercentage: 90, // (1 - 100) - Percentage of training data (the rest will go towards the testing sample)
             grabMin: true, // Equalise the total number of tracks per genre from the lowest value overall.
-            maxStrikes: 0, // Low as possible - How many strikes it takes for the program to delete the track from the training sample
+            maxStrikes: 2, // Low as possible - How many strikes it takes for the program to delete the track from the training sample
             gapAllowance: 9, // (1 - 9) - How much gap the program has to offer
         },
         config: {
             binaryThresh: 0.5,
             activation: 'sigmoid',  // supported activation types: ['sigmoid', 'relu', 'leaky-relu', 'tanh'],
-            inputSize: 110,
-            inputRange: 110,
+            inputSize: 50,
+            inputRange: 50,
             hiddenLayers: [300, 300],
-            outputSize: 110,
+            outputSize: 50,
             learningRate: 0.05,
             decayRate: 0.999,
         },
         train: {
-            iterations: 3000,    // the maximum times to iterate the training data --> number greater than 0
+            iterations: 6000,    // the maximum times to iterate the training data --> number greater than 0
             errorThresh: 0.01,     // the acceptable error percentage from training data --> number between 0 and 1
             log: false,            // true to use console.log, when a function is supplied it is used --> Either true or a function
             logPeriod: 1,         // iterations between logging out --> number greater than 0 = DEFAULT 10
-            learningRate: 0.4,    // scales with delta to effect training rate --> number between 0 and 1
+            learningRate: 0.5,    // scales with delta to effect training rate --> number between 0 and 1
             momentum: 0.1,         // scales with next layer's change value --> number between 0 and 1
             callback: null,        // a periodic call back that can be triggered while training --> null or function
             callbackPeriod: 10,    // the number of iterations through the training data between callback calls --> number greater than 0
