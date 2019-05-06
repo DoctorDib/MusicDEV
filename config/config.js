@@ -2,15 +2,20 @@ const secret = require('./secretKeys');
 
 const active_genre = {
     HipHop: true,
-    RnB: true,
-    Pop: true,
-    ElectronicAndDance: true,
-    Jazz: true,
+    RnB: false,
+    Pop: false, // getting hate
+    ElectronicAndDance: false, // getting hate
+    Jazz: false, // Mixing up with Classical
     Blues: false, // getting the most hate
     Chill: true,
     Classical: true,
     Rock: true,
 };
+
+// HipHop - Chill - Classical - Rock - 73.86%
+// HipHop - Jazz - Chill - Classical - Rock - 61.92%
+// HipHop - RnB - Chill - Classical - Rock - 62.67%
+
 
 const track_features = {
     key: true, // Either 0 or 1
@@ -49,15 +54,16 @@ module.exports = {
         general: {
             cutTrainingPercentage: 90, // (1 - 100) - Percentage of training data (the rest will go towards the testing sample)
             grabMin: true, // Equalise the total number of tracks per genre from the lowest value overall.
-            maxStrikes: 2, // Low as possible - How many strikes it takes for the program to delete the track from the training sample
-            gapAllowance: 9, // (1 - 9) - How much gap the program has to offer
+            maxStrikes: 1, // Low as possible - How many strikes it takes for the program to delete the track from the training sample
+            gapAllowance: 15
+            , // (1 - 9) - How much gap the program has to offer
         },
         config: {
             binaryThresh: 0.5,
             activation: 'sigmoid',  // supported activation types: ['sigmoid', 'relu', 'leaky-relu', 'tanh'],
             inputSize: 50,
             inputRange: 50,
-            hiddenLayers: [300, 300],
+            hiddenLayers: [200, 200],
             outputSize: 50,
             learningRate: 0.05,
             decayRate: 0.999,

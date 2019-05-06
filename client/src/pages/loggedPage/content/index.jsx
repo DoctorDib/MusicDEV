@@ -64,7 +64,8 @@ class Template extends React.Component {
 
     initialLoad = () => {
         Axios.get('initial')
-            .then((resp) => {
+            .then(resp => {
+                console.log("RESP ", resp)
                 if (resp.data.success) {
                     console.log(resp.data.accuracy)
                     this.setState({
@@ -84,6 +85,8 @@ class Template extends React.Component {
                         newUserOpen: resp.data.new_user,
                         accuracy: resp.data.accuracy,
                     });
+
+                    console.log(resp.data.newUser)
                 } else {
                     this.setState({
                         warningOpen: true,

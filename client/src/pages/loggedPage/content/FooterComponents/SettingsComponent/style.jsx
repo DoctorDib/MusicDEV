@@ -7,6 +7,7 @@ export default theme => ({
         zIndex: '1',
         overflowY: 'auto',
         padding: theme.spacing.unit * 4,
+        background: '#383838',
     },
     settingsCanvas: {
         paddingLeft: theme.spacing.unit * 10,

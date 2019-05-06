@@ -58,7 +58,8 @@ export default theme => ({
 
     main: {
         height: '85%',
-        backgroundColor: '#6ed786'
+        backgroundColor: '#6ed786',
+        background: '#383838',
     },
     root: {
         width: '100%',
@@ -81,6 +82,9 @@ export default theme => ({
     menuButton: {
         marginLeft: 12,
         marginRight: 36,
+    },
+    overrightMenu: {
+        minHeight: '0'
     },
     hide: {
         display: 'none',

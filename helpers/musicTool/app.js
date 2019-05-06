@@ -234,30 +234,6 @@ MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.
                     console.log(err);
             });
         },
-        predict: function () {
-            useCollection = db.collection("musicMemory");
-
-            useCollection.findOne({"id": 'memory'}, (err, resp) => {
-                if (!resp || resp === null) {
-                    console.log("Memory not found... Please teach me...");
-                    endProgram(true);
-                } else {
-                    let net = new brain.NeuralNetwork(config.classification_config.predict);
-                    net.fromJSON(resp.memory);
-
-                    let uri = inputThree.split(inputThree.indexOf("http") !== -1 ? '/' : ':');
-                    uri = uri[uri.length - 1];
-
-                    spotify.grabSingleFeature(spotifyApi, uri, (data) => {
-                        console.log(data);
-                        predict(net, data, (resp) => {
-                            let finalResponse = `I think it is:\n  - ${resp}`;
-                            console.log(finalResponse)
-                        });
-                    });
-                }
-            });
-        },
         sample: function () {
             const useCollectionMemory = db.collection("musicMemory");
             const useCollectionCats = db.collection("samples");
@@ -278,6 +254,9 @@ MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.
                             endProgram(true);
                         } else {
                             sample(spotifyApi, resp, cats[sampleSelection], finalAccuracy => {
+                                console.log("==========FINAL ACCURACY===========");
+                                console.log(`${finalAccuracy}%`);
+                                console.log("===============================");
                                 saveCollection.update( { id: "accuracy" }, { id: "accuracy", accuracy: finalAccuracy }, { upsert: true } );
                             });
                         }

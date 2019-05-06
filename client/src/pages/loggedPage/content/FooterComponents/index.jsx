@@ -330,8 +330,8 @@ class Template extends React.Component {
                                 [classes.appBarShift]: this.state.open,
                             })}
                         >
-                            <div style={{display: 'flex'}}>
-                                <Toolbar disableGutters={!this.state.open}>
+                            <div style={{display: 'flex', height:'100%'}}>
+                                <Toolbar disableGutters={!this.state.open} className={classes.overrightMenu}>
                                     <IconButton
                                         color="inherit"
                                         aria-label="Open drawer"
@@ -343,7 +343,7 @@ class Template extends React.Component {
                                         <MenuIcon />
                                     </IconButton>
                                 </Toolbar>
-                                <Typography variant="h6" gutterBottom className={classes.title}> {this.state.menuTitle} </Typography>
+                                <Typography variant="body1" gutterBottom className={classes.title}> {this.state.menuTitle} </Typography>
                             </div>
                         </AppBar>
                     </div>

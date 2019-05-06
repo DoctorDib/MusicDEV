@@ -88,7 +88,6 @@ module.exports = function (spotifyApi, limit, callback) {
                     let tracks = [];
                     async.eachOfSeries(data, (track, trackKey, trackCallback) => {
                         if (savedUriTracks.hasOwnProperty(track.id)) {
-                            console.log("Already existing track");
                             // Wanting to save both so I can compare the genres that the data has
                             if(!savedTracks.hasOwnProperty(track.id)) {
                                 savedTracks[track.id] = {
@@ -99,7 +98,6 @@ module.exports = function (spotifyApi, limit, callback) {
                             if (!savedTracks[track.id].hasOwnProperty(type)) savedTracks[track.id][type] = 0;
 
                             savedTracks[track.id][type] = savedTracks[track.id][type] += 1; // Recording how many times it has popped up
-                            console.log(savedTracks[track.id][type])
                         } else {
                             savedUriTracks[track.id] = track;
                             tracks.push(track.features);

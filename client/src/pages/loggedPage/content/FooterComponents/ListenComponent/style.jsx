@@ -6,6 +6,7 @@ export default theme => ({
         height: '100%',
         zIndex: '1',
         overflowY: 'auto',
+        background: '#383838',
     },
 
     listenDetails: {

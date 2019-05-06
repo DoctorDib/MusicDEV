@@ -6,6 +6,7 @@ export default theme => ({
         zIndex: '1',
         overflowY: 'auto',
         padding: theme.spacing.unit * 7,
+        background: '#383838',
     },
     header: {
         padding: '1em',

@@ -14,6 +14,7 @@ export default theme => ({
         overflowY: 'auto',
         paddingTop: '1em',
         paddingBottom: '.25em',
+        background: '#383838',
     },
 
     quantityControl: {

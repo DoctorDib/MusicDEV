@@ -14,10 +14,14 @@ let initial = {
 };
 
 function workout(expected, actual, callback){
+    if (!initial.errors.hasOwnProperty(expected)) initial.errors[expected] = 0;
+    if (!initial.percent.hasOwnProperty(expected)) initial.percent[expected] = 100;
+    if (!initial.incorrectCount.hasOwnProperty(expected)) initial.incorrectCount[expected] = {};
+    if (!initial.incorrectCount[expected].hasOwnProperty(actual)) initial.incorrectCount[expected][actual] = 0;
     if (expected !== actual) {
 
 
-        if (!initial.errors.hasOwnProperty(expected)) initial.errors[expected] = 0;
+
         initial.errors[expected] ++;
 
         if (!initial.percent.hasOwnProperty(expected)) initial.percent[expected] = 100;
@@ -75,7 +79,7 @@ module.exports = (spotifyApi, netOptions, data, callback) => {
                         }
                     }
 
-                    overallPercentage = overallPercentage / 9;
+                    overallPercentage = overallPercentage / Object.keys(initial.percent).length;
 
                     let finalAccuracy = round(overallPercentage, 2);
                     console.log("======================OVERALL======================");

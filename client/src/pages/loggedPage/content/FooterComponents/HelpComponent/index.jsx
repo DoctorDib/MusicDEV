@@ -151,24 +151,6 @@ class Template extends React.Component {
         }
     }
 
-    handleStep = step => () => {
-        document.getElementById('helperContent').scroll({
-            top: document.getElementById(step).offsetTop - 60, // Has a slight offset for some reason?
-            behavior: 'smooth'
-        });
-
-        this.setState({
-            activeStep: step,
-        });
-    };
-
-    handleScroll = count => () => {
-        console.log(count);
-        this.setState({
-            activeStep: count,
-        });
-    };
-
     componentWillReceiveProps(props) {
         if(props.open !== this.props.open){
             this.setState({

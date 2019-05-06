@@ -215,8 +215,6 @@ module.exports = function () {
                                 username: req.user.id,
                                 access_token: resp.records.spotify.access_token
                             }, playlists => {
-                                console.log(resp)
-                                console.log(accuracyRecords.records.accuracy)
                                 if (playlists.success) {
                                     res.json({
                                         success: true,
