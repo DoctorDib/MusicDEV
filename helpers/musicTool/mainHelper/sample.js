@@ -62,7 +62,7 @@ module.exports = (spotifyApi, netOptions, data, callback) => {
                 //console.log(catKey + ": " + round(initial.percent[catKey], 2) + "%");
 
                 if (trackKey+1 >= data.length) {
-                    console.log("======================SAMPLES======================");
+                    //console.log("======================SAMPLES======================");
 
                     let overallPercentage = 0;
                     for (let genre in initial.percent) {
@@ -75,7 +75,7 @@ module.exports = (spotifyApi, netOptions, data, callback) => {
                             }
 
                             overallPercentage += Number(round(initial.percent[genre], 2));
-                            console.log(print)
+                            //console.log(print)
                         }
                     }
 

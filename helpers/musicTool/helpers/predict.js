@@ -22,8 +22,9 @@ function check (outcome, callback) {
 }
 
 module.exports = function (net, data, callback) {
-    let outcome = net.run(data.features || data);
-    //console.log(outcome)
+    let features = data.features ? data.features : data;
+    let outcome = net.run(features);
+
     if (outcome) {
         check(outcome, (resp)=>{
             callback(resp)

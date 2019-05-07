@@ -31,8 +31,6 @@ let self = {
                             // Formatting for the Nerual networking process
                             features = { input: features, output: { [type]: 1 } };
                         } else {
-                            console.log(value)
-                            features.id = value.id;
                             features.id = value.id;
                         }
 

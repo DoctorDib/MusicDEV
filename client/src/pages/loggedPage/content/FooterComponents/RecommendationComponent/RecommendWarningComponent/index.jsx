@@ -73,7 +73,7 @@ class Template extends React.Component {
 
         return (
             <Dialog open={this.state.open} onClose={this.props.close('recommendWarningOpen')} >
-                <DialogTitle>Oops... seems like we have not learn that yet!</DialogTitle>
+                <DialogTitle>Oops... seems like we have not learnt that yet!</DialogTitle>
                 <section style={{padding: '20px'}}>
                     <Typography>
                         What happens next?

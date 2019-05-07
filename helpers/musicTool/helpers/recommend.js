@@ -99,14 +99,18 @@ module.exports = function (spotifyApi, data, callback) {
                 let genreCollection = data.listenFunction ? data.genres : config.recommendation_config.activitiesMap[genre] ;
                 let indexSelections = {};
 
+                console.log(genreCollection)
+                console.log(data.username)
+
                 userCollection.aggregate(
                     [
                         { '$match': {"id": data.username} },
                         { '$unwind': '$playlist'},
                         { '$match': {'playlist.genre': { $in: genreCollection } } },
                     ]
-                ).toArray(function(err, docs) {
+                ).toArray((err, docs) => {
                     if (err) console.log(err);
+                    console.log(docs)
 
                     let userPlaylist = [], userFeatureList = [], warningFlag=false;
                     for (let index in docs) {
@@ -123,21 +127,21 @@ module.exports = function (spotifyApi, data, callback) {
 
                     async.eachOfSeries(ewwArray, function (quantity, quantityKey, quantityCallback) {
 
-                        function returnData() {
+                        function returnData(random) {
                             callback({ success: !warningFlag, savePlaylist: data.savePlaylist, successSongs: finalReturn, failedSongs: errorReturn, songUsed: userPlaylist[random] });
                         }
 
-                        function finishCheck() {
+                        function finishCheck(random) {
                             if (quantityKey+1 >= ewwArray.length){
                                 if (genreKey+1 >= data.genres.length ) {
                                     // Finished
                                     db.collection("blacklist").update({blacklist: {$exists: true}}, {$set: {"blacklist": newBlackList} }, {upsert: true});
                                     if (JSON.parse(data.savePlaylist) && finalReturn.length) {
                                         saveRecommendedMusic(data.username, finalReturn, () => {
-                                            returnData();
+                                            returnData(random);
                                         });
                                     } else {
-                                        returnData();
+                                        returnData(random);
                                     }
                                 } else {
                                     genreCallback();
@@ -147,44 +151,53 @@ module.exports = function (spotifyApi, data, callback) {
                             }
                         }
 
-                        let random = Math.floor(Math.random() * userPlaylist.length); // TODO - FIND OUT WHY QUANTITY SOMETIMES DOES NOT WORK...
-                        let selectedSong =  userPlaylist[random];
-
-                        if (selectedSong && indexSelections[random] || newBlackList.hasOwnProperty(selectedSong.id)){
-                            /*if (Object.keys(indexSelections).length >= userPlaylist.length) { // TODO - ADD ERROR MANAGEMENT
-                                finishCheck();
-                            } else {
-                                // Not enough songs in user playlist to grab recommendations
-
-                            }*/
-
-                            // Song has already been selected or song is in the black list...
-                            finishCheck();
+                        // No songs within the users playlist that matches
+                        if (!userPlaylist.length) {
+                            console.log("Ping")
+                            process.exit(1)
                         } else {
-                            indexSelections[random] = true;
+                            let random = userPlaylist.length ? Math.floor(Math.random() * userPlaylist.length) : 0; // TODO - FIND OUT WHY QUANTITY SOMETIMES DOES NOT WORK...
+                            let selectedSong =  userPlaylist[random];
 
-                            neo('exists', {genre: userPlaylist[random].genre, id: selectedSong.id}, existsResp => { // TODO - FIND OUT IF THIS IS CORRECT
-                                if (existsResp.success) {
-                                    if (existsResp.exist) {
-                                        neo('recommend', {genre: userPlaylist[random].genre, song: selectedSong}, resp => {
-                                            if (resp.data) {
-                                                let randomSelection = Math.floor(Math.random() * resp.data.length);
-                                                finalReturn.push(resp.data[randomSelection].returnedNode.properties);
-                                            }
+                            console.log(selectedSong)
 
-                                            finishCheck();
-                                        });
+                            if (selectedSong && indexSelections[random] || newBlackList.hasOwnProperty(selectedSong.id)){
+                                // Song has already been selected or song is in the black list...
+                                finishCheck(random);
+                            } else {
+                                indexSelections[random] = true;
+
+                                neo('exists', {genre: userPlaylist[random].genre, id: selectedSong.id}, existsResp => { // TODO - FIND OUT IF THIS IS CORRECT
+                                    if (existsResp.success) {
+                                        if (existsResp.exist) {
+                                            neo('recommend', {genre: userPlaylist[random].genre, song: selectedSong}, resp => {
+                                                if (resp.data) {
+                                                    let randomSelection = Math.floor(Math.random() * resp.data.length);
+                                                    finalReturn.push(resp.data[randomSelection].returnedNode.properties);
+                                                }
+
+                                                finishCheck(random);
+                                            });
+                                        } else {
+                                            warningFlag = true; // There is at least one error existing
+                                            selectedSong.success = false;
+                                            errorReturn.push(selectedSong);
+                                            newBlackList[selectedSong.id] = newBlackList[selectedSong.id] || selectedSong;
+
+                                            neo('randomSong',  {genre: userPlaylist[random].genre}, randomSong=>{
+                                                if(randomSong){
+                                                    let randomSelection = Math.floor(Math.random() * randomSong.data.length);
+                                                    finalReturn.push(randomSong.data[randomSelection].a.properties);
+                                                }
+
+                                                finishCheck(random);
+                                            });
+                                        }
                                     } else {
-                                        warningFlag = true; // There is at least one error existing
-                                        selectedSong.success = false;
-                                        errorReturn.push(selectedSong);
-                                        newBlackList[selectedSong.id] = newBlackList[selectedSong.id] || selectedSong;
-                                        finishCheck();
+                                        callback({success: false, error: existsResp.error})
                                     }
-                                } else {
-                                    callback({success: false, error: existsResp.error})
-                                }
-                            });
+                                });
+                            }
                         }
                     });
                 });

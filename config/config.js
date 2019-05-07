@@ -55,7 +55,7 @@ module.exports = {
             cutTrainingPercentage: 90, // (1 - 100) - Percentage of training data (the rest will go towards the testing sample)
             grabMin: true, // Equalise the total number of tracks per genre from the lowest value overall.
             maxStrikes: 1, // Low as possible - How many strikes it takes for the program to delete the track from the training sample
-            gapAllowance: 15
+            gapAllowance: 13
             , // (1 - 9) - How much gap the program has to offer
         },
         config: {
@@ -63,7 +63,7 @@ module.exports = {
             activation: 'sigmoid',  // supported activation types: ['sigmoid', 'relu', 'leaky-relu', 'tanh'],
             inputSize: 50,
             inputRange: 50,
-            hiddenLayers: [200, 200],
+            hiddenLayers: [400, 400],//200 = 66.11 // 300 = 66.97 // 400 = 67.03 // 600 = FAILED
             outputSize: 50,
             learningRate: 0.05,
             decayRate: 0.999,
@@ -99,6 +99,7 @@ module.exports = {
             Relax: generateGenreList(["Chill", "Jazz", "Classical"]),
         },
         genres: ["Rock", "RnB", "ElectronicAndDance", "Pop", "HipHop", "Jazz", "Classical", "Blues", "Chill"],
+        // genres: ["Rock", "HipHop", "Classical", "Chill"],
         activities: ["Workout", "Party", "Focus", "Sleep", "Romance", "Gaming", "Dinner", "Travel", "Relax"],
         maxLimitSelection: 45000,
         maxGenreSelection: 10000

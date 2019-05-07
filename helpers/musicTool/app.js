@@ -265,13 +265,26 @@ MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.
             });
         },
         relate: function () {
-            async.eachOfSeries(config.recommendation_config.genres, function (genre, genreKey, genreCallback) {
-                neo4j('masterLearn', {genre: genre}, function () {
-                    if(genreKey+1 >= config.recommendation_config.genres.length) {
-                        console.log("Done")
-                    } else {
-                        genreCallback();
-                    }
+            neo4j('masterDeleteRelations', {}, function () { // Resetting
+                neo4j('initialise', { id: "Spotify", genres: config.recommendation_config.genres }, () => { // Initialising database
+                    async.eachOfSeries(config.recommendation_config.genres, function (genre, genreKey, genreCallback) {
+                        if (config.active_genres[genre]) {
+                            neo4j('masterLearn', {genre: genre}, () => {
+                                if (genreKey + 1 >= config.recommendation_config.genres.length) {
+                                    console.log("Done")
+                                } else {
+                                    genreCallback();
+                                }
+                            });
+                        } else {
+                            console.log(`${genre} skipped... not active`)
+                            if (genreKey + 1 >= config.recommendation_config.genres.length) {
+                                console.log("Done")
+                            } else {
+                                genreCallback();
+                            }
+                        }
+                    });
                 });
             });
         },
@@ -283,19 +296,18 @@ MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.
                     neo4j('initialise', { id: "Spotify", genres: config.recommendation_config.genres }, () => { // Initialising database
                         const arr = _.range(parseInt(inputThree));
                         useCollection = db.collection("musicMemory");
-                        saveCollection = db.collection("masterMusic");
-
-                        // Resetting collection
-                        mongoAction.checkDelete(saveCollection, "master", () => {
+                        let counterCollection = db.collection("masterMusicCats");
+                        counterCollection.findOne({}).then(data => {
                             useCollection.findOne({"id": 'memory'}, (err, resp) => {
                                 if (!resp || resp === null) {
                                     console.log("Memory not found... Please teach me...");
                                     endProgram(true);
                                 } else {
                                     console.log("Found")
-                                    builder(spotifyApi, arr, resp);
+                                    builder(spotifyApi, data.counter, arr, resp);
                                 }
                             });
+
                         });
                     });
                 });

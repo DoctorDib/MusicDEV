@@ -98,15 +98,13 @@ const run = (func, data, callback) => {
                         
                         WITH {item: id, weights: weights} as userData
                         WITH collect(userData) as data
+                        
                         CALL algo.similarity.cosine.stream(data,{graph: 'cypher', similarityCutoff: 0.8, topK: 2})
                         YIELD item1, item2, count1, count2, similarity
                        
                         MATCH (a:${data.genre} {id: algo.getNodeById(item1).id})
                         MATCH (a2:${data.genre} {id: algo.getNodeById(item2).id})
                         MERGE (a)-[:SIMILAR]->(a2)
-                        
-                        WITH item1,item2,similarity 
-                        where item1 > item2
                         
                         RETURN true`;
 
@@ -130,7 +128,7 @@ const run = (func, data, callback) => {
         case 'masterDeleteRelations':
             db.cypher({
                 query: 'MATCH ()-[r:RELEASED]-() DELETE r',
-            }, function (err, data) {
+            }, (err, data) => {
                 if (err) {
                     callback({success: false, error: err});
                 } else {
@@ -139,11 +137,24 @@ const run = (func, data, callback) => {
                 }
             });
             break;
+        case 'randomSong':
+            db.cypher({
+                query: `MATCH (a:${data.genre})-[:SIMILAR]->(t:${data.genre}) RETURN a, rand() as r LIMIT 3`,
+            }, (err, ree) => {
+                if (err) {
+                    console.log(err)
+                    callback({success: false, error: err});
+                } else {
+                    callback({success: true, data: ree});
+                }
+            });
+            break;
         case 'masterDelete':
             db.cypher({
                 query: 'MATCH (n) OPTIONAL MATCH (n)-[r]-() DELETE n,r RETURN true',
-            }, function (err, data) {
+            }, (err, data) => {
                 if (err) {
+                    console.log(err)
                     callback({success: false, error: err});
                 } else {
                     console.log('DELETED')
@@ -156,28 +167,36 @@ const run = (func, data, callback) => {
             db.cypher({
                 query: `CREATE (a:${data.id} {id: {id}, name: {id}}) RETURN a`,
                 params: { id: data.id }
-            }, function (err) {
+            }, (err) => {
                 if (err) {
                     console.log(err)
                     //callback({success: false, error: err});
                 } else {
-                    async.eachOfSeries(data.genres, function (genre, genreKey, genreCallback) {
-                        db.cypher({
-                            query: `MATCH (a:Spotify) CREATE (a2:${genre}_Genre {id: 'Genre', name: {genre}})-[:FROM]->(a)`,
-                            params: {
-                                genre: genre
-                            }
-                        }, function (err) {
-                            if (err) {
-                                console.log(err)
-                            } else {
-                                if (genreKey+1 >= data.genres.length) {
-                                    callback({success: true, data: data});
-                                } else {
-                                    genreCallback();
+                    async.eachOfSeries(data.genres, (genre, genreKey, genreCallback) => {
+                        if (config.active_genres[genre]) {
+                            db.cypher({
+                                query: `MATCH (a:Spotify) CREATE (a2:${genre}_Genre {id: 'Genre', name: {genre}})-[:FROM]->(a)`,
+                                params: {
+                                    genre: genre
                                 }
+                            }, (err) => {
+                                if (err) {
+                                    console.log(err)
+                                } else {
+                                    if (genreKey+1 >= data.genres.length) {
+                                        callback({success: true, data: data});
+                                    } else {
+                                        genreCallback();
+                                    }
+                                }
+                            });
+                        } else {
+                            if (genreKey+1 >= data.genres.length) {
+                                callback({success: true, data: data});
+                            } else {
+                                genreCallback();
                             }
-                        });
+                        }
                     });
                 }
             });
@@ -185,7 +204,7 @@ const run = (func, data, callback) => {
         case 'exists':
             db.cypher({
                 query: `MATCH (a:${data.genre} {id: "${data.id}"}) RETURN a`,
-            }, function (err, data) {
+            }, (err, data) => {
                 if (err) {
                     console.log("NEO Exist function error: ", err);
                     callback({success: false, error: err});
@@ -205,7 +224,7 @@ const run = (func, data, callback) => {
                     params: {
                         properties: properties,
                     }
-                }, function (err) {
+                }, (err) => {
                     if (err) return console.log("Creating node error: " + err);
                     console.log("Created node successfully")
 
@@ -235,12 +254,12 @@ const run = (func, data, callback) => {
                             genre: data.genre,
                             stringList: featuresString()
                         }
-                    }, function (err) {
+                    }, (err) => {
                         if (err) callback({success: false, error: err});
                         console.log("Done")
                         db.cypher({
                             query: recommendQuery,
-                        }, function (err, data) {
+                        }, (err, data) => {
                             if (err) {
                                 callback({success: false, error: err});
                             } else {
@@ -255,7 +274,7 @@ const run = (func, data, callback) => {
             featureManager(data.song.features, false, properties => {
                 db.cypher({
                     query: `MATCH (a:${data.genre} ${propertyManager(properties)})-[:SIMILAR]-(returnedNode) RETURN returnedNode`,
-                }, function (err, respData) {
+                }, (err, respData) => {
                     if (err || !respData.length) {
                         console.log(err)
                         callback({success: false, error: err});

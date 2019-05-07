@@ -2,11 +2,14 @@ const fs = require('fs');
 const async = require('async');
 const slugify = require('slugify');
 
+const trackFeatureManager = require('../helpers/trackFeatureManager');
 const neo4j = require('../helpers/neo4j');
 const config = require('../../../config/config');
 const spotify = require('../helpers/spotifyApi');
 const push = require('../helpers/pushbullet');
 const grabGenre = require('./grabGenre');
+
+let tmp={};
 
 function readTextFile(fileText, callback) {
     fs.readFile(fileText, 'utf8', (err, data) => {
@@ -15,13 +18,14 @@ function readTextFile(fileText, callback) {
     });
 }
 
-module.exports = function (spotifyApi, arrayLength, dataTracks) {
+module.exports = function (spotifyApi, counter, arrayLength, dataTracks) {
     let finalObject = {}, finalArray = [];
 
     async.eachOfSeries(arrayLength, (value, keyFiles, callbackFiles) => {
         function finishLoop () {
             if (keyFiles + 1 >= arrayLength.length) {
                 async.eachOfSeries(config.recommendation_config.genres, (genre, genreKey, genreCallback) => {
+                    console.log(genre)
                     neo4j('masterLearn', { genre: genre }, () => {
                         if (genreKey + 1 >= config.recommendation_config.genres.length) {
                             let body = `Database build has been completed with ${finalArray.length} entries.`;
@@ -47,6 +51,7 @@ module.exports = function (spotifyApi, arrayLength, dataTracks) {
         //mpd.slice.1000-1999.json
         //"../Data/trackData/mpd.slice." + value + ".json"
         readTextFile(`../Data/trackData/mpd.slice.${value+1}000-${value+1}999.json`, json => {
+
             async.eachOfSeries(json, (jsonValue, jsonKey, jsonCallback) => {
                 let uriArray = [];
                 async.eachOfSeries(jsonValue.tracks, (trackValue, trackKey, trackCallback) => {
@@ -63,6 +68,7 @@ module.exports = function (spotifyApi, arrayLength, dataTracks) {
                                 jsonCallback();
                             }
                         } else {
+
                             uriArray.push(uri); // Adding uri to array
                             finalObject[uri] = { name: trackValue.track_name, id: uri }; // Creating empty object for duplicated data detection
 
@@ -72,43 +78,50 @@ module.exports = function (spotifyApi, arrayLength, dataTracks) {
                                     setTimeout(() => {
                                         spotify.grabFeatures(spotifyApi, false, uriArrayValue, data => {
                                             async.eachOfSeries(data, (featuresValue, featuresKey, featuresCallback) => {
+
                                                 let ident = featuresValue.id;
                                                 delete featuresValue.id; // Sorting out data
 
-                                                // Grabbing the predicted Genre
-                                                grabGenre(dataTracks.memory, featuresValue, genre => {
-                                                    finalObject[ident].features = featuresValue;
-                                                    finalObject[ident].genre = genre;
-                                                    finalArray.push(finalObject[ident]);
+                                                trackFeatureManager(featuresValue.features, true, (normalisedFeature) => {
+                                                    // Grabbing the predicted Genre
+                                                    grabGenre(dataTracks.memory, normalisedFeature, genre => {
 
-                                                    let tmpObj = finalObject[ident];
+                                                        /*if(!tmp[genre]) tmp[genre] = 0;
+                                                        tmp[genre]++;
+                                                        console.log("========="+tmp[genre])*/
+                                                        finalObject[ident].features = normalisedFeature;
+                                                        finalObject[ident].genre = genre;
+                                                        finalArray.push(finalObject[ident]);
 
-                                                    neo4j('create', {
-                                                        count: count,
-                                                        params: tmpObj,
-                                                        single: false
-                                                    }, resp => {
-                                                        if (!resp.success) console.log("Create Error: ", resp.error);
-                                                        // else continue with life
+                                                        let tmpObj = finalObject[ident];
 
-                                                        let finalResponse = `==================================================\nID: ${count}\nName: ${finalObject[ident].name}\nGenre: ${genre}`;
-                                                        console.log(finalResponse)
+                                                        neo4j('create', {
+                                                            count: count,
+                                                            params: tmpObj,
+                                                            single: false
+                                                        }, resp => {
+                                                            if (!resp.success) console.log("Create Error: ", resp.error);
+                                                            // else continue with life
 
-                                                        if (featuresKey + 1 >= data.length) {
-                                                            if (uriArrayKey + 1 >= uriArray.length) {
-                                                                if (jsonKey + 1 >= Object.keys(json).length) {
-                                                                    finishLoop();
+                                                            let finalResponse = `==================================================\nID: ${count}\nName: ${finalObject[ident].name}\nGenre: ${genre}`;
+                                                            console.log(finalResponse)
+
+                                                            if (featuresKey + 1 >= data.length) {
+                                                                if (uriArrayKey + 1 >= uriArray.length) {
+                                                                    if (jsonKey + 1 >= Object.keys(json).length) {
+                                                                        finishLoop();
+                                                                    } else {
+                                                                        jsonCallback();
+                                                                    }
                                                                 } else {
-                                                                    jsonCallback();
+                                                                    uriArrayCallback();
                                                                 }
                                                             } else {
-                                                                uriArrayCallback();
+                                                                featuresCallback();
                                                             }
-                                                        } else {
-                                                            featuresCallback();
-                                                        }
+                                                        });
                                                     });
-                                                });
+                                                }, counter)
                                             });
                                         });
                                     }, 100);

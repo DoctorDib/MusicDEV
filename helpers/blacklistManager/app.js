@@ -13,16 +13,32 @@ MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.
     const useCollection = db.collection('blacklist');
 
     function finished(failedTracks) {
-        async.eachOfSeries(config.recommendation_config.genres, (genre, genreKey, genreCallback) => {
-            neo('masterLearn', {genre: genre}, () => {
-                if(genreKey+1 >= config.recommendation_config.genres.length) {
-                    console.log("Done")
-                    console.log('finished')
+        neo('masterDeleteRelations', {}, () => { // Resetting
+            neo('initialise', {id: "Spotify", genres: config.recommendation_config.genres}, () => { // Initialising database
+                async.eachOfSeries(config.recommendation_config.genres, (genre, genreKey, genreCallback) => {
+                    if (config.active_genres[genre]) {
+                        neo('masterLearn', {genre: genre}, () => {
+                            if(genreKey+1 >= config.recommendation_config.genres.length) {
+                                console.log("Done")
+                                console.log('finished')
 
-                    db.collection("blacklist").update({blacklist: {$exists: true}}, {$set: {"blacklist": failedTracks} }, {upsert: true});
-                } else {
-                    genreCallback();
-                }
+                                db.collection("blacklist").update({blacklist: {$exists: true}}, {$set: {"blacklist": failedTracks} }, {upsert: true});
+                            } else {
+                                genreCallback();
+                            }
+                        });
+                    } else {
+                        console.log(`${genre} skipped... not active.`)
+                        if(genreKey+1 >= config.recommendation_config.genres.length) {
+                            console.log("Done")
+                            console.log('finished')
+
+                            db.collection("blacklist").update({blacklist: {$exists: true}}, {$set: {"blacklist": failedTracks} }, {upsert: true});
+                        } else {
+                            genreCallback();
+                        }
+                    }
+                });
             });
         });
     }
@@ -31,16 +47,14 @@ MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.
         let index=0, totalLength=Object.keys(tracks).length;
         async.eachOfSeries(tracks, (track, trackKey, trackCallback) => {
             index++;
+            console.log(track)
             // Removing unwanted data
             delete track.success;
-            console.log(track)
-
             neo('create', {params: track, single: false}, res => {
                 if (res.success || res.error === 'Node already exists!') {
                     // Removing track if it has been successfully added to database
                     delete tracks[trackKey];
                 }
-
                 if (index >= totalLength) {
                     finished(tracks);
                 } else {
@@ -58,7 +72,6 @@ MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.
 
         // hours and mins = 0 (midnight
         if ((day % blacklistInterval === 0 && !processing) || dev) {
-            //axios.post('/blacklistManager'); // TODO - SENDING A WARNING MESSAGE TO USERS
             processing = true;
 
             useCollection.findOne({}, (err, records) => {
@@ -76,7 +89,10 @@ MongoClient.connect(`mongodb://localhost:${config.mongo_settings.port}/${config.
         }
     }
 
-    if (process.argv[2] === "dev") { // DEV TOOL
+    if(process.argv[2] === "help") {
+        console.log("node app.js dev - Provides a one time run")
+        console.log("node app.js - Provides the full service.")
+    } else if (process.argv[2] === "dev") { // DEV TOOL
         console.log("Dev tool active")
         heartbeat(true);
     } else { // DEFAULT
