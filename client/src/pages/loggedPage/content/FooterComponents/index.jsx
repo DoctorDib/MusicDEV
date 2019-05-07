@@ -25,6 +25,7 @@ import ListItemIcon from '@material-ui/core/ListItemIcon';
 import IconButton from '@material-ui/core/IconButton';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
+import Button from '@material-ui/core/Button';
 
 import RecentIcon from 'mdi-react/RecentIcon';
 import BrainIcon from 'mdi-react/BrainIcon';
@@ -315,13 +316,13 @@ class Template extends React.Component {
                     <CssBaseline />
 
                     <div style={{height: this.state.desktopMode ? '5%' : '7%', display: 'flex', flexDirection: 'row'}}>
-                        <IconButton
+                        <Button
                             onClick={this.handleDrawerClose}
                             className={classNames(classes.closeButton, {
                                 [classes.hide]: !this.state.open,
                             })}>
                             <ChevronLeftIcon />
-                        </IconButton>
+                        </Button>
 
                         <AppBar
                             color="primary"

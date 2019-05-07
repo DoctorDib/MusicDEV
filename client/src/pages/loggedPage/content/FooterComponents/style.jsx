@@ -37,8 +37,6 @@ export default theme => ({
 
     closeButton: {
         position: 'absolute',
-        marginTop: '10px',
-        marginLeft: '10px',
         marginBottom: 'auto'
     },
 

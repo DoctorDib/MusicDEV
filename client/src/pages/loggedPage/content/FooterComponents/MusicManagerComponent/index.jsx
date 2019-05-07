@@ -67,7 +67,7 @@ class Template extends React.Component {
         const { classes } = this.props;
 
         return (
-            <Paper className={classes.main}>
+            <Paper square className={classes.main}>
                 {this.state.savedTracks ? <TableComponent
                     tableType={"manager"}
                     tableContent={this.state.savedTracks}

@@ -47,6 +47,7 @@ export default theme => ({
     mainView: {
         display: 'flex',
         flexDirection: 'row',
+        height: '100%',
 
         [theme.breakpoints.down('sm')]: {
             flexDirection: 'column',
