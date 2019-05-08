@@ -67,7 +67,7 @@ const run = (func, data, callback) => {
                         if (!resp.exist) {
 
                             db.cypher({
-                                query: `MATCH(a:${song.genre}_Genre {id: "Genre"}) CREATE (a2:${song.genre} {properties})-[:GENRE_IS]->(a)`,
+                                query: `CREATE (a2:${song.genre} {properties}) RETURN true`,
                                 params: { properties: properties }
                             }, function (err, returnedData) {
                                 if (err) {
@@ -172,32 +172,9 @@ const run = (func, data, callback) => {
                     console.log(err)
                     //callback({success: false, error: err});
                 } else {
-                    async.eachOfSeries(data.genres, (genre, genreKey, genreCallback) => {
-                        if (config.active_genres[genre]) {
-                            db.cypher({
-                                query: `MATCH (a:Spotify) CREATE (a2:${genre}_Genre {id: 'Genre', name: {genre}})-[:FROM]->(a)`,
-                                params: {
-                                    genre: genre
-                                }
-                            }, (err) => {
-                                if (err) {
-                                    console.log(err)
-                                } else {
-                                    if (genreKey+1 >= data.genres.length) {
-                                        callback({success: true, data: data});
-                                    } else {
-                                        genreCallback();
-                                    }
-                                }
-                            });
-                        } else {
-                            if (genreKey+1 >= data.genres.length) {
-                                callback({success: true, data: data});
-                            } else {
-                                genreCallback();
-                            }
-                        }
-                    });
+                    console.log("hi")
+                    callback({success: true, data: data});
+
                 }
             });
             break;
