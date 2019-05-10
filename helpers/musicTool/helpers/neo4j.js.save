@@ -9,17 +9,6 @@ const db = new neo4j.GraphDatabase(graphDatabase);
 
 const async = require('async');
 
-function validateInformation(prop) {
-    for (let feature in config.track_features) {
-        if (config.track_features.hasOwnProperty(feature) && config.track_features[feature]) {
-            if (!prop.hasOwnProperty(feature)) {
-                prop[feature] = 0;
-            }
-        }
-    }
-    return prop;
-}
-
 function featuresString() {
     let finalString = '', index = 1;
     for (let feature in config.track_features) {
@@ -69,34 +58,31 @@ const run = (func, data, callback) => {
             console.log("================================")
 
             featureManager(song.features.hasOwnProperty('features') ? song.features.features: song.features, false, properties => {
-                validateInformation(properties, properties => {
-                    properties.name =  song.name;
-                    properties.id =  song.id;
-                    properties.genre =  song.genre;
+                properties.name =  song.name;
+                properties.id =  song.id;
+                properties.genre =  song.genre;
 
-                    run('exists', {id: song.id, genre: song.genre}, resp => {
-                        if (resp.success) {
-                            if (!resp.exist) {
+                run('exists', {id: song.id, genre: song.genre}, resp => {
+                    if (resp.success) {
+                        if (!resp.exist) {
 
-                                db.cypher({
-                                    query: `CREATE (a2:${song.genre} {properties}) RETURN true`,
-                                    params: { properties: properties }
-                                }, function (err, returnedData) {
-                                    if (err) {
-                                        console.log(err)
-                                        callback({success: false, data: returnedData, oldData: data});
-                                    } else {
-                                        callback({success: true, data: returnedData, oldData: data});
-                                    }
-                                });
-                            } else {
-				console.log(resp)
-                                callback({success: false, error: "Node already exists!", function: "Checking if the data exists... prt2"})
-                            }
+                            db.cypher({
+                                query: `CREATE (a2:${song.genre} {properties}) RETURN true`,
+                                params: { properties: properties }
+                            }, function (err, returnedData) {
+                                if (err) {
+                                    console.log(err)
+                                    callback({success: false, data: returnedData, oldData: data});
+                                } else {
+                                    callback({success: true, data: returnedData, oldData: data});
+                                }
+                            });
                         } else {
-                            callback({ success: false, error: resp.error, function: "Checking if the data exists..." })
+                            callback({success: false, error: "Node already exists!", function: "Checking if the data exists... prt2"})
                         }
-                    });
+                    } else {
+                        callback({ success: false, error: resp.error, function: "Checking if the data exists..." })
+                    }
                 });
             });
             break;
@@ -141,7 +127,7 @@ const run = (func, data, callback) => {
             break;
         case 'masterDeleteRelations':
             db.cypher({
-                query: 'MATCH ()-[r:SIMILAR]-() DELETE r',
+                query: 'MATCH ()-[r:RELEASED]-() DELETE r',
             }, (err, data) => {
                 if (err) {
                     callback({success: false, error: err});
@@ -190,7 +176,8 @@ const run = (func, data, callback) => {
                     callback({success: true, data: data});
 
                 }
-            });
+           
+	    callback({success: true});
             break;
         case 'exists':
             db.cypher({

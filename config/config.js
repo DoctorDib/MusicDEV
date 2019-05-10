@@ -50,7 +50,7 @@ module.exports = {
     },
     active_genres: active_genre,
     track_features: track_features,
-    classification_config:
+    classification_config: {
         general: {
             cutTrainingPercentage: 90, // (1 - 100) - Percentage of training data (the rest will go towards the testing sample)
             grabMin: true, // Equalise the total number of tracks per genre from the lowest value overall.
